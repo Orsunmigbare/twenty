@@ -1,6 +1,207 @@
+# CODEOWNERS
+#
+# Two sections:
+#   1. Repository infrastructure — upstream's rules, unchanged. These keep CI
+#      config, dependabot and the yarn config behind a maintainer review.
+#   2. Frontend ownership — every file under packages/twenty-front mapped to a
+#      product-domain team. See docs/frontend-ownership.md.
+#
+# The sections target disjoint paths, so they do not interact. Within section 2
+# order is load-bearing: the LAST matching rule wins.
+
+# ===========================================================================
+# 1. Repository infrastructure (upstream)
+# ===========================================================================
 /.github/              @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/CODEOWNERS    @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/workflows/    @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/actions/      @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/dependabot.yml @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.yarnrc.yml           @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
+
+
+# ===========================================================================
+# 2. Frontend ownership — packages/twenty-front
+#
+# Teams are named after the product domains in packages/twenty-docs/user-guide/
+# so docs, product and ownership share one vocabulary. Ordered broad -> narrow;
+# a nested override placed above its parent rule silently does nothing.
+#
+# NOTE: these handles are placeholders. GitHub only routes review to teams that
+# exist in the owning organisation — rename them to real teams (or use
+# individual owners) before expecting them to do anything.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# 2a. Catch-all. Nothing under twenty-front is ever unowned: a module added next
+#    quarter belongs to platform until a product team claims it, rather than
+#    falling through to nobody.
+# ---------------------------------------------------------------------------
+/packages/twenty-front/                                          @twenty/frontend-platform
+
+# ---------------------------------------------------------------------------
+# 2. Top-level src directories
+# ---------------------------------------------------------------------------
+/packages/twenty-front/src/utils/                                @twenty/frontend-platform
+/packages/twenty-front/src/hooks/                                @twenty/frontend-platform
+/packages/twenty-front/src/types/                                @twenty/frontend-platform
+/packages/twenty-front/src/config/                               @twenty/frontend-platform
+/packages/twenty-front/src/testing/                              @twenty/frontend-platform
+/packages/twenty-front/src/localization/                         @twenty/frontend-platform
+/packages/twenty-front/src/locales/                              @twenty/frontend-platform
+/packages/twenty-front/src/loading/                              @twenty/shell
+
+# ---------------------------------------------------------------------------
+# 3. One rule per module (all 56), grouped by owning team
+# ---------------------------------------------------------------------------
+
+# --- records: the record CRUD engine (table, board, calendar, field, picker)
+/packages/twenty-front/src/modules/object-record/                @twenty/records
+/packages/twenty-front/src/modules/people/                       @twenty/records
+/packages/twenty-front/src/modules/companies/                    @twenty/records
+
+# --- data-model: object/field metadata and the flat metadata graph
+/packages/twenty-front/src/modules/object-metadata/              @twenty/data-model
+/packages/twenty-front/src/modules/metadata-store/               @twenty/data-model
+/packages/twenty-front/src/modules/metadata-error-handler/       @twenty/data-model
+/packages/twenty-front/src/modules/sse-db-event/                 @twenty/data-model
+
+# --- views: saved views, filters, sorts, grouping (docs: views-pipelines)
+/packages/twenty-front/src/modules/views/                        @twenty/views
+/packages/twenty-front/src/modules/context-store/                @twenty/views
+
+# --- layout: page layouts, widgets, dashboards (docs: layout, dashboards)
+/packages/twenty-front/src/modules/page-layout/                  @twenty/layout
+/packages/twenty-front/src/modules/dashboards/                   @twenty/layout
+/packages/twenty-front/src/modules/layout-customization/         @twenty/layout
+
+# --- workflows: automation and serverless logic (docs: workflows)
+/packages/twenty-front/src/modules/workflow/                     @twenty/workflows
+/packages/twenty-front/src/modules/logic-functions/              @twenty/workflows
+
+# --- ai: agents, chat, streaming (docs: ai)
+/packages/twenty-front/src/modules/ai/                           @twenty/ai
+
+# --- comms: email, calendar, tasks, notes, files (docs: calendar-emails)
+/packages/twenty-front/src/modules/activities/                   @twenty/comms
+/packages/twenty-front/src/modules/accounts/                     @twenty/comms
+/packages/twenty-front/src/modules/mention/                      @twenty/comms
+/packages/twenty-front/src/modules/file/                         @twenty/comms
+/packages/twenty-front/src/modules/file-upload/                  @twenty/comms
+/packages/twenty-front/src/modules/geo-map/                      @twenty/comms
+
+# --- shell: navigation, command menu, side panel, app chrome
+/packages/twenty-front/src/modules/navigation/                   @twenty/shell
+/packages/twenty-front/src/modules/navigation-menu-item/         @twenty/shell
+/packages/twenty-front/src/modules/command-menu/                 @twenty/shell
+/packages/twenty-front/src/modules/command-menu-item/            @twenty/shell
+/packages/twenty-front/src/modules/side-panel/                   @twenty/shell
+/packages/twenty-front/src/modules/keyboard-shortcut-menu/       @twenty/shell
+/packages/twenty-front/src/modules/information-banner/           @twenty/shell
+
+# --- workspace-admin: settings, billing, roles, members (docs: settings,
+#     billing, permissions-access). Slices are re-assigned in section 4.
+/packages/twenty-front/src/modules/settings/                     @twenty/workspace-admin
+/packages/twenty-front/src/modules/workspace/                    @twenty/workspace-admin
+/packages/twenty-front/src/modules/workspace-member/             @twenty/workspace-admin
+/packages/twenty-front/src/modules/workspace-invitation/         @twenty/workspace-admin
+/packages/twenty-front/src/modules/users/                        @twenty/workspace-admin
+/packages/twenty-front/src/modules/domain-manager/               @twenty/workspace-admin
+/packages/twenty-front/src/modules/support/                      @twenty/workspace-admin
+/packages/twenty-front/src/modules/analytics/                    @twenty/workspace-admin
+
+# --- auth: the sign-in / onboarding funnel
+/packages/twenty-front/src/modules/auth/                         @twenty/auth
+/packages/twenty-front/src/modules/onboarding/                   @twenty/auth
+/packages/twenty-front/src/modules/captcha/                      @twenty/auth
+/packages/twenty-front/src/modules/sign-in-background-mock/      @twenty/auth
+
+# --- design-system: the in-app UI layer above twenty-ui, plus editor widgets
+/packages/twenty-front/src/modules/ui/                           @twenty/design-system
+/packages/twenty-front/src/modules/blocknote-editor/             @twenty/design-system
+/packages/twenty-front/src/modules/advanced-text-editor/         @twenty/design-system
+/packages/twenty-front/src/modules/spreadsheet-import/           @twenty/design-system
+/packages/twenty-front/src/modules/dropdown-context-state-management/ @twenty/design-system
+
+# --- frontend-platform: app shell, data layer, extension runtime, infra
+/packages/twenty-front/src/modules/app/                          @twenty/frontend-platform
+/packages/twenty-front/src/modules/apollo/                       @twenty/frontend-platform
+/packages/twenty-front/src/modules/client-config/                @twenty/frontend-platform
+/packages/twenty-front/src/modules/error-handler/                @twenty/frontend-platform
+/packages/twenty-front/src/modules/browser-event/                @twenty/frontend-platform
+/packages/twenty-front/src/modules/applications/                 @twenty/frontend-platform
+/packages/twenty-front/src/modules/marketplace/                  @twenty/frontend-platform
+/packages/twenty-front/src/modules/front-components/             @twenty/frontend-platform
+/packages/twenty-front/src/modules/localization/                 @twenty/frontend-platform
+/packages/twenty-front/src/modules/debug/                        @twenty/frontend-platform
+/packages/twenty-front/src/modules/types/                        @twenty/frontend-platform
+
+# ---------------------------------------------------------------------------
+# 3b. Route-level pages
+# ---------------------------------------------------------------------------
+/packages/twenty-front/src/pages/settings/                       @twenty/workspace-admin
+/packages/twenty-front/src/pages/object-record/                  @twenty/records
+/packages/twenty-front/src/pages/page-layout/                    @twenty/layout
+/packages/twenty-front/src/pages/auth/                           @twenty/auth
+/packages/twenty-front/src/pages/onboarding/                     @twenty/auth
+/packages/twenty-front/src/pages/not-found/                      @twenty/shell
+
+# ---------------------------------------------------------------------------
+# 4. Nested overrides — the modules too big to have one owner.
+#    These MUST stay below their parent rule in section 3.
+# ---------------------------------------------------------------------------
+
+# object-record: filtering/sorting/grouping is view semantics, not record
+# rendering. The engine belongs to records; the query surface to views.
+/packages/twenty-front/src/modules/object-record/advanced-filter/        @twenty/views
+/packages/twenty-front/src/modules/object-record/object-filter-dropdown/ @twenty/views
+/packages/twenty-front/src/modules/object-record/object-sort-dropdown/   @twenty/views
+/packages/twenty-front/src/modules/object-record/record-filter/          @twenty/views
+/packages/twenty-front/src/modules/object-record/record-filter-group/    @twenty/views
+/packages/twenty-front/src/modules/object-record/record-group/           @twenty/views
+/packages/twenty-front/src/modules/object-record/record-sort/            @twenty/views
+
+# settings: an 877-file module covering six unrelated domains.
+/packages/twenty-front/src/modules/settings/data-model/          @twenty/data-model
+/packages/twenty-front/src/modules/settings/ai/                  @twenty/ai
+/packages/twenty-front/src/modules/settings/logic-functions/     @twenty/workflows
+/packages/twenty-front/src/modules/settings/accounts/            @twenty/comms
+/packages/twenty-front/src/pages/settings/data-model/            @twenty/data-model
+/packages/twenty-front/src/pages/settings/ai/                    @twenty/ai
+/packages/twenty-front/src/pages/settings/logic-functions/       @twenty/workflows
+/packages/twenty-front/src/pages/settings/accounts/              @twenty/comms
+
+# page-layout/widgets: the container is layout's, but each widget body is a
+# different domain's surface re-hosted inside it.
+/packages/twenty-front/src/modules/page-layout/widgets/emails/            @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/email-thread/      @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/calendar/          @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/notes/             @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/tasks/             @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/files/             @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/timeline/          @twenty/comms
+/packages/twenty-front/src/modules/page-layout/widgets/workflow/          @twenty/workflows
+/packages/twenty-front/src/modules/page-layout/widgets/record-table/      @twenty/records
+
+# side-panel/pages: same shape — shell owns the panel, content owners own what
+# is rendered inside it.
+/packages/twenty-front/src/modules/side-panel/pages/compose-email/        @twenty/comms
+/packages/twenty-front/src/modules/side-panel/pages/compose-campaign/     @twenty/comms
+/packages/twenty-front/src/modules/side-panel/pages/ask-ai/               @twenty/ai
+/packages/twenty-front/src/modules/side-panel/pages/ai-chat-threads/      @twenty/ai
+/packages/twenty-front/src/modules/side-panel/pages/record-page/          @twenty/records
+/packages/twenty-front/src/modules/side-panel/pages/page-layout/          @twenty/layout
+/packages/twenty-front/src/modules/side-panel/pages/workflow/             @twenty/workflows
+
+# ---------------------------------------------------------------------------
+# 5. Generated code. Human review here is theatre — graphql-codegen and lingui
+#    emit these, and the repo's own .oxlintrc.json ignorePatterns already
+#    excludes them from linting. Platform owns them so CI has someone to notify
+#    when codegen output changes shape.
+#    Nothing may override these, so they come last.
+# ---------------------------------------------------------------------------
+/packages/twenty-front/src/generated/                            @twenty/frontend-platform
+/packages/twenty-front/src/generated-metadata/                   @twenty/frontend-platform
+/packages/twenty-front/src/generated-admin/                      @twenty/frontend-platform
+/packages/twenty-front/src/locales/generated/                    @twenty/frontend-platform
+/packages/twenty-front/src/testing/mock-data/                    @twenty/frontend-platform
