@@ -1,0 +1,41 @@
+# webgraph: fold a merged PR's graph delta into the baseline.
+#
+# Counterpart to webgraph.yml. When a PR merges, its ref (pr-N) stops being an
+# overlay and becomes base-graph truth; anything changed in BOTH main and the
+# PR since the branch point is marked dirty as a fold conflict, which the
+# owning teams see as incidents in their dashboard inboxes. When a PR closes
+# WITHOUT merging, the ref is deleted so its pending approvals stop haunting
+# the inboxes.
+#
+# Same runner and the same fork-PR refusal as webgraph.yml.
+name: webgraph-fold
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: webgraph-fold-${{ github.event.pull_request.number }}
+
+jobs:
+  fold:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, webgraph]
+    env:
+      WEBGRAPH_HOME: ${{ vars.WEBGRAPH_HOME || '/Users/gbare/Desktop/frontend-mcp' }}
+      WEBGRAPH_DEPLOYMENT_ID: ${{ vars.WEBGRAPH_DEPLOYMENT_ID || '22222222-3333-4444-8555-666666666666' }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Fold or discard the PR ref
+        run: |
+          node "$WEBGRAPH_HOME/scripts/pr-fold.mjs" \
+            --deployment "$WEBGRAPH_DEPLOYMENT_ID" \
+            --pr "${{ github.event.pull_request.number }}" \
+            --merged "${{ github.event.pull_request.merged }}" \
+            --sha "${{ github.event.pull_request.merge_commit_sha }}" \
+            --actor "${{ github.event.pull_request.merged_by.login || github.actor }}" \
+            --repo "${{ github.repository }}"
