@@ -1,6 +1,50 @@
+# CODEOWNERS
+#
+#   1. Repository infrastructure — upstream's rules, unchanged.
+#   2. Frontend feature teams — packages/twenty-front only. Generated from
+#      CRAWLED SURFACE by scripts/apply-surface-teams.mjs; a team exists here
+#      because it owns screens a QA can open in a browser.
+#
+# Enforced: scripts/ownership-coverage.mjs fails CI if any frontend file is
+# unowned. Order is broad -> narrow; the last matching rule wins.
+#
+# NOTE: handles are placeholders — GitHub routes review only to teams that
+# exist in the owning organisation.
+
+# ==========================================================================
+# 1. Repository infrastructure (upstream)
+# ==========================================================================
 /.github/              @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/CODEOWNERS    @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/workflows/    @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/actions/      @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.github/dependabot.yml @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
 /.yarnrc.yml           @charlesBochet @FelixMalfait @Weiko @prastoin @bosiraphael @etiennejouan @ijreilly @martmull @thomtrp
+
+# ==========================================================================
+# 2. Frontend feature teams — packages/twenty-front
+# ==========================================================================
+
+/packages/twenty-front/                                                    @twenty/records
+/packages/twenty-front/src/pages/auth/                                     @twenty/auth
+/packages/twenty-front/src/pages/not-found/                                @twenty/records
+/packages/twenty-front/src/pages/object-record/                            @twenty/records
+/packages/twenty-front/src/pages/onboarding/                               @twenty/onboarding
+/packages/twenty-front/src/pages/settings/                                 @twenty/settings-workspace
+/packages/twenty-front/src/modules/auth/components/                        @twenty/auth
+/packages/twenty-front/src/pages/settings/accounts/                        @twenty/settings-accounts
+/packages/twenty-front/src/pages/settings/admin-panel/                     @twenty/settings-admin
+/packages/twenty-front/src/pages/settings/ai/                              @twenty/settings-ai
+/packages/twenty-front/src/pages/settings/applications/                    @twenty/settings-integrations
+/packages/twenty-front/src/pages/settings/data-model/                      @twenty/settings-data-model
+/packages/twenty-front/src/pages/settings/domains/                         @twenty/settings-workspace
+/packages/twenty-front/src/pages/settings/emailing-domains/                @twenty/settings-integrations
+/packages/twenty-front/src/pages/settings/members/                         @twenty/settings-access
+/packages/twenty-front/src/pages/settings/security/                        @twenty/settings-access
+/packages/twenty-front/src/modules/settings/accounts/components/  @twenty/settings-accounts
+/packages/twenty-front/src/modules/settings/domains/components/            @twenty/settings-integrations
+/packages/twenty-front/src/pages/settings/data-model/new-field/            @twenty/settings-data-model
+/packages/twenty-front/src/pages/settings/developers/api-keys/             @twenty/settings-integrations
+/packages/twenty-front/src/pages/settings/members/roles/                   @twenty/settings-access
+/packages/twenty-front/src/pages/settings/developers/webhooks/components/  @twenty/settings-integrations
+/packages/twenty-front/src/pages/settings/profile/appearance/components/   @twenty/settings-workspace
