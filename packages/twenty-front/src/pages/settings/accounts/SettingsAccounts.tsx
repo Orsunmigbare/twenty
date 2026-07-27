@@ -49,3 +49,7 @@ export const SettingsAccounts = () => {
     </SettingsPageLayout>
   );
 };
+
+// webgraph CI smoke test — comment-only, no behaviour change.
+// Verifies the PR check reaches its decision path on a frontend file owned by
+// @twenty/settings-accounts. Reverted immediately after the run.
