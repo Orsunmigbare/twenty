@@ -1,8 +1,5 @@
-import {
-  defineCommandMenuItem,
-  isInSidePanel,
-  objectPermissions,
-} from '@/sdk/define';
+import { defineCommandMenuItem } from '@/sdk/define';
+import { isInSidePanel, objectPermissions } from '@/sdk/front-component';
 
 export default defineCommandMenuItem({
   universalIdentifier: 'permissions-check-cmd',

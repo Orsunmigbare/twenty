@@ -12,7 +12,6 @@ import { ViewGroupResolver } from 'src/engine/metadata-modules/view-group/resolv
 import { ViewGroupService } from 'src/engine/metadata-modules/view-group/services/view-group.service';
 import { ViewPermissionsModule } from 'src/engine/metadata-modules/view-permissions/view-permissions.module';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
 import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace-migration/workspace-migration.module';
 
@@ -29,11 +28,7 @@ import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace
     ViewPermissionsModule,
   ],
   controllers: [ViewGroupController],
-  providers: [
-    ViewGroupService,
-    ViewGroupResolver,
-    provideWorkspaceScopedRepository(ViewGroupEntity),
-  ],
+  providers: [ViewGroupService, ViewGroupResolver],
   exports: [ViewGroupService],
 })
 export class ViewGroupModule {}

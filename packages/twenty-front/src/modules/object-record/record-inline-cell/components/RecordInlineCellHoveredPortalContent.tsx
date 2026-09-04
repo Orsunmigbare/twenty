@@ -17,15 +17,11 @@ const StyledRecordTableCellHoveredPortalContent = styled.div<{
 
 const StyledInlineCellBaseContainer = styled.div<{ readonly: boolean }>`
   align-items: center;
-  background: var(
-    --record-card-background-color,
-    ${themeCssVariables.background.primary}
-  );
   box-sizing: border-box;
   display: flex;
   gap: ${themeCssVariables.spacing[1]};
   height: fit-content;
-  user-select: text;
+  user-select: none;
   width: 100%;
 `;
 

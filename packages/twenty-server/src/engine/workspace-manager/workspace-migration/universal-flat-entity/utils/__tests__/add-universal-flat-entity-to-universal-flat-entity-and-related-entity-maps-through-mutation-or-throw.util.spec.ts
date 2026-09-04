@@ -37,17 +37,18 @@ describe('addUniversalFlatEntityToUniversalFlatEntityAndRelatedEntityMapsThrough
       icon: 'icon',
       isActive: true,
       isAuditLogged: true,
+      isCustom: true,
       isLabelSyncedWithName: false,
       isRemote: false,
       isSearchable: true,
       isSystem: false,
-      isUIEditable: true,
+      isUIReadOnly: false,
       labelPlural: 'default flat object metadata label plural',
       labelSingular: 'default flat object metadata label singular',
       namePlural: 'defaultflatObjectMetadataNamePlural',
       nameSingular: 'defaultflatObjectMetadataNameSingular',
       shortcut: 'shortcut',
-      overrides: null,
+      standardOverrides: null,
       targetTableName: '',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -67,7 +68,6 @@ describe('addUniversalFlatEntityToUniversalFlatEntityAndRelatedEntityMapsThrough
       viewFieldUniversalIdentifiers: [],
       viewFilterUniversalIdentifiers: [],
       calendarViewUniversalIdentifiers: [],
-      calendarEndViewUniversalIdentifiers: [],
       mainGroupByFieldMetadataViewUniversalIdentifiers: [],
       kanbanAggregateOperationViewUniversalIdentifiers: [],
       createdAt: '2024-01-01T00:00:00.000Z',
@@ -80,14 +80,15 @@ describe('addUniversalFlatEntityToUniversalFlatEntityAndRelatedEntityMapsThrough
       description: 'default flat field metadata description',
       icon: 'icon',
       isActive: true,
+      isCustom: true,
       name: 'flatFieldMetadataName',
       label: 'flat field metadata label',
       isNullable: true,
       isUnique: false,
-      isUIEditable: true,
+      isUIReadOnly: false,
       isLabelSyncedWithName: false,
       isSystem: false,
-      overrides: null,
+      standardOverrides: null,
       relationTargetObjectMetadataUniversalIdentifier: null,
       relationTargetFieldMetadataUniversalIdentifier: null,
     };
@@ -100,8 +101,6 @@ describe('addUniversalFlatEntityToUniversalFlatEntityAndRelatedEntityMapsThrough
       viewGroupUniversalIdentifiers: [],
       applicationUniversalIdentifier,
       calendarFieldMetadataUniversalIdentifier:
-        fieldMetadataUniversalIdentifier,
-      calendarEndFieldMetadataUniversalIdentifier:
         fieldMetadataUniversalIdentifier,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
@@ -179,7 +178,6 @@ describe('addUniversalFlatEntityToUniversalFlatEntityAndRelatedEntityMapsThrough
 
     expect(updatedFieldMetadata).toMatchObject({
       calendarViewUniversalIdentifiers: [viewUniversalIdentifier],
-      calendarEndViewUniversalIdentifiers: [viewUniversalIdentifier],
     });
   });
 

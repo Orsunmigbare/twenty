@@ -16,8 +16,12 @@ import { t } from '@lingui/core/macro';
 import { Link } from 'react-router-dom';
 import { AppPath, ViewFilterOperand } from 'twenty-shared/types';
 import { getAppPath, isDefined } from 'twenty-shared/utils';
-import { IconArrowUpRight } from 'twenty-ui/icon';
-import { AppTooltip, TooltipDelay, TooltipPosition } from 'twenty-ui/surfaces';
+import {
+  AppTooltip,
+  IconArrowUpRight,
+  TooltipDelay,
+  TooltipPosition,
+} from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { RelationType } from '~/generated-metadata/graphql';
 

@@ -7,8 +7,7 @@ import { SettingsLogicFunctionWorkflowActionTriggerSection } from '@/settings/lo
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { Callout } from 'twenty-ui/feedback';
-import { IconInfoCircle } from 'twenty-ui/icon';
+import { Callout, IconInfoCircle } from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledEmptyState = styled.div`

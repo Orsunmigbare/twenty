@@ -1,21 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
 import assert from 'assert';
 
 import { msg } from '@lingui/core/macro';
+import { TypeOrmQueryService } from '@ptc-org/nestjs-query-typeorm';
 import { PermissionFlagType } from 'twenty-shared/constants';
 import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
-import {
-  DataSource,
-  In,
-  IsNull,
-  LessThan,
-  Not,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 
 import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
 import { ApiKeyEntity } from 'src/engine/core-modules/api-key/api-key.entity';
@@ -27,11 +20,6 @@ import { BillingService } from 'src/engine/core-modules/billing/services/billing
 import { DnsManagerService } from 'src/engine/core-modules/dns-manager/services/dns-manager.service';
 import { CustomDomainManagerService } from 'src/engine/core-modules/domain/custom-domain-manager/services/custom-domain-manager.service';
 import { SubdomainManagerService } from 'src/engine/core-modules/domain/subdomain-manager/services/subdomain-manager.service';
-import { EmailingDomainEntity } from 'src/engine/core-modules/emailing-domain/emailing-domain.entity';
-import {
-  EmailingDomainWorkspaceCleanupJob,
-  type EmailingDomainWorkspaceCleanupJobData,
-} from 'src/engine/core-modules/emailing-domain/jobs/emailing-domain-workspace-cleanup.job';
 import { ExceptionHandlerService } from 'src/engine/core-modules/exception-handler/exception-handler.service';
 import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { FileCorePictureService } from 'src/engine/core-modules/file/file-core-picture/services/file-core-picture.service';
@@ -42,13 +30,13 @@ import {
 import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 import { MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
-import { SdkClientGenerationService } from 'src/engine/core-modules/sdk-client/sdk-client-generation.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UpgradeMigrationService } from 'src/engine/core-modules/upgrade/services/upgrade-migration.service';
 import { UpgradeSequenceReaderService } from 'src/engine/core-modules/upgrade/services/upgrade-sequence-reader.service';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { UserWorkspaceService } from 'src/engine/core-modules/user-workspace/user-workspace.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
+import { type ActivateWorkspaceInput } from 'src/engine/core-modules/workspace/dtos/activate-workspace-input';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import {
   WorkspaceException,
@@ -82,15 +70,9 @@ import { WorkspaceManagerService } from 'src/engine/workspace-manager/workspace-
 import { DEFAULT_FEATURE_FLAGS } from 'src/engine/workspace-manager/workspace-migration/constant/default-feature-flags';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
-// A workspace stuck in ONGOING_CREATION for longer than this is treated as a
-// crashed activation (the process died before the catch block could reset it to
-// PENDING_CREATION) and may be retried. It is far longer than a real activation
-// takes, so a genuinely in-progress activation is never reclaimed.
-const WORKSPACE_ACTIVATION_STALE_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
-
 @Injectable()
 // oxlint-disable-next-line twenty/inject-workspace-repository
-export class WorkspaceService {
+export class WorkspaceService extends TypeOrmQueryService<WorkspaceEntity> {
   protected readonly logger = new Logger(WorkspaceService.name);
 
   private readonly WORKSPACE_FIELD_PERMISSIONS: Record<
@@ -105,7 +87,6 @@ export class WorkspaceService {
     eventLogRetentionDays: PermissionFlagType.SECURITY,
     inviteHash: PermissionFlagType.WORKSPACE_MEMBERS,
     isPublicInviteLinkEnabled: PermissionFlagType.SECURITY,
-    workspaceDiscoverability: PermissionFlagType.SECURITY,
     allowImpersonation: PermissionFlagType.SECURITY,
     isGoogleAuthEnabled: PermissionFlagType.SECURITY,
     isMicrosoftAuthEnabled: PermissionFlagType.SECURITY,
@@ -118,7 +99,6 @@ export class WorkspaceService {
     aiAdditionalInstructions: PermissionFlagType.WORKSPACE,
     enabledAiModelIds: PermissionFlagType.AI_SETTINGS,
     useRecommendedModels: PermissionFlagType.AI_SETTINGS,
-    isInternalMessagesImportEnabled: PermissionFlagType.WORKSPACE,
   };
 
   constructor(
@@ -155,8 +135,9 @@ export class WorkspaceService {
     private readonly coreEntityCacheService: CoreEntityCacheService,
     private readonly upgradeMigrationService: UpgradeMigrationService,
     private readonly upgradeSequenceReaderService: UpgradeSequenceReaderService,
-    private readonly sdkClientGenerationService: SdkClientGenerationService,
-  ) {}
+  ) {
+    super(workspaceRepository);
+  }
 
   async updateWorkspaceById({
     payload,
@@ -335,105 +316,57 @@ export class WorkspaceService {
     return updatedWorkspace;
   }
 
-  async activateWorkspace(user: AuthContextUser, workspace: WorkspaceEntity) {
-    // Acquire the activation lock by atomically moving the workspace to
-    // ONGOING_CREATION. First try the normal case (PENDING_CREATION). If nothing
-    // matches, the workspace may be stuck in ONGOING_CREATION from a prior
-    // attempt that was killed before the catch block could reset it — reclaim it,
-    // but only once the lock is stale, so a genuinely concurrent activation is
-    // never interrupted. Postgres row locking serializes concurrent reclaims, and
-    // repository.update bumps updatedAt, so a reclaimed lock is immediately fresh.
-    let activationLockResult = await this.workspaceRepository.update(
-      {
-        id: workspace.id,
-        activationStatus: WorkspaceActivationStatus.PENDING_CREATION,
-      },
-      { activationStatus: WorkspaceActivationStatus.ONGOING_CREATION },
-    );
-
-    if ((activationLockResult.affected ?? 0) === 0) {
-      activationLockResult = await this.workspaceRepository.update(
-        {
-          id: workspace.id,
-          activationStatus: WorkspaceActivationStatus.ONGOING_CREATION,
-          updatedAt: LessThan(
-            new Date(Date.now() - WORKSPACE_ACTIVATION_STALE_LOCK_TIMEOUT_MS),
-          ),
-        },
-        { activationStatus: WorkspaceActivationStatus.ONGOING_CREATION },
-      );
+  async activateWorkspace(
+    user: AuthContextUser,
+    workspace: WorkspaceEntity,
+    data: ActivateWorkspaceInput,
+  ) {
+    if (!data.displayName || !data.displayName.length) {
+      throw new BadRequestException("'displayName' not provided");
     }
 
-    if ((activationLockResult.affected ?? 0) === 0) {
-      // Activation is idempotent for the terminal state: if a prior attempt
-      // already completed (e.g. the client lost the response and retried),
-      // return the active workspace instead of failing. Otherwise another
-      // activation is genuinely in progress and must not be interrupted.
-      const existingWorkspace = await this.workspaceRepository.findOneBy({
-        id: workspace.id,
-      });
-
-      if (
-        existingWorkspace?.activationStatus ===
-          WorkspaceActivationStatus.ACTIVE ||
-        existingWorkspace?.activationStatus ===
-          WorkspaceActivationStatus.CREATED
-      ) {
-        return existingWorkspace;
-      }
-
+    if (
+      workspace.activationStatus === WorkspaceActivationStatus.ONGOING_CREATION
+    ) {
       throw new Error('Workspace is already being created');
     }
+
+    if (
+      workspace.activationStatus !== WorkspaceActivationStatus.PENDING_CREATION
+    ) {
+      throw new Error('Workspace is not pending creation');
+    }
+
+    await this.workspaceRepository.update(workspace.id, {
+      activationStatus: WorkspaceActivationStatus.ONGOING_CREATION,
+    });
 
     await this.coreEntityCacheService.invalidate(
       'workspaceEntity',
       workspace.id,
     );
 
-    try {
-      await this.workspaceManagerService.init({
-        workspace,
-        userId: user.id,
-      });
+    await this.workspaceManagerService.init({
+      workspace,
+      userId: user.id,
+    });
 
-      await this.featureFlagService.enableFeatureFlags(
-        DEFAULT_FEATURE_FLAGS,
-        workspace.id,
-      );
+    await this.featureFlagService.enableFeatureFlags(
+      DEFAULT_FEATURE_FLAGS,
+      workspace.id,
+    );
 
-      await this.userWorkspaceService.createWorkspaceMember(workspace.id, user);
+    await this.userWorkspaceService.createWorkspaceMember(workspace.id, user);
 
-      await this.prefillCreatedWorkspaceRecords({
-        workspaceId: workspace.id,
-        schemaName: getWorkspaceSchemaName(workspace.id),
-      });
+    await this.prefillCreatedWorkspaceRecords({
+      workspaceId: workspace.id,
+      schemaName: getWorkspaceSchemaName(workspace.id),
+    });
 
-      await this.activateAndInitializeUpgradeState({
-        workspaceId: workspace.id,
-      });
-    } catch (error) {
-      await this.workspaceRepository.update(workspace.id, {
-        activationStatus: WorkspaceActivationStatus.PENDING_CREATION,
-      });
-      await this.coreEntityCacheService.invalidate(
-        'workspaceEntity',
-        workspace.id,
-      );
-
-      throw error;
-    }
-
-    try {
-      await this.sdkClientGenerationService.enqueueSdkClientGenerationForWorkspace(
-        workspace.id,
-      );
-    } catch (error) {
-      this.logger.error(
-        `failed to enqueue SDK client generation jobs for workspace ${workspace.id}`,
-        error,
-      );
-      this.exceptionHandlerService.captureExceptions([error as Error]);
-    }
+    await this.activateAndInitializeUpgradeState({
+      workspaceId: workspace.id,
+      displayName: data.displayName,
+    });
 
     await this.coreEntityCacheService.invalidate(
       'workspaceEntity',
@@ -446,9 +379,11 @@ export class WorkspaceService {
   }
 
   private async activateAndInitializeUpgradeState({
+    displayName,
     workspaceId,
   }: {
     workspaceId: string;
+    displayName: string;
   }): Promise<void> {
     const lastAttemptedInstanceCommand =
       await this.upgradeMigrationService.getLastAttemptedInstanceCommandOrThrow();
@@ -461,9 +396,6 @@ export class WorkspaceService {
     const executedByVersion =
       this.twentyConfigService.get('APP_VERSION') ?? 'unknown';
 
-    const hasWorkspaceAnySubscription =
-      await this.billingService.hasWorkspaceAnySubscription(workspaceId);
-
     const queryRunner = this.coreDataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -471,9 +403,8 @@ export class WorkspaceService {
 
     try {
       await queryRunner.manager.update(WorkspaceEntity, workspaceId, {
-        activationStatus: hasWorkspaceAnySubscription
-          ? WorkspaceActivationStatus.ACTIVE
-          : WorkspaceActivationStatus.CREATED,
+        displayName,
+        activationStatus: WorkspaceActivationStatus.ACTIVE,
       });
 
       await this.upgradeMigrationService.markAsWorkspaceInitial({
@@ -491,53 +422,6 @@ export class WorkspaceService {
     } finally {
       await queryRunner.release();
     }
-  }
-
-  async suspendWorkspace(id: string): Promise<boolean> {
-    const { affected } = await this.workspaceRepository.update(
-      {
-        id,
-        activationStatus: Not(WorkspaceActivationStatus.SUSPENDED),
-        deletedAt: IsNull(),
-      },
-      {
-        activationStatus: WorkspaceActivationStatus.SUSPENDED,
-        suspendedAt: new Date(),
-      },
-    );
-
-    const hasBeenSuspended = isDefined(affected) && affected > 0;
-
-    if (hasBeenSuspended) {
-      await this.coreEntityCacheService.invalidate('workspaceEntity', id);
-    }
-
-    return hasBeenSuspended;
-  }
-
-  async reactivateWorkspace(id: string): Promise<boolean> {
-    const { affected } = await this.workspaceRepository.update(
-      {
-        id,
-        activationStatus: In([
-          WorkspaceActivationStatus.SUSPENDED,
-          WorkspaceActivationStatus.CREATED,
-        ]),
-        deletedAt: IsNull(),
-      },
-      {
-        activationStatus: WorkspaceActivationStatus.ACTIVE,
-        suspendedAt: null,
-      },
-    );
-
-    const hasBeenReactivated = isDefined(affected) && affected > 0;
-
-    if (hasBeenReactivated) {
-      await this.coreEntityCacheService.invalidate('workspaceEntity', id);
-    }
-
-    return hasBeenReactivated;
   }
 
   async deleteWorkspace(id: string, softDelete = false) {
@@ -566,11 +450,11 @@ export class WorkspaceService {
 
     this.logger.log(`workspace ${id} cache flushed`);
 
-    if (softDelete) {
-      if (this.billingService.isBillingEnabled()) {
-        await this.billingSubscriptionService.cancelSubscription(workspace.id);
-      }
+    if (this.billingService.isBillingEnabled()) {
+      await this.billingSubscriptionService.deleteSubscriptions(workspace.id);
+    }
 
+    if (softDelete) {
       await this.workspaceRepository.softDelete({ id });
       await this.coreEntityCacheService.invalidate('workspaceEntity', id);
 
@@ -579,17 +463,14 @@ export class WorkspaceService {
       return workspace;
     }
 
-    if (this.billingService.isBillingEnabled()) {
-      await this.billingSubscriptionService.assertSubscriptionCanceledOrNone(
-        workspace.id,
-      );
-    }
-
     await this.deleteWorkspaceSyncableMetadataEntities(workspace);
 
     await this.workspaceDataSourceService.deleteWorkspaceDBSchema(workspace.id);
 
-    await this.workspaceCacheStorageService.flush(workspace.id);
+    await this.workspaceCacheStorageService.flush(
+      workspace.id,
+      workspace.metadataVersion,
+    );
     await this.flatEntityMapsCacheService.flushFlatEntityMaps({
       workspaceId: workspace.id,
     });
@@ -597,18 +478,6 @@ export class WorkspaceService {
     await this.messageQueueService.add<FileWorkspaceFolderDeletionJobData>(
       FileWorkspaceFolderDeletionJob.name,
       { workspaceId: id },
-    );
-
-    const emailingDomains = await this.coreDataSource
-      .getRepository(EmailingDomainEntity)
-      .find({ where: { workspaceId: id } });
-
-    await this.messageQueueService.add<EmailingDomainWorkspaceCleanupJobData>(
-      EmailingDomainWorkspaceCleanupJob.name,
-      {
-        workspaceId: id,
-        domains: emailingDomains.map((emailingDomain) => emailingDomain.domain),
-      },
     );
 
     if (workspace.customDomain) {

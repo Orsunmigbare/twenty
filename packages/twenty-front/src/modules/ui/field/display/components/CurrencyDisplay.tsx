@@ -1,9 +1,6 @@
 import { useContext, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { styled } from '@linaria/react';
-import { AppTooltip, TooltipDelay, TooltipPosition } from 'twenty-ui/surfaces';
-import { ThemeContext } from 'twenty-ui/theme-constants';
-import { isDefined, formatToShortNumber } from 'twenty-shared/utils';
+import { AppTooltip, TooltipDelay, TooltipPosition } from 'twenty-ui/display';
 
 import { useNumberFormat } from '@/localization/hooks/useNumberFormat';
 import { type FieldDefinition } from '@/object-record/record-field/ui/types/FieldDefinition';
@@ -13,13 +10,10 @@ import {
 } from '@/object-record/record-field/ui/types/FieldMetadata';
 import { SETTINGS_FIELD_CURRENCY_CODES } from '@/settings/data-model/constants/SettingsFieldCurrencyCodes';
 import { EllipsisDisplay } from '@/ui/field/display/components/EllipsisDisplay';
+import { isDefined, formatToShortNumber } from 'twenty-shared/utils';
 import { DEFAULT_DECIMAL_VALUE } from '~/utils/format/formatNumber';
 import { isUndefinedOrNull } from '~/utils/isUndefinedOrNull';
-
-const StyledCurrencyIconContainer = styled.span`
-  align-items: center;
-  display: flex;
-`;
+import { ThemeContext } from 'twenty-ui/theme-constants';
 
 type CurrencyDisplayProps = {
   currencyValue: FieldCurrencyValue | null | undefined;
@@ -63,7 +57,7 @@ export const CurrencyDisplay = ({
       <EllipsisDisplay>
         {shouldShowCurrencyTooltip && (
           <>
-            <StyledCurrencyIconContainer
+            <span
               id={tooltipAnchorId}
               onMouseEnter={() => setShouldRenderTooltip(true)}
               onMouseLeave={() => setShouldRenderTooltip(false)}
@@ -73,7 +67,7 @@ export const CurrencyDisplay = ({
                 size={theme.icon.size.md}
                 stroke={theme.icon.stroke.sm}
               />
-            </StyledCurrencyIconContainer>{' '}
+            </span>{' '}
           </>
         )}
         {amountToDisplay !== null

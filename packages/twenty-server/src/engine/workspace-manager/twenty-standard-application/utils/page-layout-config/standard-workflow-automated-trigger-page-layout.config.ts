@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -15,31 +12,21 @@ import {
 
 const WORKFLOW_AUTOMATED_TRIGGER_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .workflowAutomatedTriggerRecordPage.tabs.home.universalIdentifier,
+    universalIdentifier: '20202020-ab15-4015-8015-a0bcf1151501',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .workflowAutomatedTriggerRecordPage.tabs.home.widgets.fields
-            .universalIdentifier,
+        universalIdentifier: '20202020-ac15-4015-8015-a0bcf1151511',
         ...WIDGET_PROPS.fields,
       },
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .workflowAutomatedTriggerRecordPage.tabs.timeline.universalIdentifier,
+    universalIdentifier: '20202020-ab15-4015-8015-a0bcf1151502',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .workflowAutomatedTriggerRecordPage.tabs.timeline.widgets.timeline
-            .universalIdentifier,
+        universalIdentifier: '20202020-ac15-4015-8015-a0bcf1151521',
         ...WIDGET_PROPS.timeline,
       },
     },
@@ -51,9 +38,7 @@ export const STANDARD_WORKFLOW_AUTOMATED_TRIGGER_PAGE_LAYOUT_CONFIG = {
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier:
     STANDARD_OBJECTS.workflowAutomatedTrigger.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-      .workflowAutomatedTriggerRecordPage.universalIdentifier,
+  universalIdentifier: '20202020-a115-4015-8015-a0bcf1150001',
   defaultTabUniversalIdentifier: null,
   tabs: WORKFLOW_AUTOMATED_TRIGGER_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

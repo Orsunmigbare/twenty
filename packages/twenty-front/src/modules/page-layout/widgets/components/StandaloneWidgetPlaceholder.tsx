@@ -7,7 +7,8 @@ import {
   AnimatedPlaceholderEmptySubTitle,
   AnimatedPlaceholderEmptyTextContainer,
   AnimatedPlaceholderEmptyTitle,
-} from 'twenty-ui/feedback';
+  EMPTY_PLACEHOLDER_TRANSITION_PROPS,
+} from 'twenty-ui/layout';
 
 const StyledPlaceholderContainer = styled.div`
   background: ${themeCssVariables.background.secondary};
@@ -23,7 +24,10 @@ const StyledPlaceholderContainer = styled.div`
 export const StandaloneWidgetPlaceholder = () => {
   return (
     <StyledPlaceholderContainer className="widget">
-      <AnimatedPlaceholderEmptyContainer>
+      <AnimatedPlaceholderEmptyContainer
+        // oxlint-disable-next-line react/jsx-props-no-spreading
+        {...EMPTY_PLACEHOLDER_TRANSITION_PROPS}
+      >
         <AnimatedPlaceholder type="noWidgets" />
         <AnimatedPlaceholderEmptyTextContainer>
           <AnimatedPlaceholderEmptyTitle>

@@ -1,5 +1,4 @@
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
-import { isManyToOneRelationField } from '@/object-metadata/utils/isManyToOneRelationField';
 import { isFieldMorphRelation } from '@/object-record/record-field/ui/types/guards/isFieldMorphRelation';
 import { type ObjectRecord } from '@/object-record/types/ObjectRecord';
 import { isSystemSearchVectorField } from '@/object-record/utils/isSystemSearchVectorField';
@@ -64,7 +63,8 @@ export const sanitizeRecordInput = ({
 
         if (
           isDefined(fieldMetadataItem) &&
-          isManyToOneRelationField(fieldMetadataItem) &&
+          fieldMetadataItem.type === FieldMetadataType.RELATION &&
+          fieldMetadataItem.relation?.type === RelationType.MANY_TO_ONE &&
           !isDefined(recordInput[fieldMetadataItem.name]?.connect?.where)
         ) {
           return undefined;

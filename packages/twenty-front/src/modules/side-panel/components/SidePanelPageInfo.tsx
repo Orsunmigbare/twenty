@@ -1,10 +1,12 @@
 import { styled } from '@linaria/react';
 import { isDefined } from 'twenty-shared/utils';
-import { IconColumnInsertRight } from 'twenty-ui/icon';
-import { OverflowingTextWithTooltip } from 'twenty-ui/surfaces';
+import {
+  IconColumnInsertRight,
+  OverflowingTextWithTooltip,
+} from 'twenty-ui/display';
 
 import { selectedNavigationMenuItemIdInEditModeState } from '@/navigation-menu-item/common/states/selectedNavigationMenuItemIdInEditModeState';
-import { useNavigationMenuItemEditSectionItems } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditSectionItems';
+import { useNavigationMenuItemSectionItems } from '@/navigation-menu-item/display/hooks/useNavigationMenuItemSectionItems';
 import { SidePanelAskAiInfo } from '@/side-panel/components/SidePanelAskAiInfo';
 import { SidePanelFolderInfo } from '@/side-panel/components/SidePanelFolderInfo';
 import { SidePanelLinkInfo } from '@/side-panel/components/SidePanelLinkInfo';
@@ -36,7 +38,7 @@ export const SidePanelPageInfo = ({ pageChip }: SidePanelPageInfoProps) => {
   const selectedNavigationMenuItemIdInEditMode = useAtomStateValue(
     selectedNavigationMenuItemIdInEditModeState,
   );
-  const items = useNavigationMenuItemEditSectionItems();
+  const items = useNavigationMenuItemSectionItems();
 
   if (!isDefined(pageChip)) {
     return null;

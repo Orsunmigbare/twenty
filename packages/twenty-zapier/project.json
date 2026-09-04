@@ -16,12 +16,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
-        "commands": ["npx oxfmt ."]
-      },
-      "configurations": {
-        "check": {
-          "commands": ["npx oxfmt --check ."]
-        }
+        "commands": ["prettier . --write \"!build\""]
       }
     },
     "test": {
@@ -37,7 +32,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
-        "commands": ["zapier-platform validate"]
+        "commands": ["zapier validate"]
       },
       "dependsOn": ["build"]
     },
@@ -45,7 +40,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
-        "commands": ["zapier-platform versions"]
+        "commands": ["zapier versions"]
       },
       "dependsOn": ["build"]
     },
@@ -68,7 +63,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
-        "commands": ["zapier-platform push --disable-dependency-detection"]
+        "commands": ["zapier push --disable-dependency-detection"]
       },
       "dependsOn": ["build"]
     },
@@ -76,7 +71,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
-        "commands": ["zapier-platform promote"]
+        "commands": ["zapier promote"]
       },
       "dependsOn": ["build"]
     }

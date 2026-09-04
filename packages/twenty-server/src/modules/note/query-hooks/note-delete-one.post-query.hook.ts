@@ -13,7 +13,9 @@ import { NoteWorkspaceEntity } from 'src/modules/note/standard-objects/note.work
   key: `note.deleteOne`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class NoteDeleteOnePostQueryHook implements WorkspacePostQueryHookInstance {
+export class NoteDeleteOnePostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly notePostQueryHookService: NotePostQueryHookService,
   ) {}

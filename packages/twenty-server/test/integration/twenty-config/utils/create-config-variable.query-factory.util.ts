@@ -1,4 +1,4 @@
-import { gql } from 'graphql-tag';
+import { gql } from 'apollo-server-core';
 import { type ConfigVariableValue } from 'twenty-shared/types';
 
 export type CreateConfigVariableFactoryInput = {

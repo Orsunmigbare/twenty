@@ -1,4 +1,3 @@
-import { STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS } from 'twenty-shared/metadata';
 import { PageLayoutTabLayoutMode } from 'twenty-shared/types';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
@@ -9,53 +8,35 @@ import {
 
 const DASHBOARD_PAGE_TABS = {
   tab1: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-        .universalIdentifier,
+    universalIdentifier: '20202020-d011-4d11-8d11-da5ab0a01001',
     title: 'Tab 1',
     position: 0,
     icon: null,
     layoutMode: PageLayoutTabLayoutMode.GRID,
     widgets: {
       welcomeRichText: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.welcomeRichText.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11001',
       },
       dealsByCompany: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.dealsByCompany.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11002',
       },
       pipelineValueByStage: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.pipelineValueByStage.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11003',
       },
       revenueTimeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.revenueTimeline.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11004',
       },
       opportunitiesByOwner: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.opportunitiesByOwner.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11005',
       },
       stockMarketIframe: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.stockMarketIframe.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11006',
       },
       dealsCreatedThisMonth: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.dealsCreatedThisMonth.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11007',
       },
       dealValueCreatedThisMonth: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard.tabs.tab1
-            .widgets.dealValueCreatedThisMonth.universalIdentifier,
+        universalIdentifier: '20202020-d111-4d11-8d11-da5ab0a11008',
       },
     },
   },
@@ -65,9 +46,7 @@ export const STANDARD_DASHBOARD_PAGE_LAYOUT_CONFIG = {
   name: 'My First Dashboard',
   type: PageLayoutType.DASHBOARD,
   objectUniversalIdentifier: null,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.myFirstDashboard
-      .universalIdentifier,
+  universalIdentifier: '20202020-d001-4d01-8d01-da5ab0a00001',
   defaultTabUniversalIdentifier: null,
   tabs: DASHBOARD_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

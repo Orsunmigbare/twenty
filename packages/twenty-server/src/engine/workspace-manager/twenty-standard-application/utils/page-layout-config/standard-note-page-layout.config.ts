@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -19,21 +16,15 @@ import {
 
 const NOTE_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.home
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab04-4004-8004-a0be5a11a401',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.home
-            .widgets.fields.universalIdentifier,
+        universalIdentifier: '20202020-ac04-4004-8004-a0be5a11a411',
         ...WIDGET_PROPS.fields,
       },
       noteRichText: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.home
-            .widgets.noteRichText.universalIdentifier,
+        universalIdentifier: '20202020-ac04-4004-8004-a0be5a11a412',
         title: WIDGET_PROPS.noteRichText.title,
         type: WIDGET_PROPS.noteRichText.type,
         gridPosition: WIDGET_PROPS.noteRichText.gridPosition,
@@ -45,15 +36,11 @@ const NOTE_PAGE_TABS = {
     },
   },
   note: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.note
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab04-4004-8004-a0be5a11a402',
     ...TAB_PROPS.note,
     widgets: {
       noteRichText: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.note
-            .widgets.noteRichText.universalIdentifier,
+        universalIdentifier: '20202020-ac04-4004-8004-a0be5a11a421',
         ...WIDGET_PROPS.noteRichText,
         conditionalDisplay: CONDITIONAL_DISPLAY_DEVICE_DESKTOP,
         conditionalAvailabilityExpression:
@@ -62,29 +49,21 @@ const NOTE_PAGE_TABS = {
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.timeline
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab04-4004-8004-a0be5a11a403',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs
-            .timeline.widgets.timeline.universalIdentifier,
+        universalIdentifier: '20202020-ac04-4004-8004-a0be5a11a431',
         ...WIDGET_PROPS.timeline,
       },
     },
   },
   files: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.files
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab04-4004-8004-a0be5a11a404',
     ...TAB_PROPS.files,
     widgets: {
       files: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage.tabs.files
-            .widgets.files.universalIdentifier,
+        universalIdentifier: '20202020-ac04-4004-8004-a0be5a11a441',
         ...WIDGET_PROPS.files,
       },
     },
@@ -95,9 +74,7 @@ export const STANDARD_NOTE_PAGE_LAYOUT_CONFIG = {
   name: 'Default Note Layout',
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier: STANDARD_OBJECTS.note.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.noteRecordPage
-      .universalIdentifier,
+  universalIdentifier: '20202020-a104-4004-8004-a0be5a11a004',
   defaultTabUniversalIdentifier: null,
   tabs: NOTE_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

@@ -15,14 +15,9 @@ import { AuthWorkspace } from 'src/engine/decorators/auth/auth-workspace.decorat
 import { CustomPermissionGuard } from 'src/engine/guards/custom-permission.guard';
 import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
 import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
-import { PermissionsGraphqlApiExceptionFilter } from 'src/engine/metadata-modules/permissions/utils/permissions-graphql-api-exception.filter';
 
 @CoreResolver()
-@UseFilters(
-  SearchApiExceptionFilter,
-  PermissionsGraphqlApiExceptionFilter,
-  PreventNestToAutoLogGraphqlErrorsFilter,
-)
+@UseFilters(SearchApiExceptionFilter, PreventNestToAutoLogGraphqlErrorsFilter)
 @UsePipes(ResolverValidationPipe)
 @UseGuards(WorkspaceAuthGuard, CustomPermissionGuard)
 export class SearchResolver {
@@ -76,7 +71,7 @@ export class SearchResolver {
         workspaceId: workspace.id,
       });
 
-    return await this.searchService.computeSearchObjectResults({
+    return this.searchService.computeSearchObjectResults({
       recordsWithObjectMetadataItems: allRecordsWithObjectMetadataItems,
       flatFieldMetadataMaps,
       workspaceId: workspace.id,

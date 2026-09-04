@@ -7,9 +7,8 @@ import { isDefined } from 'twenty-shared/utils';
 
 import { MessageFolderImportPolicy } from 'twenty-shared/types';
 import { type MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
-import { GoogleOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
-import { MESSAGING_GMAIL_EXCLUDED_SYSTEM_LABELS } from 'src/modules/messaging/message-import-manager/drivers/gmail/constants/messaging-gmail-excluded-system-labels.constant';
 import { GmailMessagesImportErrorHandler } from 'src/modules/messaging/message-import-manager/drivers/gmail/services/gmail-messages-import-error-handler.service';
 import { filterGmailMessagesByFolderPolicy } from 'src/modules/messaging/message-import-manager/drivers/gmail/utils/filter-gmail-messages-by-folder-policy.util';
 import { parseAndFormatGmailMessage } from 'src/modules/messaging/message-import-manager/drivers/gmail/utils/parse-and-format-gmail-message.util';
@@ -20,7 +19,7 @@ const GMAIL_BATCH_REQUEST_MAX_SIZE = 50;
 @Injectable()
 export class GmailGetMessagesService {
   constructor(
-    private readonly googleOAuth2ClientProvider: GoogleOAuth2ClientProvider,
+    private readonly oAuth2ClientManagerService: OAuth2ClientManagerService,
     private readonly gmailMessagesImportErrorHandler: GmailMessagesImportErrorHandler,
   ) {}
 
@@ -28,16 +27,22 @@ export class GmailGetMessagesService {
     messageIds: string[],
     connectedAccount: Pick<
       ConnectedAccountEntity,
-      'provider' | 'id' | 'handle' | 'handleAliases'
+      | 'provider'
+      | 'accessToken'
+      | 'refreshToken'
+      | 'id'
+      | 'handle'
+      | 'handleAliases'
     >,
     messageChannel: Pick<
       MessageChannelEntity,
       'messageFolders' | 'messageFolderImportPolicy'
     >,
   ): Promise<MessageWithParticipants[]> {
-    const oAuth2Client = await this.googleOAuth2ClientProvider.getClient(
-      connectedAccount.id,
-    );
+    const oAuth2Client =
+      await this.oAuth2ClientManagerService.getGoogleOAuth2Client(
+        connectedAccount,
+      );
 
     const batchedFetchImplementation = batchFetchImplementation({
       maxBatchSize: GMAIL_BATCH_REQUEST_MAX_SIZE,
@@ -186,12 +191,6 @@ export class GmailGetMessagesService {
           connectedAccount,
         );
       })
-      .filter(isDefined)
-      .filter(
-        (message) =>
-          !(message.labelIds ?? []).some((labelId) =>
-            MESSAGING_GMAIL_EXCLUDED_SYSTEM_LABELS.includes(labelId),
-          ),
-      );
+      .filter(isDefined);
   }
 }

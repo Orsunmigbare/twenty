@@ -1,5 +1,5 @@
 import { styled } from '@linaria/react';
-import { type DraggableListDropResult } from '@/ui/layout/draggable-list/types/DraggableListDropResult';
+import { type DropResult } from '@hello-pangea/dnd';
 import { Controller, useFormContext } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -39,9 +39,9 @@ import {
   IconPlus,
   IconPoint,
   IconTrash,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { LightButton, LightIconButton } from 'twenty-ui/input';
-import { CardContent, CardFooter } from 'twenty-ui/surfaces';
+import { CardContent, CardFooter } from 'twenty-ui/layout';
 import { MenuItem } from 'twenty-ui/navigation';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { SettingsDataModelFieldSelectFormOptionRow } from './SettingsDataModelFieldSelectFormOptionRow';
@@ -210,7 +210,7 @@ export const SettingsDataModelFieldSelectForm = ({
 
   const handleDragEnd = (
     values: FieldMetadataItemOption[],
-    result: DraggableListDropResult,
+    result: DropResult,
     onChange: (options: FieldMetadataItemOption[]) => void,
   ) => {
     if (!result.destination) return;
@@ -440,6 +440,7 @@ export const SettingsDataModelFieldSelectForm = ({
                         <>
                           {options.map((option, index) => (
                             <DraggableItem
+                              isInsideScrollableContainer
                               key={option.id}
                               draggableId={option.id}
                               index={index}

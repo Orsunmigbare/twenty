@@ -2,22 +2,20 @@ import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { type ReactNode, lazy, Suspense, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { type IconComponent } from 'twenty-ui/icon';
+import { type IconComponent } from 'twenty-ui/display';
 
 import { CommandMenuItem } from '@/command-menu/components/CommandMenuItem';
-import { addToNavPayloadRegistryState } from '@/navigation-menu-item/common/states/addToNavPayloadRegistryState';
-import { navigationMenuItemEditSectionState } from '@/navigation-menu-item/common/states/navigationMenuItemEditSectionState';
-import type { AddToNavigationDragPayload } from '@/navigation-menu-item/common/types/add-to-navigation-drag-payload';
 import { AddToNavigationDragHandle } from '@/navigation-menu-item/display/dnd/components/AddToNavigationDragHandle';
-import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { addToNavPayloadRegistryState } from '@/navigation-menu-item/common/states/addToNavPayloadRegistryState';
+import type { AddToNavigationDragPayload } from '@/navigation-menu-item/common/types/add-to-navigation-drag-payload';
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 
 const CommandMenuItemWithAddToNavigationDragDndKit = lazy(() =>
-  import('@/command-menu/components/CommandMenuItemWithAddToNavigationDragDndKit').then(
-    (m) => ({
-      default: m.CommandMenuItemWithAddToNavigationDragDndKit,
-    }),
-  ),
+  import(
+    '@/command-menu/components/CommandMenuItemWithAddToNavigationDragDndKit'
+  ).then((m) => ({
+    default: m.CommandMenuItemWithAddToNavigationDragDndKit,
+  })),
 );
 
 type SidePanelItemWithAddToNavigationDragProps = {
@@ -64,16 +62,9 @@ export const SidePanelItemWithAddToNavigationDrag = ({
   const setAddToNavPayloadRegistry = useSetAtomState(
     addToNavPayloadRegistryState,
   );
-  const navigationMenuItemEditSection = useAtomStateValue(
-    navigationMenuItemEditSectionState,
-  );
   const [isHovered, setIsHovered] = useState(false);
 
-  // Favorites are added by click only; drag-to-add targets the workspace
-  // sidebar and runs through layout-customization mode.
-  const effectiveDisableDrag =
-    disableDrag || navigationMenuItemEditSection === 'favorite';
-  const showDragAffordance = !disabled && !effectiveDisableDrag && isHovered;
+  const showDragAffordance = !disabled && !disableDrag && isHovered;
   const contextualDescription = showDragAffordance
     ? t`Drag to add to navbar`
     : description;
@@ -85,12 +76,12 @@ export const SidePanelItemWithAddToNavigationDrag = ({
       payload={payload}
       isHovered={showDragAffordance}
       disabled={disabled}
-      disableDrag={effectiveDisableDrag}
+      disableDrag={disableDrag}
     />
   );
 
   const registerPayload = () => {
-    if (!disabled && !effectiveDisableDrag && isDefined(dragIndex)) {
+    if (!disabled && !disableDrag && isDefined(dragIndex)) {
       setAddToNavPayloadRegistry((prev) => new Map(prev).set(id, payload));
     }
   };
@@ -98,15 +89,15 @@ export const SidePanelItemWithAddToNavigationDrag = ({
   const menuItemContent = (
     <StyledDraggableMenuItem
       $disabled={disabled}
-      $disableDrag={effectiveDisableDrag}
+      $disableDrag={disableDrag}
       onMouseEnter={() => {
-        if (!disabled && !effectiveDisableDrag) {
+        if (!disabled && !disableDrag) {
           setIsHovered(true);
           registerPayload();
         }
       }}
       onMouseLeave={() => {
-        if (!disabled && !effectiveDisableDrag) setIsHovered(false);
+        if (!disabled && !disableDrag) setIsHovered(false);
       }}
       onMouseDown={registerPayload}
     >
@@ -121,7 +112,7 @@ export const SidePanelItemWithAddToNavigationDrag = ({
     </StyledDraggableMenuItem>
   );
 
-  if (!isDefined(dragIndex) || effectiveDisableDrag) {
+  if (!isDefined(dragIndex) || disableDrag) {
     return menuItemContent;
   }
 

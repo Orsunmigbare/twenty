@@ -8,7 +8,7 @@ import {
 
 import { type MessageFolder } from 'src/modules/messaging/message-folder-manager/interfaces/message-folder-driver.interface';
 
-import { MicrosoftOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/microsoft/microsoft-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 import { MicrosoftGetMessageListService } from 'src/modules/messaging/message-import-manager/drivers/microsoft/services/microsoft-get-message-list.service';
 import { MicrosoftMessageListFetchErrorHandler } from 'src/modules/messaging/message-import-manager/drivers/microsoft/services/microsoft-message-list-fetch-error-handler.service';
@@ -27,36 +27,33 @@ const createMockFolder = (
 
 describe('MicrosoftGetMessageListService', () => {
   let service: MicrosoftGetMessageListService;
-  let microsoftOAuth2ClientProvider: MicrosoftOAuth2ClientProvider;
+  let oAuth2ClientManagerService: OAuth2ClientManagerService;
 
   const mockConnectedAccount: Pick<
     ConnectedAccountEntity,
-    'provider' | 'id' | 'handle'
+    | 'provider'
+    | 'accessToken'
+    | 'refreshToken'
+    | 'id'
+    | 'handle'
+    | 'connectionParameters'
   > = {
     id: 'connected-account-id',
     provider: ConnectedAccountProvider.MICROSOFT,
+    accessToken: 'access-token',
+    refreshToken: 'refresh-token',
     handle: 'test@outlook.com',
+    connectionParameters: {},
   };
 
   const createMockMicrosoftClient = () => ({
     api: jest.fn().mockReturnThis(),
     version: jest.fn().mockReturnThis(),
     headers: jest.fn().mockReturnThis(),
-    post: jest
-      .fn()
-      .mockImplementation((batchRequestBody: { requests: { id: string }[] }) =>
-        Promise.resolve({
-          responses: batchRequestBody.requests.map((request) => ({
-            id: request.id,
-            status: 200,
-            body: {
-              value: [{ id: 'msg-1' }, { id: 'msg-2' }],
-              '@odata.deltaLink':
-                'https://graph.microsoft.com/beta/delta?token=abc',
-            },
-          })),
-        }),
-      ),
+    get: jest.fn().mockResolvedValue({
+      value: [{ id: 'msg-1' }, { id: 'msg-2' }],
+      '@odata.deltaLink': 'https://graph.microsoft.com/delta?token=abc',
+    }),
   });
 
   beforeEach(async () => {
@@ -64,9 +61,9 @@ describe('MicrosoftGetMessageListService', () => {
       providers: [
         MicrosoftGetMessageListService,
         {
-          provide: MicrosoftOAuth2ClientProvider,
+          provide: OAuth2ClientManagerService,
           useValue: {
-            getClient: jest.fn(),
+            getMicrosoftOAuth2Client: jest.fn(),
           },
         },
         {
@@ -81,8 +78,8 @@ describe('MicrosoftGetMessageListService', () => {
     service = module.get<MicrosoftGetMessageListService>(
       MicrosoftGetMessageListService,
     );
-    microsoftOAuth2ClientProvider = module.get<MicrosoftOAuth2ClientProvider>(
-      MicrosoftOAuth2ClientProvider,
+    oAuth2ClientManagerService = module.get<OAuth2ClientManagerService>(
+      OAuth2ClientManagerService,
     );
   });
 
@@ -94,9 +91,9 @@ describe('MicrosoftGetMessageListService', () => {
     it('should only process synced folders when SELECTED_FOLDERS policy is set', async () => {
       const mockClient = createMockMicrosoftClient();
 
-      (microsoftOAuth2ClientProvider.getClient as jest.Mock).mockResolvedValue(
-        mockClient,
-      );
+      (
+        oAuth2ClientManagerService.getMicrosoftOAuth2Client as jest.Mock
+      ).mockResolvedValue(mockClient);
 
       const syncedFolder = createMockFolder({
         name: 'Inbox',
@@ -122,15 +119,17 @@ describe('MicrosoftGetMessageListService', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].folderId).toBe(syncedFolder.id);
-      expect(microsoftOAuth2ClientProvider.getClient).toHaveBeenCalledTimes(1);
+      expect(
+        oAuth2ClientManagerService.getMicrosoftOAuth2Client,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('should process all folders when ALL_FOLDERS policy is set', async () => {
       const mockClient = createMockMicrosoftClient();
 
-      (microsoftOAuth2ClientProvider.getClient as jest.Mock).mockResolvedValue(
-        mockClient,
-      );
+      (
+        oAuth2ClientManagerService.getMicrosoftOAuth2Client as jest.Mock
+      ).mockResolvedValue(mockClient);
 
       const syncedFolder = createMockFolder({
         name: 'Inbox',
@@ -190,9 +189,9 @@ describe('MicrosoftGetMessageListService', () => {
     it('should process all non-synced folders when ALL_FOLDERS policy is set', async () => {
       const mockClient = createMockMicrosoftClient();
 
-      (microsoftOAuth2ClientProvider.getClient as jest.Mock).mockResolvedValue(
-        mockClient,
-      );
+      (
+        oAuth2ClientManagerService.getMicrosoftOAuth2Client as jest.Mock
+      ).mockResolvedValue(mockClient);
 
       const nonSyncedFolder1 = createMockFolder({
         name: 'Personal',

@@ -65,11 +65,11 @@ your-app/
 │   npx create-twenty-app → yarn twenty dev (live sync)   │
 ├─────────────────────────────────────────────────────────┤
 │ Build & Deploy                                          │
-│   yarn twenty dev:build → yarn twenty app:publish        │
+│   yarn twenty build → yarn twenty deploy                │
 ├─────────────────────────────────────────────────────────┤
 │ Install flow                                            │
 │   upload → [pre-install] → metadata migration →         │
-│   generate SDK → [post-install] → … → [uninstall]       │
+│   generate SDK → [post-install]                         │
 ├─────────────────────────────────────────────────────────┤
 │ Publish                                                 │
 │   npm publish → appears in Twenty marketplace           │
@@ -77,14 +77,14 @@ your-app/
 ```
 
 - **`yarn twenty dev`** — watches your source files and live-syncs changes to a connected Twenty server. The typed API client is regenerated automatically when the schema changes.
-- **`yarn twenty dev:build`** — compiles TypeScript, bundles logic functions and front components with esbuild, and produces a manifest.
-- **Pre/post-install and uninstall hooks** — optional functions that run during installation or right before removal. See [Install Hooks](/developers/extend/apps/config/install-hooks) for details.
+- **`yarn twenty build`** — compiles TypeScript, bundles logic functions and front components with esbuild, and produces a manifest.
+- **Pre/post-install hooks** — optional functions that run during installation. See [Install Hooks](/developers/extend/apps/config/install-hooks) for details.
 
 ## Next steps
 
 <CardGroup cols={2}>
   <Card title="Config" icon="screwdriver-wrench" href="/developers/extend/apps/config/overview">
-    Application identity, default role, and install and uninstall hooks.
+    Application identity, default role, and install hooks.
   </Card>
   <Card title="Data" icon="database" href="/developers/extend/apps/data/overview">
     Objects, fields, and bidirectional relations.

@@ -68,7 +68,7 @@ export const FieldsConfigurationGroupRenameInput = ({
         variant="primary"
         accent="blue"
         size="small"
-        title={t`Done`}
+        title="Done"
         onClick={handleSave}
       />
     </StyledContainer>

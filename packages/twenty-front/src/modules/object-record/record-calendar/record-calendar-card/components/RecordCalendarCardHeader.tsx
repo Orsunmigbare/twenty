@@ -11,7 +11,7 @@ import { useGetCurrentViewOnly } from '@/views/hooks/useGetCurrentViewOnly';
 import { styled } from '@linaria/react';
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { isDefined } from 'twenty-shared/utils';
-import { ChipVariant } from 'twenty-ui/data-display';
+import { ChipVariant } from 'twenty-ui/components';
 import { Checkbox, CheckboxVariant } from 'twenty-ui/input';
 import { isRecordCalendarCardSelectedComponentFamilyState } from '@/object-record/record-calendar/record-calendar-card/states/isRecordCalendarCardSelectedComponentFamilyState';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -69,27 +69,16 @@ export const RecordCalendarCardHeader = ({
       padding={themeCssVariables.spacing[1]}
     >
       <StyledRecordChipContainer>
-        {isCompactModeActive ? (
+        <StopPropagationContainer>
           <RecordChip
             objectNameSingular={objectMetadataItem.nameSingular}
             record={recordStore}
             variant={ChipVariant.Transparent}
             isIconHidden={true}
-            forceDisableClick
+            onClick={handleChipClick}
             triggerEvent={'CLICK'}
           />
-        ) : (
-          <StopPropagationContainer>
-            <RecordChip
-              objectNameSingular={objectMetadataItem.nameSingular}
-              record={recordStore}
-              variant={ChipVariant.Transparent}
-              isIconHidden={true}
-              onClick={handleChipClick}
-              triggerEvent={'CLICK'}
-            />
-          </StopPropagationContainer>
-        )}
+        </StopPropagationContainer>
       </StyledRecordChipContainer>
       <StyledCheckboxContainer className="checkbox-container">
         <StopPropagationContainer>

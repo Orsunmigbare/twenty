@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import { Logger } from '@nestjs/common';
 
 import RedisStore from 'connect-redis';
@@ -6,7 +8,6 @@ import { createClient } from 'redis';
 import type session from 'express-session';
 
 import { CacheStorageType } from 'src/engine/core-modules/cache-storage/types/cache-storage-type.enum';
-import { resolveSessionCookieSecretsOrThrow } from 'src/engine/core-modules/secret-encryption/utils/resolve-session-cookie-secrets.util';
 import { type TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 
 const sessionStorageLogger = new Logger('SessionStorage');
@@ -20,12 +21,18 @@ export const getSessionStorageOptions = (
 
   const SERVER_URL = twentyConfigService.get('SERVER_URL');
 
-  const sessionSecrets = resolveSessionCookieSecretsOrThrow({
-    twentyConfigService,
-  });
+  const appSecret = twentyConfigService.get('APP_SECRET');
+
+  if (!appSecret) {
+    throw new Error('APP_SECRET is not set');
+  }
+
+  const sessionSecret = createHash('sha256')
+    .update(`${appSecret}SESSION_STORE_SECRET`)
+    .digest('hex');
 
   const sessionStorage: session.SessionOptions = {
-    secret: sessionSecrets,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     proxy: true,

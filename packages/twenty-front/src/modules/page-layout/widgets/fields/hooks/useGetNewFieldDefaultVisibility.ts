@@ -31,7 +31,7 @@ export const useGetNewFieldDefaultVisibility = ({
       : null;
 
   const newFieldDefaultVisibility =
-    fieldsConfiguration?.newFieldDefaultVisibility ?? false;
+    fieldsConfiguration?.newFieldDefaultVisibility ?? true;
 
   return { newFieldDefaultVisibility, fieldsConfiguration };
 };

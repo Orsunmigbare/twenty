@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { canObjectBeManagedByAutomation } from 'twenty-shared/workflow';
+import { canObjectBeManagedByWorkflow } from 'twenty-shared/workflow';
 
 import { CommonUpdateManyQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-update-many-query-runner.service';
 import {
@@ -23,8 +23,7 @@ export class UpdateManyRecordsService {
   ) {}
 
   async execute(params: UpdateManyRecordsParams): Promise<ToolOutput> {
-    const { objectName, filter, data, authContext, rolePermissionConfig } =
-      params;
+    const { objectName, filter, data, authContext } = params;
 
     try {
       const {
@@ -35,16 +34,16 @@ export class UpdateManyRecordsService {
       } = await this.commonApiContextBuilder.build({
         authContext,
         objectName,
-        rolePermissionConfig,
       });
 
       if (
-        !canObjectBeManagedByAutomation({
+        !canObjectBeManagedByWorkflow({
           nameSingular: flatObjectMetadata.nameSingular,
+          isSystem: flatObjectMetadata.isSystem,
         })
       ) {
         throw new RecordCrudException(
-          'Failed to update: Object cannot be updated by automation',
+          'Failed to update: Object cannot be updated by workflow',
           RecordCrudExceptionCode.INVALID_REQUEST,
         );
       }

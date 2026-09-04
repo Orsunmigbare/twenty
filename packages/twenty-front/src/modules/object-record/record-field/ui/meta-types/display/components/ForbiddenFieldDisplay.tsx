@@ -1,25 +1,24 @@
 import { styled } from '@linaria/react';
 import { Trans } from '@lingui/react/macro';
 import { useContext } from 'react';
-import { IconLock } from 'twenty-ui/icon';
+import { IconLock } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledContainer = styled.div`
   align-items: center;
   background: ${themeCssVariables.background.transparent.light};
 
-  border-radius: ${themeCssVariables.border.radius.md};
+  border-radius: ${themeCssVariables.border.radius.sm};
   color: ${themeCssVariables.font.color.tertiary};
   display: inline-flex;
   font-size: ${themeCssVariables.font.size.md};
   font-weight: ${themeCssVariables.font.weight.regular};
   gap: ${themeCssVariables.spacing[1]};
-  height: ${themeCssVariables.spacing[5]};
-  line-height: ${themeCssVariables.text.lineHeight.md};
+  height: ${themeCssVariables.spacing[3]};
   overflow: hidden;
-  padding: 0 ${themeCssVariables.spacing[1]};
+
+  padding: ${themeCssVariables.spacing[1]};
   user-select: none;
-  white-space: nowrap;
 `;
 
 export const ForbiddenFieldDisplay = () => {

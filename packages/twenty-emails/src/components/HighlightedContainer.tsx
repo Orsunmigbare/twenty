@@ -1,5 +1,5 @@
 import { Column, Container, Row } from '@react-email/components';
-import React, { type JSX } from 'react';
+import React from 'react';
 
 import { emailTheme } from 'src/common-style';
 

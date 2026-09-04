@@ -35,7 +35,7 @@ const COMPANY_GQL_FIELDS_WITHOUT_EMPLOYEES = `
 const expectPermissionDeniedError = (response: any) => {
   expect(response.body.errors).toBeDefined();
   expect(response.body.errors.length).toBeGreaterThan(0);
-  expect(response.body.errors[0].message).toContain(
+  expect(response.body.errors[0].message).toBe(
     PermissionsExceptionMessage.PERMISSION_DENIED,
   );
   expect(response.body.errors[0].extensions.code).toBe(ErrorCode.FORBIDDEN);
@@ -137,8 +137,8 @@ describe('Field update permissions restrictions', () => {
     await makeGraphqlAPIRequest(createCompanyOp);
     const createPersonOperation = createOneOperationFactory({
       objectMetadataSingularName: 'person',
-      gqlFields: 'id jobTitle',
-      data: { id: personId, jobTitle: 'Paris', companyId },
+      gqlFields: 'id city',
+      data: { id: personId, city: 'Paris', companyId },
     });
 
     await makeGraphqlAPIRequest(createPersonOperation);

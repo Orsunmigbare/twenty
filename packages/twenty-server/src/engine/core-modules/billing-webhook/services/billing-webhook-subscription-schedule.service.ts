@@ -18,8 +18,6 @@ export class BillingWebhookSubscriptionScheduleService {
   );
 
   constructor(
-    // Stripe webhook: subscription lookup by stripeSubscriptionId.
-    // eslint-disable-next-line twenty/prefer-workspace-scoped-repository
     @InjectRepository(BillingSubscriptionEntity)
     private readonly billingSubscriptionRepository: Repository<BillingSubscriptionEntity>,
     private readonly stripeSubscriptionScheduleService: StripeSubscriptionScheduleService,

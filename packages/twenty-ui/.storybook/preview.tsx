@@ -5,11 +5,6 @@ import { ThemeProvider } from '@ui/theme-constants';
 
 const preview: Preview = {
   tags: ['autodocs'],
-  parameters: {
-    a11y: {
-      test: 'error',
-    },
-  },
   decorators: [
     (Story) => {
       return (

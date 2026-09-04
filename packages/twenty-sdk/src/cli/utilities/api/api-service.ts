@@ -5,10 +5,6 @@ import { FileApi } from '@/cli/utilities/api/file-api';
 import { LogicFunctionApi } from '@/cli/utilities/api/logic-function-api';
 import { SchemaApi } from '@/cli/utilities/api/schema-api';
 import { type Manifest } from 'twenty-shared/application';
-import {
-  type MetadataValidationErrorResponse,
-  type SyncAction,
-} from 'twenty-shared/metadata';
 
 type ApiServiceOptions = {
   disableInterceptors?: boolean;
@@ -34,10 +30,6 @@ export class ApiService {
 
   validateAuth(): Promise<{ authValid: boolean; serverUp: boolean }> {
     return this.apiClient.validateAuth();
-  }
-
-  getWorkspaceFrontendUrl(): Promise<string | null> {
-    return this.apiClient.getWorkspaceFrontendUrl();
   }
 
   refreshToken(): Promise<string | null> {
@@ -76,25 +68,8 @@ export class ApiService {
     return this.applicationApi.createDevelopmentApplication(...args);
   }
 
-  generateApplicationToken(
-    ...args: Parameters<ApplicationApi['generateApplicationToken']>
-  ) {
-    return this.applicationApi.generateApplicationToken(...args);
-  }
-
-  syncApplication(
-    manifest: Manifest,
-    options?: { dryRun?: boolean },
-  ): Promise<
-    ApiResponse<
-      {
-        applicationUniversalIdentifier: string;
-        actions: SyncAction[];
-      },
-      MetadataValidationErrorResponse
-    >
-  > {
-    return this.applicationApi.syncApplication(manifest, options);
+  syncApplication(manifest: Manifest): Promise<ApiResponse> {
+    return this.applicationApi.syncApplication(manifest);
   }
 
   uninstallApplication(universalIdentifier: string): Promise<ApiResponse> {

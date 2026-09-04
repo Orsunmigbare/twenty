@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const relationFilterValueSchemaObject = z.object({
   isCurrentWorkspaceMemberSelected: z.boolean().optional(),
-  isCurrentRecordSelected: z.boolean().optional(),
   selectedRecordIds: z.array(z.string()),
 });
 

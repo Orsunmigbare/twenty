@@ -1,15 +1,13 @@
-import { RecordGroupChip } from '@/object-record/record-group/components/RecordGroupChip';
 import { recordGroupDefinitionFamilyState } from '@/object-record/record-group/states/recordGroupDefinitionFamilyState';
 import {
   type RecordGroupDefinition,
   RecordGroupDefinitionType,
 } from '@/object-record/record-group/types/RecordGroupDefinition';
-import { recordIndexGroupFieldMetadataItemComponentState } from '@/object-record/record-index/states/recordIndexGroupFieldMetadataComponentState';
-import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { t } from '@lingui/core/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { IconEye, IconEyeOff } from 'twenty-ui/icon';
+import { Tag } from 'twenty-ui/components';
+import { IconEye, IconEyeOff } from 'twenty-ui/display';
 import { MenuItemDraggable } from 'twenty-ui/navigation';
 
 type RecordGroupMenuItemDraggableProps = {
@@ -32,10 +30,6 @@ export const RecordGroupMenuItemDraggable = ({
     recordGroupId,
   );
 
-  const recordIndexGroupFieldMetadataItem = useAtomComponentStateValue(
-    recordIndexGroupFieldMetadataItemComponentState,
-  );
-
   if (!isDefined(recordGroupDefinition)) {
     return null;
   }
@@ -54,8 +48,8 @@ export const RecordGroupMenuItemDraggable = ({
       {
         Icon: recordGroupDefinition.isVisible ? IconEyeOff : IconEye,
         ariaLabel: recordGroupDefinition.isVisible
-          ? t`Hide group ${groupValue ?? ''}`
-          : t`Show group ${groupValue ?? ''}`,
+          ? t`Hide group ${groupValue}`
+          : t`Show group ${groupValue}`,
         dataTestId: recordGroupDefinition.isVisible
           ? `hide-group-${recordGroupDefinition.value?.toLowerCase().replace(' ', '-') ?? ''}`
           : `show-group-${recordGroupDefinition.value?.toLowerCase().replace(' ', '-') ?? ''}`,
@@ -74,9 +68,23 @@ export const RecordGroupMenuItemDraggable = ({
     <MenuItemDraggable
       key={recordGroupDefinition.id}
       text={
-        <RecordGroupChip
-          recordGroupDefinition={recordGroupDefinition}
-          fieldMetadataItem={recordIndexGroupFieldMetadataItem}
+        <Tag
+          variant={
+            recordGroupDefinition.type !== RecordGroupDefinitionType.NoValue
+              ? 'solid'
+              : 'outline'
+          }
+          color={
+            recordGroupDefinition.type !== RecordGroupDefinitionType.NoValue
+              ? recordGroupDefinition.color
+              : 'transparent'
+          }
+          text={recordGroupDefinition.title}
+          weight={
+            recordGroupDefinition.type !== RecordGroupDefinitionType.NoValue
+              ? 'regular'
+              : 'medium'
+          }
         />
       }
       accent={isNoValue || showDragGrip ? 'placeholder' : 'default'}

@@ -14,8 +14,10 @@ import {
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
 import { type AuthToken } from 'src/engine/core-modules/auth/dto/auth-token.dto';
-import { type RefreshTokenJwtPayload } from 'src/engine/core-modules/auth/types/refresh-token-jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import {
+  type RefreshTokenJwtPayload,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
@@ -110,6 +112,10 @@ export class RefreshTokenService {
     payload: Omit<RefreshTokenJwtPayload, 'type' | 'sub' | 'jti'>,
     isImpersonationToken: boolean = false,
   ): Promise<AuthToken> {
+    const secret = this.jwtWrapperService.generateAppSecret(
+      JwtTokenTypeEnum.REFRESH,
+      payload.workspaceId ?? payload.userId,
+    );
     const expiresIn = isImpersonationToken
       ? '1d'
       : this.twentyConfigService.get('REFRESH_TOKEN_EXPIRES_IN');
@@ -131,17 +137,20 @@ export class RefreshTokenService {
 
     await this.appTokenRepository.save(refreshToken);
 
-    const jwtPayload: RefreshTokenJwtPayload = {
-      ...payload,
-      sub: payload.userId,
-      type: JwtTokenTypeEnum.REFRESH,
+    return {
+      token: this.jwtWrapperService.sign(
+        {
+          ...payload,
+          sub: payload.userId,
+          type: JwtTokenTypeEnum.REFRESH,
+        },
+        {
+          secret,
+          expiresIn,
+          jwtid: refreshToken.id,
+        },
+      ),
+      expiresAt,
     };
-
-    const token = await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
-      expiresIn,
-      jwtid: refreshToken.id,
-    });
-
-    return { token, expiresAt };
   }
 }

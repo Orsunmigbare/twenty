@@ -14,6 +14,9 @@ import {
   createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
+import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
+import { SEARCH_FIELDS_FOR_MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER } from 'src/modules/messaging/common/standard-objects/message-channel-message-association-message-folder.workspace-entity';
+
 export const buildMessageChannelMessageAssociationMessageFolderStandardFlatFieldMetadatas =
   ({
     now,
@@ -43,7 +46,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         icon: 'Icon123',
         isSystem: true,
         isNullable: false,
-        isUIEditable: false,
+        isUIReadOnly: true,
         defaultValue: 'uuid',
       },
       standardObjectMetadataRelatedEntityIds,
@@ -62,7 +65,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         icon: 'IconCalendar',
         isSystem: true,
         isNullable: false,
-        isUIEditable: false,
+        isUIReadOnly: true,
         defaultValue: 'now',
         settings: { displayFormat: DateDisplayFormat.RELATIVE },
       },
@@ -82,7 +85,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         icon: 'IconCalendarClock',
         isSystem: true,
         isNullable: false,
-        isUIEditable: false,
+        isUIReadOnly: true,
         defaultValue: 'now',
         settings: { displayFormat: DateDisplayFormat.RELATIVE },
       },
@@ -102,7 +105,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         icon: 'IconCalendarMinus',
         isSystem: true,
         isNullable: true,
-        isUIEditable: false,
+        isUIReadOnly: true,
         settings: { displayFormat: DateDisplayFormat.RELATIVE },
       },
       standardObjectMetadataRelatedEntityIds,
@@ -120,7 +123,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         description: i18nLabel(msg`The creator of the record`),
         icon: 'IconCreativeCommonsSa',
         isSystem: true,
-        isUIEditable: false,
+        isUIReadOnly: true,
         isNullable: false,
         defaultValue: {
           source: "'MANUAL'",
@@ -145,7 +148,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         ),
         icon: 'IconUserCircle',
         isSystem: true,
-        isUIEditable: false,
+        isUIReadOnly: true,
         isNullable: false,
         defaultValue: {
           source: "'MANUAL'",
@@ -189,6 +192,12 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         icon: 'IconUser',
         isSystem: true,
         isNullable: true,
+        settings: {
+          generatedType: 'STORED',
+          asExpression: getTsVectorColumnExpressionFromFields(
+            SEARCH_FIELDS_FOR_MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER,
+          ),
+        },
       },
       standardObjectMetadataRelatedEntityIds,
       dependencyFlatEntityMaps,
@@ -206,7 +215,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         description: i18nLabel(msg`Message Channel Message Association`),
         icon: 'IconMessage',
         isNullable: false,
-        isUIEditable: false,
+        isUIReadOnly: true,
         targetObjectName: 'messageChannelMessageAssociation',
         targetFieldName: 'messageFolders',
         settings: {
@@ -230,7 +239,7 @@ export const buildMessageChannelMessageAssociationMessageFolderStandardFlatField
         description: i18nLabel(msg`Message Folder`),
         icon: 'IconFolder',
         isNullable: false,
-        isUIEditable: false,
+        isUIReadOnly: true,
       },
       standardObjectMetadataRelatedEntityIds,
       dependencyFlatEntityMaps,

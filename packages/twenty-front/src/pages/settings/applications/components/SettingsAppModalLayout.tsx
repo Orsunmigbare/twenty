@@ -3,12 +3,12 @@ import React from 'react';
 
 import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStatefulWrapper';
 import { Button } from 'twenty-ui/input';
-import { Section } from 'twenty-ui/layout';
 import {
   type ModalOverlay,
   type ModalPadding,
   type ModalSize,
-} from 'twenty-ui/surfaces';
+  Section,
+} from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 type StyledAppModalBaseProps = React.PropsWithChildren<{

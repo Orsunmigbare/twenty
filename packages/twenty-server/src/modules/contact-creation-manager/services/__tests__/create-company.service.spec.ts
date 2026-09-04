@@ -137,6 +137,7 @@ describe('CreateCompanyService', () => {
               labelSingular: 'Company',
               labelPlural: 'Companies',
               targetTableName: 'company',
+              isCustom: false,
               isRemote: false,
               isActive: true,
               isSystem: false,

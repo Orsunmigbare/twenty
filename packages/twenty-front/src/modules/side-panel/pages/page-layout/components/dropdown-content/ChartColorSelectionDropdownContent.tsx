@@ -63,12 +63,16 @@ export const ChartColorSelectionDropdownContent = () => {
   const isBarOrLineChart =
     isWidgetConfigurationOfType(configuration, 'BarChartConfiguration') ||
     isWidgetConfigurationOfType(configuration, 'LineChartConfiguration');
+  const isGaugeChart = isWidgetConfigurationOfType(
+    configuration,
+    'GaugeChartConfiguration',
+  );
   const isPieChart = isWidgetConfigurationOfType(
     configuration,
     'PieChartConfiguration',
   );
 
-  if (!isBarOrLineChart && !isPieChart) {
+  if (!isBarOrLineChart && !isGaugeChart && !isPieChart) {
     return null;
   }
 

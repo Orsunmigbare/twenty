@@ -1,34 +1,44 @@
-import { isNonEmptyString } from '@sniptt/guards';
-import {
-  type AllMetadataName,
-  type MetadataValidationErrorResponse,
-} from 'twenty-shared/metadata';
-import { isDefined } from 'twenty-shared/utils';
-
 import { type OrchestratorStateStepEvent } from '@/cli/utilities/dev/orchestrator/dev-mode-orchestrator-state';
 
+type SyncValidationEntry = {
+  flatEntityMinimalInformation?: { universalIdentifier?: string };
+  errors: { code: string; message: string; value?: string }[];
+};
+
+type StructuredSyncError = {
+  message?: string;
+  extensions?: {
+    code?: string;
+    errors?: Record<string, SyncValidationEntry[]>;
+    summary?: Record<string, number> & { totalErrors: number };
+    message?: string;
+  };
+};
+
 export const formatManifestValidationErrors = (
-  error: MetadataValidationErrorResponse | undefined,
+  error: unknown,
 ): OrchestratorStateStepEvent[] | null => {
-  if (!isDefined(error?.errors) || !isDefined(error?.summary)) {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  const syncError = error as StructuredSyncError;
+  const extensions = syncError.extensions;
+
+  if (!extensions?.errors || !extensions?.summary) {
     return null;
   }
 
   const events: OrchestratorStateStepEvent[] = [];
-  const totalErrors = error.summary.totalErrors;
+  const totalErrors = extensions.summary.totalErrors;
 
   events.push({
     message: `Sync failed with ${totalErrors} error${totalErrors !== 1 ? 's' : ''}`,
     status: 'error',
   });
 
-  for (const [metadataName, entries] of Object.entries(error.errors)) {
-    if (!isDefined(entries)) {
-      continue;
-    }
-
-    const count =
-      error.summary[metadataName as AllMetadataName] ?? entries.length;
+  for (const [metadataName, entries] of Object.entries(extensions.errors)) {
+    const count = extensions.summary[metadataName] ?? entries.length;
 
     events.push({
       message: `${metadataName}: ${count} error${count !== 1 ? 's' : ''}`,
@@ -44,11 +54,11 @@ export const formatManifestValidationErrors = (
       for (const entryError of entry.errors) {
         const details: string[] = [];
 
-        if (isDefined(entryError.value)) {
-          details.push(`value: ${String(entryError.value)}`);
+        if (entryError.value) {
+          details.push(`value: ${entryError.value}`);
         }
 
-        if (isNonEmptyString(universalIdentifier)) {
+        if (universalIdentifier) {
           details.push(`universalIdentifier: ${universalIdentifier}`);
         }
 

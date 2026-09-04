@@ -5,7 +5,7 @@ import { isDefined } from 'twenty-shared/utils';
 import { DataSource } from 'typeorm';
 import { v4, v5 } from 'uuid';
 
-import { ProvisionedWorkspaceCommandRunner } from 'src/database/commands/command-runners/provisioned-workspace.command-runner';
+import { ActiveOrSuspendedWorkspaceCommandRunner } from 'src/database/commands/command-runners/active-or-suspended-workspace.command-runner';
 import { WorkspaceIteratorService } from 'src/database/commands/command-runners/workspace-iterator.service';
 import {
   type RunOnWorkspaceArgs,
@@ -68,7 +68,7 @@ const SETTINGS_NAVIGATION_ITEM_KEYS = [
   description:
     'Replace GO_TO_* command menu items with unified NAVIGATION engine key and payload',
 })
-export class RefactorNavigationCommandsCommand extends ProvisionedWorkspaceCommandRunner {
+export class RefactorNavigationCommandsCommand extends ActiveOrSuspendedWorkspaceCommandRunner {
   constructor(
     protected readonly workspaceIteratorService: WorkspaceIteratorService,
     @InjectDataSource()
@@ -197,8 +197,6 @@ export class RefactorNavigationCommandsCommand extends ProvisionedWorkspaceComma
           objectMetadata,
           commandMenuItemId: v4(),
           applicationId: twentyStandardFlatApplication.id,
-          applicationUniversalIdentifier:
-            twentyStandardFlatApplication.universalIdentifier,
           workspaceId,
           position: nextPosition++,
           now,
@@ -224,7 +222,6 @@ export class RefactorNavigationCommandsCommand extends ProvisionedWorkspaceComma
         applicationUniversalIdentifier:
           TWENTY_STANDARD_APPLICATION.universalIdentifier,
         workspaceId,
-        isSystemSideEffect: false,
         label: commandMenuItem.label,
         shortLabel: commandMenuItem.shortLabel,
         icon: commandMenuItem.icon,
@@ -243,9 +240,6 @@ export class RefactorNavigationCommandsCommand extends ProvisionedWorkspaceComma
         availabilityObjectMetadataUniversalIdentifier: null,
         pageLayoutId: null,
         pageLayoutUniversalIdentifier: null,
-        isActive: true,
-        overrides: null,
-        universalOverrides: null,
         createdAt: now,
         updatedAt: now,
       });
@@ -290,7 +284,7 @@ export class RefactorNavigationCommandsCommand extends ProvisionedWorkspaceComma
     }
 
     const validateAndBuildResult =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
         {
           allFlatEntityOperationByMetadataName: {
             commandMenuItem: {

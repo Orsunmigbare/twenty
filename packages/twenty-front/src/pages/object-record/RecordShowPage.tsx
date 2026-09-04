@@ -7,12 +7,13 @@ import { TimelineActivityContext } from '@/activities/timeline-activities/contex
 import { MAIN_CONTEXT_STORE_INSTANCE_ID } from '@/context-store/constants/MainContextStoreInstanceId';
 import { ContextStoreComponentInstanceContext } from '@/context-store/states/contexts/ContextStoreComponentInstanceContext';
 import { isLayoutCustomizationModeEnabledState } from '@/layout-customization/states/isLayoutCustomizationModeEnabledState';
+import { MainContainerLayoutWithSidePanel } from '@/object-record/components/MainContainerLayoutWithSidePanel';
 import { RecordComponentInstanceContextsWrapper } from '@/object-record/components/RecordComponentInstanceContextsWrapper';
 import { PageLayoutRecordPageRenderer } from '@/object-record/record-show/components/PageLayoutRecordPageRenderer';
 import { RecordShowPageSSESubscribeEffect } from '@/object-record/record-show/components/RecordShowPageSSESubscribeEffect';
 import { useRecordShowPage } from '@/object-record/record-show/hooks/useRecordShowPage';
 import { computeRecordShowComponentInstanceId } from '@/object-record/record-show/utils/computeRecordShowComponentInstanceId';
-import { PageCardLayout } from '@/ui/layout/page/components/PageCardLayout';
+import { PageContainer } from '@/ui/layout/page/components/PageContainer';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { RecordShowPageHeader } from '~/pages/object-record/RecordShowPageHeader';
 import { RecordShowPageTitle } from '~/pages/object-record/RecordShowPageTitle';
@@ -45,39 +46,38 @@ export const RecordShowPage = () => {
         <CommandMenuComponentInstanceContext.Provider
           value={{ instanceId: recordShowComponentInstanceId }}
         >
-          <RecordShowPageTitle
-            objectNameSingular={objectNameSingular}
-            objectRecordId={objectRecordId}
-          />
-          <PageCardLayout
-            header={
-              <RecordShowPageHeader
-                objectNameSingular={objectNameSingular}
-                objectRecordId={objectRecordId}
-              >
-                <RecordShowCommandMenu />
-                {!isLayoutCustomizationModeEnabled && <SidePanelToggleButton />}
-              </RecordShowPageHeader>
-            }
-          >
-            <TimelineActivityContext.Provider
-              value={{
-                recordId: objectRecordId,
-              }}
+          <PageContainer>
+            <RecordShowPageTitle
+              objectNameSingular={objectNameSingular}
+              objectRecordId={objectRecordId}
+            />
+            <RecordShowPageHeader
+              objectNameSingular={objectNameSingular}
+              objectRecordId={objectRecordId}
             >
-              <PageLayoutRecordPageRenderer
-                targetRecordIdentifier={{
-                  id: objectRecordId,
-                  targetObjectNameSingular: objectNameSingular,
+              <RecordShowCommandMenu />
+              {!isLayoutCustomizationModeEnabled && <SidePanelToggleButton />}
+            </RecordShowPageHeader>
+            <MainContainerLayoutWithSidePanel>
+              <TimelineActivityContext.Provider
+                value={{
+                  recordId: objectRecordId,
                 }}
-                isInSidePanel={false}
-              />
-              <RecordShowPageSSESubscribeEffect
-                objectNameSingular={objectNameSingular}
-                recordId={objectRecordId}
-              />
-            </TimelineActivityContext.Provider>
-          </PageCardLayout>
+              >
+                <PageLayoutRecordPageRenderer
+                  targetRecordIdentifier={{
+                    id: objectRecordId,
+                    targetObjectNameSingular: objectNameSingular,
+                  }}
+                  isInSidePanel={false}
+                />
+                <RecordShowPageSSESubscribeEffect
+                  objectNameSingular={objectNameSingular}
+                  recordId={objectRecordId}
+                />
+              </TimelineActivityContext.Provider>
+            </MainContainerLayoutWithSidePanel>
+          </PageContainer>
         </CommandMenuComponentInstanceContext.Provider>
       </ContextStoreComponentInstanceContext.Provider>
     </RecordComponentInstanceContextsWrapper>

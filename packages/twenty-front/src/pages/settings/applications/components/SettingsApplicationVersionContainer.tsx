@@ -5,11 +5,13 @@ import { SettingsAdminVersionDisplay } from '@/settings/admin-panel/components/S
 import { useUpgradeApplication } from '@/marketplace/hooks/useUpgradeApplication';
 import { t } from '@lingui/core/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { IconCircleDot, IconStatusChange, IconUpload } from 'twenty-ui/icon';
+import { IconCircleDot, IconStatusChange, IconUpload } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
-import { type Application } from '~/generated-metadata/graphql';
+import {
+  ApplicationRegistrationSourceType,
+  type Application,
+} from '~/generated-metadata/graphql';
 import { isNewerSemver } from '~/pages/settings/applications/utils/isNewerSemver';
-import { isUpgradableApplicationSourceType } from '~/pages/settings/applications/utils/isUpgradableApplicationSourceType';
 
 const StyledContainer = styled.div`
   display: flex;
@@ -35,14 +37,14 @@ export const SettingsApplicationVersionContainer = ({
   const currentVersion = application?.version;
 
   const sourceType = application?.applicationRegistration?.sourceType;
-  const isUpgradableApp = isUpgradableApplicationSourceType(sourceType);
+  const isNpmApp = sourceType === ApplicationRegistrationSourceType.NPM;
 
-  const latestVersion = isUpgradableApp
+  const latestVersion = isNpmApp
     ? (latestAvailableVersion ?? currentVersion)
     : currentVersion;
 
   const hasUpdate =
-    isUpgradableApp &&
+    isNpmApp &&
     isDefined(latestAvailableVersion) &&
     isDefined(currentVersion) &&
     isNewerSemver(latestAvailableVersion, currentVersion);
@@ -72,7 +74,7 @@ export const SettingsApplicationVersionContainer = ({
         />
       ),
     },
-    ...(isUpgradableApp
+    ...(isNpmApp
       ? [
           {
             Icon: IconStatusChange,

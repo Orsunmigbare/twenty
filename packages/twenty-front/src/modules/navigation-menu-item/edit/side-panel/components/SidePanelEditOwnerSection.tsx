@@ -1,14 +1,14 @@
 import { useLingui } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { IconApps } from 'twenty-ui/icon';
+import { IconApps } from 'twenty-ui/display';
 
 import { SidePanelGroup } from '@/side-panel/components/SidePanelGroup';
 import { CommandMenuItem } from '@/command-menu/components/CommandMenuItem';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
+import { useDraftNavigationMenuItems } from '@/navigation-menu-item/edit/hooks/useDraftNavigationMenuItems';
 import { useSelectedNavigationMenuItemEditItem } from '@/navigation-menu-item/edit/hooks/useSelectedNavigationMenuItemEditItem';
 import { SelectableListItem } from '@/ui/layout/selectable-list/components/SelectableListItem';
 import { useQuery } from '@apollo/client/react';
-import { FindOneApplicationNameDocument } from '~/generated-metadata/graphql';
+import { FindOneApplicationDocument } from '~/generated-metadata/graphql';
 
 type SidePanelEditOwnerSectionProps = {
   applicationId?: string | null;
@@ -20,15 +20,16 @@ export const SidePanelEditOwnerSection = ({
   const { t } = useLingui();
 
   const { selectedItem } = useSelectedNavigationMenuItemEditItem();
-  const { currentItems } = useNavigationMenuItemEditController();
+  const { currentDraft } = useDraftNavigationMenuItems();
 
-  const applicationIdFromSection = isDefined(selectedItem)
-    ? currentItems.find((item) => item.id === selectedItem.id)?.applicationId
-    : undefined;
+  const applicationIdFromDraft =
+    isDefined(selectedItem) && isDefined(currentDraft)
+      ? currentDraft.find((item) => item.id === selectedItem.id)?.applicationId
+      : undefined;
 
-  const applicationId = applicationIdProp ?? applicationIdFromSection;
+  const applicationId = applicationIdProp ?? applicationIdFromDraft;
 
-  const { data } = useQuery(FindOneApplicationNameDocument, {
+  const { data } = useQuery(FindOneApplicationDocument, {
     variables: { id: applicationId ?? '' },
     skip: !isDefined(applicationId),
   });

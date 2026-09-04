@@ -10,7 +10,6 @@ import { useSingleRecordPickerSearch } from '@/object-record/record-picker/singl
 import { SingleRecordPickerComponentInstanceContext } from '@/object-record/record-picker/single-record-picker/states/contexts/SingleRecordPickerComponentInstanceContext';
 import { singleRecordPickerSearchFilterComponentState } from '@/object-record/record-picker/single-record-picker/states/singleRecordPickerSearchFilterComponentState';
 import { type RecordPickerLayoutDirection } from '@/object-record/record-picker/types/RecordPickerLayoutDirection';
-import { canCreateRecordsForObjectMetadataItem } from '@/object-record/utils/canCreateRecordsForObjectMetadataItem';
 import { CreateNewButton } from '@/ui/input/relation-picker/components/CreateNewButton';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
 import { DropdownMenuSearchInput } from '@/ui/layout/dropdown/components/DropdownMenuSearchInput';
@@ -19,7 +18,7 @@ import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/com
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { isDefined } from 'twenty-shared/utils';
 import { t } from '@lingui/core/macro';
-import { IconPlus } from 'twenty-ui/icon';
+import { IconPlus } from 'twenty-ui/display';
 
 export type SingleRecordPickerMenuItemsWithSearchProps = {
   excludedRecordIds?: string[];
@@ -69,18 +68,11 @@ export const SingleRecordPickerMenuItemsWithSearch = ({
 
   const { objectPermissionsByObjectMetadataId } = useObjectPermissions();
 
-  const canCreateRecords = objectMetadataItems.every((objectMetadataItem) => {
-    const objectPermissions =
-      objectPermissionsByObjectMetadataId[objectMetadataItem.id];
-
-    return (
-      isDefined(objectPermissions) &&
-      canCreateRecordsForObjectMetadataItem({
-        objectPermissions,
-        objectMetadataItem,
-      })
-    );
-  });
+  const hasUpdatePermissions = objectMetadataItems.every(
+    (objectMetadataItem) =>
+      objectPermissionsByObjectMetadataId[objectMetadataItem.id]
+        ?.canUpdateObjectRecords,
+  );
 
   const handleCreateNew = () => {
     onCreate?.(singleRecordPickerSearchFilter);
@@ -91,7 +83,7 @@ export const SingleRecordPickerMenuItemsWithSearch = ({
       <SingleRecordPickerLoadingEffect loading={loading} />
       {layoutDirection === 'search-bar-on-bottom' && (
         <>
-          {isDefined(onCreate) && canCreateRecords && (
+          {isDefined(onCreate) && hasUpdatePermissions && (
             <>
               <DropdownMenuItemsContainer scrollable={false}>
                 <CreateNewButton
@@ -139,7 +131,7 @@ export const SingleRecordPickerMenuItemsWithSearch = ({
               }}
             />
           </DropdownMenuItemsContainer>
-          {isDefined(onCreate) && canCreateRecords && (
+          {isDefined(onCreate) && hasUpdatePermissions && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItemsContainer scrollable={false}>

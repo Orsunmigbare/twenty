@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Failing create field metadata tests suite should fail to create NUMERIC field type via API 1`] = `
 [
@@ -26,50 +26,13 @@ exports[`Failing create field metadata tests suite should fail to create NUMERIC
             "type": "create",
           },
         ],
-        "viewField": [
-          {
-            "errors": [
-              {
-                "code": "INVALID_VIEW_DATA",
-                "message": "Field metadata not found",
-                "userFriendlyMessage": "Field metadata not found",
-              },
-            ],
-            "flatEntityMinimalInformation": {
-              "fieldMetadataUniversalIdentifier": Any<String>,
-              "universalIdentifier": Any<String>,
-              "viewUniversalIdentifier": Any<String>,
-            },
-            "metadataName": "viewField",
-            "status": "fail",
-            "type": "create",
-          },
-          {
-            "errors": [
-              {
-                "code": "INVALID_VIEW_DATA",
-                "message": "Field metadata not found",
-                "userFriendlyMessage": "Field metadata not found",
-              },
-            ],
-            "flatEntityMinimalInformation": {
-              "fieldMetadataUniversalIdentifier": Any<String>,
-              "universalIdentifier": Any<String>,
-              "viewUniversalIdentifier": Any<String>,
-            },
-            "metadataName": "viewField",
-            "status": "fail",
-            "type": "create",
-          },
-        ],
       },
-      "message": "Validation failed for 1 fieldMetadata, 2 viewFields",
+      "message": "Validation failed for 1 fieldMetadata",
       "summary": {
         "fieldMetadata": 1,
-        "totalErrors": 3,
-        "viewField": 2,
+        "totalErrors": 1,
       },
-      "userFriendlyMessage": "Many validation errors",
+      "userFriendlyMessage": "Field type NUMERIC is not supported. Use Number instead.",
     },
     "message": "Multiple validation errors occurred while creating fields",
     "name": "GraphQLError",
@@ -109,50 +72,13 @@ exports[`Failing create field metadata tests suite should fail to create POSITIO
             "type": "create",
           },
         ],
-        "viewField": [
-          {
-            "errors": [
-              {
-                "code": "INVALID_VIEW_DATA",
-                "message": "Field metadata not found",
-                "userFriendlyMessage": "Field metadata not found",
-              },
-            ],
-            "flatEntityMinimalInformation": {
-              "fieldMetadataUniversalIdentifier": Any<String>,
-              "universalIdentifier": Any<String>,
-              "viewUniversalIdentifier": Any<String>,
-            },
-            "metadataName": "viewField",
-            "status": "fail",
-            "type": "create",
-          },
-          {
-            "errors": [
-              {
-                "code": "INVALID_VIEW_DATA",
-                "message": "Field metadata not found",
-                "userFriendlyMessage": "Field metadata not found",
-              },
-            ],
-            "flatEntityMinimalInformation": {
-              "fieldMetadataUniversalIdentifier": Any<String>,
-              "universalIdentifier": Any<String>,
-              "viewUniversalIdentifier": Any<String>,
-            },
-            "metadataName": "viewField",
-            "status": "fail",
-            "type": "create",
-          },
-        ],
       },
-      "message": "Validation failed for 1 fieldMetadata, 2 viewFields",
+      "message": "Validation failed for 1 fieldMetadata",
       "summary": {
         "fieldMetadata": 1,
-        "totalErrors": 3,
-        "viewField": 2,
+        "totalErrors": 1,
       },
-      "userFriendlyMessage": "Many validation errors",
+      "userFriendlyMessage": "Field type POSITION must be named "position"",
     },
     "message": "Multiple validation errors occurred while creating fields",
     "name": "GraphQLError",

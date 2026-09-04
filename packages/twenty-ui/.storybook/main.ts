@@ -17,7 +17,6 @@ const config: StorybookConfig = {
     '@storybook-community/storybook-addon-cookie',
     '@storybook/addon-links',
     '@storybook/addon-coverage',
-    '@storybook/addon-a11y',
     'storybook-addon-pseudo-states',
     '@storybook/addon-vitest',
   ],

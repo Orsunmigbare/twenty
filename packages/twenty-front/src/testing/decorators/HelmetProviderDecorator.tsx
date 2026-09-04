@@ -1,5 +1,5 @@
 import { type Decorator } from '@storybook/react-vite';
-import { HelmetProvider } from '@dr.pogodin/react-helmet';
+import { HelmetProvider } from 'react-helmet-async';
 
 export const HelmetProviderDecorator: Decorator = (Story) => {
   return (

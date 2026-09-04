@@ -24,7 +24,7 @@ import { buildFieldMapsFromFlatObjectMetadata } from 'src/engine/metadata-module
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 
 type BuildCursorWhereConditionParams = {
-  cursorKey: string;
+  cursorKey: keyof ObjectRecord;
   cursorValue:
     | ObjectRecordCursorLeafScalarValue
     | ObjectRecordCursorLeafCompositeValue;
@@ -49,10 +49,7 @@ export const buildCursorWhereCondition = ({
     flatObjectMetadata,
   );
 
-  const [fieldKey, ...subFieldPath] = cursorKey.split('.');
-  const compositeSubFieldKey = subFieldPath.join('.');
-  const fieldMetadataKey = fieldKey as keyof ObjectRecord;
-  const fieldMetadataId = fieldIdByName[fieldMetadataKey];
+  const fieldMetadataId = fieldIdByName[cursorKey];
 
   const fieldMetadata = findFlatEntityByIdInFlatEntityMaps({
     flatEntityMaps: flatFieldMetadataMaps,
@@ -61,29 +58,16 @@ export const buildCursorWhereCondition = ({
 
   if (!fieldMetadata) {
     throw new GraphqlQueryRunnerException(
-      `Field metadata not found for key: ${String(cursorKey)}`,
+      `Field metadata not found for key: ${cursorKey}`,
       GraphqlQueryRunnerExceptionCode.INVALID_CURSOR,
       { userFriendlyMessage: STANDARD_ERROR_MESSAGE },
     );
   }
 
   if (isCompositeFieldMetadataType(fieldMetadata.type)) {
-    if (compositeSubFieldKey.length > 0) {
-      return buildCursorCompositeFieldWhereCondition({
-        fieldType: fieldMetadata.type,
-        fieldKey: fieldMetadataKey,
-        orderBy,
-        cursorValue: {
-          [compositeSubFieldKey]: cursorValue,
-        } as ObjectRecordCursorLeafCompositeValue,
-        isForwardPagination,
-        isEqualityCondition,
-      });
-    }
-
     return buildCursorCompositeFieldWhereCondition({
       fieldType: fieldMetadata.type,
-      fieldKey: fieldMetadataKey,
+      fieldKey: cursorKey,
       orderBy,
       cursorValue: cursorValue as ObjectRecordCursorLeafCompositeValue,
       isForwardPagination,
@@ -92,14 +76,11 @@ export const buildCursorWhereCondition = ({
   }
 
   if (isEqualityCondition) {
-    return { [fieldMetadataKey]: { eq: cursorValue } };
+    return { [cursorKey]: { eq: cursorValue } };
   }
 
-  const keyOrderBy = validateAndGetOrderByForScalarField(
-    fieldMetadataKey,
-    orderBy,
-  );
-  const orderByDirection = keyOrderBy[fieldMetadataKey];
+  const keyOrderBy = validateAndGetOrderByForScalarField(cursorKey, orderBy);
+  const orderByDirection = keyOrderBy[cursorKey];
 
   if (!isDefined(orderByDirection)) {
     throw new GraphqlQueryRunnerException(
@@ -112,5 +93,5 @@ export const buildCursorWhereCondition = ({
   const isAscending = isAscendingOrder(orderByDirection);
   const computedOperator = computeOperator(isAscending, isForwardPagination);
 
-  return { [fieldMetadataKey]: { [computedOperator]: cursorValue } };
+  return { [cursorKey]: { [computedOperator]: cursorValue } };
 };

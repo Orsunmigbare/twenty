@@ -5,14 +5,18 @@ import { Repository } from 'typeorm';
 
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { FlatApplication } from 'src/engine/core-modules/application/types/flat-application.type';
+import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
+import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
+import { MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
+import {
+  GenerateSdkClientJob,
+  GenerateSdkClientJobData,
+} from 'src/engine/core-modules/sdk-client/jobs/generate-sdk-client.job';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { RoleService } from 'src/engine/metadata-modules/role/role.service';
 import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
-import { MEMBER_ROLE_LABEL } from 'src/engine/metadata-modules/permissions/constants/member-role-label.constants';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceDataSourceService } from 'src/engine/workspace-datasource/workspace-datasource.service';
 import { STANDARD_ROLE } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-role.constant';
 import { TwentyStandardApplicationService } from 'src/engine/workspace-manager/twenty-standard-application/services/twenty-standard-application.service';
@@ -30,9 +34,11 @@ export class WorkspaceManagerService {
     private readonly twentyStandardApplicationService: TwentyStandardApplicationService,
     @InjectRepository(WorkspaceEntity)
     private readonly workspaceRepository: Repository<WorkspaceEntity>,
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
     private readonly applicationService: ApplicationService,
+    @InjectMessageQueue(MessageQueue.workspaceQueue)
+    private readonly messageQueueService: MessageQueueService,
   ) {}
 
   public async init({
@@ -77,12 +83,33 @@ export class WorkspaceManagerService {
       `Metadata creation took ${dataSourceMetadataCreationEnd - dataSourceMetadataCreationStart}ms`,
     );
 
-    const { workspaceCustomFlatApplication } =
+    const { workspaceCustomFlatApplication, twentyStandardFlatApplication } =
       await this.applicationService.findWorkspaceTwentyStandardAndCustomApplicationOrThrow(
         {
           workspaceId,
         },
       );
+
+    await Promise.all([
+      this.messageQueueService.add<GenerateSdkClientJobData>(
+        GenerateSdkClientJob.name,
+        {
+          workspaceId,
+          applicationId: twentyStandardFlatApplication.id,
+          applicationUniversalIdentifier:
+            twentyStandardFlatApplication.universalIdentifier,
+        },
+      ),
+      this.messageQueueService.add<GenerateSdkClientJobData>(
+        GenerateSdkClientJob.name,
+        {
+          workspaceId,
+          applicationId: workspaceCustomFlatApplication.id,
+          applicationUniversalIdentifier:
+            workspaceCustomFlatApplication.universalIdentifier,
+        },
+      ),
+    ]);
 
     await this.setupDefaultRoles({
       workspaceId,
@@ -100,9 +127,10 @@ export class WorkspaceManagerService {
     userId: string;
     workspaceCustomFlatApplication: FlatApplication;
   }): Promise<void> {
-    const adminRole = await this.roleRepository.findOne(workspaceId, {
+    const adminRole = await this.roleRepository.findOne({
       where: {
         universalIdentifier: STANDARD_ROLE.admin.universalIdentifier,
+        workspaceId,
       },
     });
 
@@ -118,16 +146,10 @@ export class WorkspaceManagerService {
       });
     }
 
-    const existingMemberRole = await this.roleRepository.findOne(workspaceId, {
-      where: { label: MEMBER_ROLE_LABEL },
+    const memberRole = await this.roleService.createMemberRole({
+      workspaceId,
+      ownerFlatApplication: workspaceCustomFlatApplication,
     });
-
-    const memberRole =
-      existingMemberRole ??
-      (await this.roleService.createMemberRole({
-        workspaceId,
-        ownerFlatApplication: workspaceCustomFlatApplication,
-      }));
 
     await this.workspaceRepository.update(workspaceId, {
       defaultRoleId: memberRole.id,

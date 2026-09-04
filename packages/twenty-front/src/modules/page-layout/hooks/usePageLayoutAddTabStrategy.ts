@@ -8,11 +8,12 @@ import { shouldEnableTabEditingFeatures } from '@/page-layout/utils/shouldEnable
 import { useNavigatePageLayoutSidePanel } from '@/side-panel/pages/page-layout/hooks/useNavigatePageLayoutSidePanel';
 import { useLayoutRenderingContext } from '@/ui/layout/contexts/LayoutRenderingContext';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
+import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
 import { t } from '@lingui/core/macro';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidePanelPages } from 'twenty-shared/types';
-import { PageLayoutType } from '~/generated-metadata/graphql';
+import { FeatureFlagKey, PageLayoutType } from '~/generated-metadata/graphql';
 
 export const usePageLayoutAddTabStrategy = ({
   pageLayoutId,
@@ -23,6 +24,10 @@ export const usePageLayoutAddTabStrategy = ({
 }): PageLayoutAddTabStrategy | undefined => {
   const { currentPageLayout } = useCurrentPageLayoutOrThrow();
   const isPageLayoutInEditMode = useIsPageLayoutInEditMode();
+
+  const isRecordPageGlobalEditionEnabled = useIsFeatureEnabled(
+    FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_GLOBAL_EDITION_ENABLED,
+  );
 
   const { createPageLayoutTab } = useCreatePageLayoutTab({
     pageLayoutId,
@@ -61,7 +66,10 @@ export const usePageLayoutAddTabStrategy = ({
 
   const isEnabled =
     isPageLayoutInEditMode &&
-    shouldEnableTabEditingFeatures(currentPageLayout.type);
+    shouldEnableTabEditingFeatures(
+      currentPageLayout.type,
+      isRecordPageGlobalEditionEnabled,
+    );
 
   if (!isEnabled) {
     return undefined;

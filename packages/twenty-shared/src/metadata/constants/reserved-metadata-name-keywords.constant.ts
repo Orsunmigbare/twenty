@@ -27,6 +27,8 @@ export const RESERVED_METADATA_NAME_KEYWORDS = [
   'pageLayoutTabs',
   'pageLayoutWidget',
   'pageLayoutWidgets',
+  'postgresCredential',
+  'postgresCredentials',
   'twoFactorMethod',
   'twoFactorMethods',
   'user',

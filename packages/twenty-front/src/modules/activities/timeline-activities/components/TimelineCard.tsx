@@ -13,7 +13,8 @@ import {
   AnimatedPlaceholderEmptySubTitle,
   AnimatedPlaceholderEmptyTextContainer,
   AnimatedPlaceholderEmptyTitle,
-} from 'twenty-ui/feedback';
+  EMPTY_PLACEHOLDER_TRANSITION_PROPS,
+} from 'twenty-ui/layout';
 import { MOBILE_VIEWPORT, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledMainContainer = styled.div`
@@ -47,22 +48,21 @@ const StyledSidePanelPlaceholderWrapper = styled.div`
 export const TimelineCard = () => {
   const targetRecord = useTargetRecord();
   const { isInSidePanel } = useLayoutRenderingContext();
-  const {
-    timelineActivities,
-    firstQueryLoading,
-    loadingMore,
-    fetchMoreRecords,
-  } = useTimelineActivities(targetRecord);
+  const { timelineActivities, loading, fetchMoreRecords } =
+    useTimelineActivities(targetRecord);
 
   const isTimelineActivitiesEmpty = timelineActivities.length === 0;
 
-  if (firstQueryLoading === true) {
+  if (loading === true) {
     return <SkeletonLoader withSubSections />;
   }
 
   if (isTimelineActivitiesEmpty) {
     const placeholderContent = (
-      <AnimatedPlaceholderEmptyContainer>
+      <AnimatedPlaceholderEmptyContainer
+        // oxlint-disable-next-line react/jsx-props-no-spreading
+        {...EMPTY_PLACEHOLDER_TRANSITION_PROPS}
+      >
         <AnimatedPlaceholder type="emptyTimeline" />
         <AnimatedPlaceholderEmptyTextContainer>
           <AnimatedPlaceholderEmptyTitle>
@@ -92,7 +92,7 @@ export const TimelineCard = () => {
         events={timelineActivities ?? []}
       />
       <CustomResolverFetchMoreLoader
-        loading={loadingMore}
+        loading={loading}
         onLastRowVisible={fetchMoreRecords}
       />
     </StyledMainContainer>

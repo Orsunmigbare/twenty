@@ -1,22 +1,23 @@
+import { isNonEmptyString } from '@sniptt/guards';
+import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { useObjectMetadataItem } from '@/object-metadata/hooks/useObjectMetadataItem';
 import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
 import { lastShowPageRecordIdState } from '@/object-record/record-field/ui/states/lastShowPageRecordId';
-import { computeCursorArgFilter } from '@/object-record/graphql/utils/computeCursorArgFilter';
-import { extractOrderByFieldNames } from '@/object-record/graphql/utils/extractOrderByFieldNames';
-import { reverseOrderBy } from '@/object-record/graphql/utils/reverseOrderBy';
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
+import { useRecordIdsFromFindManyCacheRootQuery } from '@/object-record/record-show/hooks/useRecordIdsFromFindManyCacheRootQuery';
 import { useQueryVariablesFromParentView } from '@/views/hooks/useQueryVariablesFromParentView';
 import { AppPath } from 'twenty-shared/types';
-import { combineFilters, isDefined } from 'twenty-shared/utils';
+import { isDefined } from 'twenty-shared/utils';
 import { useNavigateApp } from '~/hooks/useNavigateApp';
 
 export const useRecordShowPagePagination = (
   propsObjectNameSingular: string,
   propsObjectRecordId: string,
 ) => {
+  const { t } = useLingui();
   const {
     objectNameSingular: paramObjectNameSingular,
     objectRecordId: paramObjectRecordId,
@@ -35,202 +36,207 @@ export const useRecordShowPagePagination = (
     throw new Error('Object name or Record id is not defined');
   }
 
-  const { objectMetadataItem } = useObjectMetadataItem({
-    objectNameSingular,
+  const { objectMetadataItem } = useObjectMetadataItem({ objectNameSingular });
+
+  const { filter, orderBy } = useQueryVariablesFromParentView({
+    objectMetadataItem,
   });
 
-  const { filter, orderBy, isSoftDeleteFilterActive } =
-    useQueryVariablesFromParentView({
-      objectMetadataItem,
-    });
-
-  const orderByGqlFields = extractOrderByFieldNames(orderBy);
-
-  const reversedOrderBy = reverseOrderBy(orderBy);
-
-  const { loading: loadingCurrentRecord, records: currentRecords } =
+  const { loading: loadingCursor, pageInfo: currentRecordsPageInfo } =
     useFindManyRecords({
-      filter: { id: { eq: objectRecordId } },
+      filter: {
+        id: { eq: objectRecordId },
+      },
       orderBy,
       limit: 1,
       objectNameSingular,
-      recordGqlFields: { ...orderByGqlFields, deletedAt: true },
-      withSoftDeleted: true,
+      recordGqlFields: { id: true },
     });
 
-  const currentRecord = currentRecords[0];
-  const isCurrentRecordDeleted = isDefined(currentRecord?.deletedAt);
-  const withSoftDeleted = isSoftDeleteFilterActive || isCurrentRecordDeleted;
+  const currentRecordCursorFromRequest = currentRecordsPageInfo?.endCursor;
 
-  const deletedOnlyFilter = isCurrentRecordDeleted
-    ? { deletedAt: { is: 'NOT_NULL' as const } }
-    : undefined;
+  const [totalCountBefore, setTotalCountBefore] = useState<number>(0);
+  const [totalCountAfter, setTotalCountAfter] = useState<number>(0);
 
-  const currentRecordKeysetValues: Record<string, unknown> | undefined =
-    isDefined(currentRecord)
-      ? {
-          id: currentRecord.id,
-          ...Object.fromEntries(
-            Object.keys(orderByGqlFields).map((fieldName) => [
-              fieldName,
-              currentRecord[fieldName],
-            ]),
-          ),
-        }
-      : undefined;
-
-  const beforeFilter = isDefined(currentRecordKeysetValues)
-    ? computeCursorArgFilter({
-        orderBy,
-        cursorRecordValues: currentRecordKeysetValues,
-        isForwardPagination: false,
-      })
-    : undefined;
-
-  const afterFilter = isDefined(currentRecordKeysetValues)
-    ? computeCursorArgFilter({
-        orderBy,
-        cursorRecordValues: currentRecordKeysetValues,
-        isForwardPagination: true,
-      })
-    : undefined;
-
-  const hasKeysetFilters = isDefined(beforeFilter) && isDefined(afterFilter);
-  const skipNeighborQueries = loadingCurrentRecord || !hasKeysetFilters;
-
-  const baseNeighborOptions = {
-    skip: skipNeighborQueries,
-    objectNameSingular,
-    recordGqlFields: { id: true },
-    withSoftDeleted,
-    limit: 1,
-  };
-
-  const mergedFilter = combineFilters(
-    [filter, deletedOnlyFilter].filter(isDefined),
-  );
-
-  const {
-    loading: loadingRecordBefore,
-    records: recordsBefore,
-    totalCount: totalCountBefore,
-  } = useFindManyRecords({
-    ...baseNeighborOptions,
-    fetchPolicy: 'network-only',
-    filter: combineFilters([mergedFilter, beforeFilter].filter(isDefined)),
-    orderBy: reversedOrderBy,
-  });
-
-  const {
-    loading: loadingRecordAfter,
-    records: recordsAfter,
-    totalCount: totalCountAfter,
-  } = useFindManyRecords({
-    ...baseNeighborOptions,
-    fetchPolicy: 'network-only',
-    filter: combineFilters([mergedFilter, afterFilter].filter(isDefined)),
-    orderBy,
-  });
-
-  const isAtFirstRecord = !loadingRecordBefore && totalCountBefore === 0;
-  const isAtLastRecord = !loadingRecordAfter && totalCountAfter === 0;
-
-  const { loading: loadingFirstRecord, records: firstRecords } =
+  const { loading: loadingRecordBefore, records: recordsBefore } =
     useFindManyRecords({
-      ...baseNeighborOptions,
-      skip: skipNeighborQueries || !isAtLastRecord,
-      filter: mergedFilter,
+      skip: loadingCursor,
+      fetchPolicy: 'network-only',
+      filter: {
+        ...filter,
+        id: { neq: objectRecordId },
+      },
       orderBy,
+      limit: isNonEmptyString(currentRecordCursorFromRequest) ? 1 : undefined,
+      cursorFilter: isNonEmptyString(currentRecordCursorFromRequest)
+        ? {
+            cursorDirection: 'before',
+            cursor: currentRecordCursorFromRequest,
+          }
+        : undefined,
+      objectNameSingular,
+      recordGqlFields: { id: true },
+      onCompleted: (_, pagination) => {
+        setTotalCountBefore(pagination?.totalCount ?? 0);
+      },
     });
 
-  const { loading: loadingLastRecord, records: lastRecords } =
+  const { loading: loadingRecordAfter, records: recordsAfter } =
     useFindManyRecords({
-      ...baseNeighborOptions,
-      skip: skipNeighborQueries || !isAtFirstRecord,
-      filter: mergedFilter,
-      orderBy: reversedOrderBy,
+      skip: loadingCursor,
+      filter: {
+        ...filter,
+        id: { neq: objectRecordId },
+      },
+      fetchPolicy: 'network-only',
+      orderBy,
+      limit: isNonEmptyString(currentRecordCursorFromRequest) ? 1 : undefined,
+      cursorFilter: currentRecordCursorFromRequest
+        ? {
+            cursorDirection: 'after',
+            cursor: currentRecordCursorFromRequest,
+          }
+        : undefined,
+      objectNameSingular,
+      recordGqlFields: { id: true },
+      onCompleted: (_, pagination) => {
+        setTotalCountAfter(pagination?.totalCount ?? 0);
+      },
     });
 
-  const loading =
-    loadingRecordAfter ||
-    loadingRecordBefore ||
-    loadingCurrentRecord ||
-    !hasKeysetFilters ||
-    (isAtLastRecord && loadingFirstRecord) ||
-    (isAtFirstRecord && loadingLastRecord);
+  const loading = loadingRecordAfter || loadingRecordBefore || loadingCursor;
 
   const recordBefore = recordsBefore[0];
   const recordAfter = recordsAfter[0];
 
-  // oxlint-disable-next-line twenty/no-navigate-prefer-link
-  const navigateToRecord = (targetRecordId: string) => {
-    navigate(
-      AppPath.RecordShowPage,
-      { objectNameSingular, objectRecordId: targetRecordId },
-      { viewId: viewIdQueryParam },
-    );
-  };
+  const isFirstRecord = !loading && !isDefined(recordBefore);
+  const isLastRecord = !loading && !isDefined(recordAfter);
+
+  const { recordIdsInCache } = useRecordIdsFromFindManyCacheRootQuery({
+    objectNamePlural: objectMetadataItem.namePlural,
+    fieldVariables: {
+      filter,
+      orderBy,
+    },
+  });
+
+  const cacheIsAvailableForNavigation =
+    !loading &&
+    (totalCountAfter > 0 || totalCountBefore > 0) &&
+    recordIdsInCache.length > 0;
+
+  const canNavigateToPreviousRecord =
+    !isFirstRecord || (isFirstRecord && cacheIsAvailableForNavigation);
 
   const navigateToPreviousRecord = () => {
-    if (loading) return;
-
-    if (isDefined(recordBefore)) {
-      return navigateToRecord(recordBefore.id);
+    if (loading) {
+      return;
     }
 
-    if (isDefined(lastRecords[0])) {
-      return navigateToRecord(lastRecords[0].id);
+    if (isFirstRecord) {
+      if (cacheIsAvailableForNavigation) {
+        const lastRecordIdFromCache =
+          recordIdsInCache[recordIdsInCache.length - 1];
+
+        navigate(
+          AppPath.RecordShowPage,
+          {
+            objectNameSingular,
+            objectRecordId: lastRecordIdFromCache,
+          },
+          {
+            viewId: viewIdQueryParam,
+          },
+        );
+      }
+    } else {
+      navigate(
+        AppPath.RecordShowPage,
+        {
+          objectNameSingular,
+          objectRecordId: recordBefore.id,
+        },
+        {
+          viewId: viewIdQueryParam,
+        },
+      );
     }
   };
 
-  const navigateToNextRecord = () => {
-    if (loading) return;
+  const canNavigateToNextRecord =
+    !isLastRecord || (isLastRecord && cacheIsAvailableForNavigation);
 
-    if (isDefined(recordAfter)) {
-      return navigateToRecord(recordAfter.id);
+  const navigateToNextRecord = () => {
+    if (loading) {
+      return;
     }
 
-    if (isDefined(firstRecords[0])) {
-      return navigateToRecord(firstRecords[0].id);
+    if (isLastRecord) {
+      if (cacheIsAvailableForNavigation) {
+        const firstRecordIdFromCache = recordIdsInCache[0];
+
+        navigate(
+          AppPath.RecordShowPage,
+          {
+            objectNameSingular,
+            objectRecordId: firstRecordIdFromCache,
+          },
+          {
+            viewId: viewIdQueryParam,
+          },
+        );
+      }
+    } else {
+      navigate(
+        AppPath.RecordShowPage,
+        {
+          objectNameSingular,
+          objectRecordId: recordAfter.id,
+        },
+        {
+          viewId: viewIdQueryParam,
+        },
+      );
     }
   };
 
   const navigateToIndexView = () => {
     navigate(
       AppPath.RecordIndexPage,
-      { objectNamePlural: objectMetadataItem.namePlural },
-      { viewId: viewIdQueryParam },
+      {
+        objectNamePlural: objectMetadataItem.namePlural,
+      },
+      {
+        viewId: viewIdQueryParam,
+      },
     );
+
     setLastShowPageRecordId(objectRecordId);
   };
 
-  const rankInView = isDefined(totalCountBefore) ? totalCountBefore : -1;
-  const totalCount =
-    rankInView > -1 && isDefined(totalCountAfter)
-      ? 1 + rankInView + totalCountAfter
-      : 0;
+  const rankInView = recordIdsInCache.findIndex((id) => id === objectRecordId);
 
-  const [cachedPagination, setCachedPagination] = useState({
-    rankInView,
-    totalCount,
-  });
+  const rankFoundInView = rankInView > -1;
 
-  if (!loading && rankInView > -1) {
-    if (
-      cachedPagination.rankInView !== rankInView ||
-      cachedPagination.totalCount !== totalCount
-    ) {
-      setCachedPagination({ rankInView, totalCount });
-    }
-  }
+  const objectLabelPlural = objectMetadataItem.labelPlural;
+
+  const totalCount = 1 + Math.max(totalCountBefore, totalCountAfter);
+
+  const currentRank = rankInView + 1;
+  const viewNameWithCount = rankFoundInView
+    ? t`${currentRank} of ${totalCount} in ${objectLabelPlural}`
+    : t`${objectLabelPlural} (${totalCount})`;
 
   return {
+    viewName: viewNameWithCount,
     isLoadingPagination: loading,
     navigateToPreviousRecord,
     navigateToNextRecord,
     navigateToIndexView,
-    rankInView: loading ? cachedPagination.rankInView : rankInView,
-    totalCount: loading ? cachedPagination.totalCount : totalCount,
+    canNavigateToNextRecord,
+    canNavigateToPreviousRecord,
+    rankInView,
+    totalCount,
     objectMetadataItem,
   };
 };

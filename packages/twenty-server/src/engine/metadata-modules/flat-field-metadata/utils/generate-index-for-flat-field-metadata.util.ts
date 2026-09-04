@@ -30,7 +30,6 @@ export const generateIndexForFlatFieldMetadata = ({
               flatFieldMetadata.universalIdentifier,
             indexMetadataUniversalIdentifier,
             order: 0,
-            subFieldName: null,
             updatedAt: createdAt,
           },
         ],
@@ -38,7 +37,6 @@ export const generateIndexForFlatFieldMetadata = ({
         indexWhereClause: null,
         isCustom: true,
         isUnique: flatFieldMetadata.isUnique ?? false,
-        isSystemSideEffect: true,
         objectMetadataUniversalIdentifier:
           flatObjectMetadata.universalIdentifier,
         universalIdentifier: indexMetadataUniversalIdentifier,

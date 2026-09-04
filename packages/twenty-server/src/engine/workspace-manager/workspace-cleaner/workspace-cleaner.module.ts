@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { BillingModule } from 'src/engine/core-modules/billing/billing.module';
 import { BillingSubscriptionEntity } from 'src/engine/core-modules/billing/entities/billing-subscription.entity';
-import { WorkspaceDomainsModule } from 'src/engine/core-modules/domain/workspace-domains/workspace-domains.module';
 import { EmailModule } from 'src/engine/core-modules/email/email.module';
 import { MetricsModule } from 'src/engine/core-modules/metrics/metrics.module';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
@@ -11,7 +10,6 @@ import { UserVarsModule } from 'src/engine/core-modules/user/user-vars/user-vars
 import { UserModule } from 'src/engine/core-modules/user/user.module';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { WorkspaceModule } from 'src/engine/core-modules/workspace/workspace.module';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 import { CleanOnboardingWorkspacesCommand } from 'src/engine/workspace-manager/workspace-cleaner/commands/clean-onboarding-workspaces.command';
 import { CleanOnboardingWorkspacesCronCommand } from 'src/engine/workspace-manager/workspace-cleaner/commands/clean-onboarding-workspaces.cron.command';
 import { CleanSuspendedWorkspacesCommand } from 'src/engine/workspace-manager/workspace-cleaner/commands/clean-suspended-workspaces.command';
@@ -32,7 +30,6 @@ import { CleanerWorkspaceService } from 'src/engine/workspace-manager/workspace-
     EmailModule,
     BillingModule,
     MetricsModule,
-    WorkspaceDomainsModule,
   ],
   providers: [
     DestroyWorkspaceCommand,
@@ -41,7 +38,6 @@ import { CleanerWorkspaceService } from 'src/engine/workspace-manager/workspace-
     CleanOnboardingWorkspacesCommand,
     CleanOnboardingWorkspacesCronCommand,
     CleanerWorkspaceService,
-    provideWorkspaceScopedRepository(BillingSubscriptionEntity),
   ],
   exports: [
     CleanerWorkspaceService,

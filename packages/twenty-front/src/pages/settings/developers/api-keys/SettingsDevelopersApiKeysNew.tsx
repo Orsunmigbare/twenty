@@ -9,32 +9,28 @@ import { EXPIRATION_DATES } from '@/settings/developers/constants/ExpirationDate
 import { apiKeyTokenFamilyState } from '@/settings/developers/states/apiKeyTokenFamilyState';
 import { Select } from '@/ui/input/components/Select';
 import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { useLingui } from '@lingui/react/macro';
 import { useStore } from 'jotai';
 import { Key } from 'ts-key-enum';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 import {
   CreateApiKeyDocument,
   GenerateApiKeyTokenDocument,
-  GetApiKeyRolesDocument,
-  GetApiKeysDocument,
+  GetRolesDocument,
 } from '~/generated-metadata/graphql';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
-import { SETTINGS_API_WEBHOOKS_TABS } from '~/pages/settings/api-webhooks/constants/SettingsApiWebhooksTabs';
 
 export const SettingsDevelopersApiKeysNew = () => {
   const { t } = useLingui();
   const [generateOneApiKeyToken] = useMutation(GenerateApiKeyTokenDocument);
   const navigateSettings = useNavigateSettings();
-  const { data: rolesData, loading: rolesLoading } = useQuery(
-    GetApiKeyRolesDocument,
-  );
-  const roles = rolesData?.getApiKeyRoles ?? [];
+  const { data: rolesData, loading: rolesLoading } = useQuery(GetRolesDocument);
+  const roles = rolesData?.getRoles ?? [];
 
   const [formValues, setFormValues] = useState<{
     name: string;
@@ -47,8 +43,8 @@ export const SettingsDevelopersApiKeysNew = () => {
   });
 
   useEffect(() => {
-    if (isDefined(rolesData?.getApiKeyRoles)) {
-      const apiKeyAssignableRoles = rolesData.getApiKeyRoles.filter(
+    if (isDefined(rolesData?.getRoles)) {
+      const apiKeyAssignableRoles = rolesData.getRoles.filter(
         (role) => role.canBeAssignedToApiKeys,
       );
       if (apiKeyAssignableRoles.length > 0) {
@@ -62,10 +58,7 @@ export const SettingsDevelopersApiKeysNew = () => {
     }
   }, [rolesData]);
 
-  const [createApiKey] = useMutation(CreateApiKeyDocument, {
-    refetchQueries: [GetApiKeysDocument],
-    awaitRefetchQueries: true,
-  });
+  const [createApiKey] = useMutation(CreateApiKeyDocument);
 
   const jotaiStore = useStore();
 
@@ -131,21 +124,16 @@ export const SettingsDevelopersApiKeysNew = () => {
   }
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       title={t`New key`}
       links={[
         {
           children: t`Workspace`,
-          href: getSettingsPath(SettingsPath.General),
+          href: getSettingsPath(SettingsPath.Workspace),
         },
         {
-          children: t`MCP & APIs`,
-          href: getSettingsPath(
-            SettingsPath.ApiWebhooks,
-            undefined,
-            undefined,
-            SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.API,
-          ),
+          children: t`APIs & Webhooks`,
+          href: getSettingsPath(SettingsPath.ApiWebhooks),
         },
         { children: t`New Key` },
       ]}
@@ -153,13 +141,7 @@ export const SettingsDevelopersApiKeysNew = () => {
         <SaveAndCancelButtons
           isSaveDisabled={!canSave}
           onCancel={() => {
-            navigateSettings(
-              SettingsPath.ApiWebhooks,
-              undefined,
-              undefined,
-              undefined,
-              SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.API,
-            );
+            navigateSettings(SettingsPath.ApiWebhooks);
           }}
           onSave={handleSave}
         />
@@ -173,9 +155,6 @@ export const SettingsDevelopersApiKeysNew = () => {
             placeholder={t`E.g. backoffice integration`}
             value={formValues.name}
             onKeyDown={(e) => {
-              if (e.nativeEvent.isComposing || e.keyCode === 229) {
-                return;
-              }
               if (e.key === Key.Enter) {
                 handleSave();
               }
@@ -223,6 +202,6 @@ export const SettingsDevelopersApiKeysNew = () => {
           />
         </Section>
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

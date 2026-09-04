@@ -28,13 +28,13 @@ export type ToWorkspaceMemberDtoArgs = {
 export class WorkspaceMemberTranspiler {
   constructor(private readonly fileUrlService: FileUrlService) {}
 
-  async generateSignedAvatarUrl({
+  generateSignedAvatarUrl({
     workspaceId,
     workspaceMember,
   }: {
     workspaceMember: Pick<WorkspaceMemberWorkspaceEntity, 'avatarUrl' | 'id'>;
     workspaceId: string;
-  }): Promise<string> {
+  }): string {
     if (
       !isDefined(workspaceMember.avatarUrl) ||
       !isNonEmptyString(workspaceMember.avatarUrl)
@@ -58,11 +58,11 @@ export class WorkspaceMemberTranspiler {
     });
   }
 
-  async toWorkspaceMemberDto({
+  toWorkspaceMemberDto({
     userWorkspace,
     workspaceMemberEntity,
     userWorkspaceRoles,
-  }: ToWorkspaceMemberDtoArgs): Promise<WorkspaceMemberDTO> {
+  }: ToWorkspaceMemberDtoArgs): WorkspaceMemberDTO {
     const {
       avatarUrl: avatarUrlFromEntity,
       id,
@@ -77,7 +77,7 @@ export class WorkspaceMemberTranspiler {
       numberFormat,
     } = workspaceMemberEntity;
 
-    const avatarUrl = await this.generateSignedAvatarUrl({
+    const avatarUrl = this.generateSignedAvatarUrl({
       workspaceId: userWorkspace.workspaceId,
       workspaceMember: {
         avatarUrl: avatarUrlFromEntity,
@@ -108,20 +108,18 @@ export class WorkspaceMemberTranspiler {
     } satisfies WorkspaceMemberDTO;
   }
 
-  async toWorkspaceMemberDtos(
+  toWorkspaceMemberDtos(
     allWorkspaceEntitiesBundles: ToWorkspaceMemberDtoArgs[],
-  ): Promise<WorkspaceMemberDTO[]> {
-    return Promise.all(
-      allWorkspaceEntitiesBundles.map((bundle) =>
-        this.toWorkspaceMemberDto(bundle),
-      ),
+  ) {
+    return allWorkspaceEntitiesBundles.map((bundle) =>
+      this.toWorkspaceMemberDto(bundle),
     );
   }
 
-  async toDeletedWorkspaceMemberDto(
+  toDeletedWorkspaceMemberDto(
     workspaceMember: WorkspaceMemberWorkspaceEntity,
     userWorkspaceId?: string,
-  ): Promise<DeletedWorkspaceMemberDTO> {
+  ): DeletedWorkspaceMemberDTO {
     const {
       avatarUrl: avatarUrlFromEntity,
       id,
@@ -134,7 +132,7 @@ export class WorkspaceMemberTranspiler {
     }
 
     const avatarUrl = userWorkspaceId
-      ? await this.generateSignedAvatarUrl({
+      ? this.generateSignedAvatarUrl({
           workspaceId: userWorkspaceId,
           workspaceMember: {
             avatarUrl: avatarUrlFromEntity,
@@ -152,14 +150,12 @@ export class WorkspaceMemberTranspiler {
     } satisfies DeletedWorkspaceMemberDTO;
   }
 
-  async toDeletedWorkspaceMemberDtos(
+  toDeletedWorkspaceMemberDtos(
     workspaceMembers: WorkspaceMemberWorkspaceEntity[],
     userWorkspaceId?: string,
-  ): Promise<DeletedWorkspaceMemberDTO[]> {
-    return Promise.all(
-      workspaceMembers.map((workspaceMember) =>
-        this.toDeletedWorkspaceMemberDto(workspaceMember, userWorkspaceId),
-      ),
+  ): DeletedWorkspaceMemberDTO[] {
+    return workspaceMembers.map((workspaceMember) =>
+      this.toDeletedWorkspaceMemberDto(workspaceMember, userWorkspaceId),
     );
   }
 }

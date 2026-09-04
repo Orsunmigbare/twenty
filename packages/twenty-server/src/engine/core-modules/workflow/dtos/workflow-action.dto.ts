@@ -4,7 +4,7 @@ import graphqlTypeJson from 'graphql-type-json';
 
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 import { WorkflowStepPosition } from 'src/engine/core-modules/workflow/dtos/workflow-step-position.dto';
-import { WorkflowActionType } from 'twenty-shared/workflow';
+import { WorkflowActionType } from 'src/modules/workflow/workflow-executor/workflow-actions/types/workflow-action.type';
 
 registerEnumType(WorkflowActionType, {
   name: 'WorkflowActionType',

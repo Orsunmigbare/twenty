@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { FieldActorSource } from 'twenty-shared/types';
-import { canObjectBeManagedByAutomation } from 'twenty-shared/workflow';
+import { canObjectBeManagedByWorkflow } from 'twenty-shared/workflow';
 
 import { CommonCreateOneQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-create-one-query-runner.service';
 import {
@@ -24,8 +24,7 @@ export class CreateRecordService {
   ) {}
 
   async execute(params: CreateRecordParams): Promise<ToolOutput> {
-    const { objectName, objectRecord, authContext, rolePermissionConfig } =
-      params;
+    const { objectName, objectRecord, authContext } = params;
 
     try {
       const {
@@ -36,16 +35,16 @@ export class CreateRecordService {
       } = await this.commonApiContextBuilder.build({
         authContext,
         objectName,
-        rolePermissionConfig,
       });
 
       if (
-        !canObjectBeManagedByAutomation({
+        !canObjectBeManagedByWorkflow({
           nameSingular: flatObjectMetadata.nameSingular,
+          isSystem: flatObjectMetadata.isSystem,
         })
       ) {
         throw new RecordCrudException(
-          'Failed to create: Object cannot be created by automation',
+          'Failed to create: Object cannot be created by workflow',
           RecordCrudExceptionCode.INVALID_REQUEST,
         );
       }

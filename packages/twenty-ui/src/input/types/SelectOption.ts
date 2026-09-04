@@ -1,4 +1,4 @@
-import { type IconComponent } from '@ui/icon';
+import { type IconComponent } from '@ui/display';
 import { type ThemeColor } from '@ui/theme';
 
 export type SelectOption<
@@ -12,5 +12,4 @@ export type SelectOption<
   disabled?: boolean;
   color?: ThemeColor | 'transparent';
   contextualText?: string;
-  searchKeywords?: string;
 };

@@ -5,9 +5,7 @@ import {
   DEFAULT_API_KEY_NAME,
   DEFAULT_API_URL_NAME,
   DEFAULT_APP_ACCESS_TOKEN_NAME,
-  DEFAULT_FUNCTIONS_URL_NAME,
 } from 'twenty-shared/application';
-import { FeatureFlagKey } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { Not, Repository } from 'typeorm';
 import { v4 } from 'uuid';
@@ -18,22 +16,16 @@ import {
   type LogicFunctionTranspileResult,
 } from 'src/engine/core-modules/logic-function/logic-function-drivers/interfaces/logic-function-driver.interface';
 
-import { buildApplicationLogEnvelopes } from 'src/engine/core-modules/event-logs/producers/application-log/build-application-log-envelopes';
-import { parseApplicationLogLines } from 'src/engine/core-modules/event-logs/producers/application-log/parse-application-log-lines';
+import { ApplicationLogsService } from 'src/engine/core-modules/application-logs/application-logs.service';
+import { parseApplicationLogLines } from 'src/engine/core-modules/application-logs/utils/parse-application-log-lines';
 import { ApplicationRegistrationVariableEntity } from 'src/engine/core-modules/application/application-registration-variable/application-registration-variable.entity';
-import { ApplicationStopService } from 'src/engine/core-modules/application/application-stop/application-stop.service';
-import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import type { FlatApplicationVariable } from 'src/engine/metadata-modules/flat-application-variable/types/flat-application-variable.type';
 import { FlatApplication } from 'src/engine/core-modules/application/types/flat-application.type';
-import { EventLogEmitterService } from 'src/engine/core-modules/event-logs/emit/event-log-emitter.service';
-import { LOGIC_FUNCTION_EXECUTED_EVENT } from 'src/engine/core-modules/event-logs/emit/events/workspace-event/logic-function/logic-function-executed';
-import { isBillingExemptApplication } from 'src/engine/core-modules/application/application-marketplace/utils/is-billing-exempt-application.util';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
+import { LOGIC_FUNCTION_EXECUTED_EVENT } from 'src/engine/core-modules/audit/utils/events/workspace-event/logic-function/logic-function-executed';
 import { ApplicationTokenService } from 'src/engine/core-modules/auth/token/services/application-token.service';
-import { NO_BILLING_SUBSCRIPTION } from 'src/engine/core-modules/billing/constants/no-billing-subscription.constant';
 import { BillingUsageService } from 'src/engine/core-modules/billing/services/billing-usage.service';
 import { BillingService } from 'src/engine/core-modules/billing/services/billing.service';
-import { WorkspaceDomainsService } from 'src/engine/core-modules/domain/workspace-domains/services/workspace-domains.service';
-import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { LogicFunctionDriverFactory } from 'src/engine/core-modules/logic-function/logic-function-drivers/logic-function-driver.factory';
 import { buildEnvVar } from 'src/engine/core-modules/logic-function/logic-function-executor/utils/build-env-var';
 import { SecretEncryptionService } from 'src/engine/core-modules/secret-encryption/secret-encryption.service';
@@ -45,16 +37,9 @@ import { UsageResourceType } from 'src/engine/core-modules/usage/enums/usage-res
 import { UsageUnit } from 'src/engine/core-modules/usage/enums/usage-unit.enum';
 import { type UsageEvent } from 'src/engine/core-modules/usage/types/usage-event.type';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
-import { LogicFunctionExecutionMode } from 'src/engine/metadata-modules/logic-function/logic-function.entity';
-import {
-  LogicFunctionException,
-  LogicFunctionExceptionCode,
-} from 'src/engine/metadata-modules/logic-function/logic-function.exception';
 import { FlatLogicFunction } from 'src/engine/metadata-modules/logic-function/types/flat-logic-function.type';
 import { SubscriptionChannel } from 'src/engine/subscriptions/enums/subscription-channel.enum';
 import { SubscriptionService } from 'src/engine/subscriptions/subscription.service';
-import { EventLogLiveService } from 'src/engine/core-modules/event-logs/live/event-log-live.service';
-import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceEventEmitter } from 'src/engine/workspace-event-emitter/workspace-event-emitter';
 import { cleanServerUrl } from 'src/utils/clean-server-url';
@@ -86,17 +71,11 @@ export class LogicFunctionExecutorService {
     private readonly applicationTokenService: ApplicationTokenService,
     private readonly secretEncryptionService: SecretEncryptionService,
     private readonly subscriptionService: SubscriptionService,
-    private readonly eventLogLiveService: EventLogLiveService,
-    private readonly eventLogEmitterService: EventLogEmitterService,
+    private readonly auditService: AuditService,
+    private readonly applicationLogsService: ApplicationLogsService,
     private readonly workspaceEventEmitter: WorkspaceEventEmitter,
     private readonly billingService: BillingService,
     private readonly billingUsageService: BillingUsageService,
-    private readonly featureFlagService: FeatureFlagService,
-    private readonly workspaceDomainsService: WorkspaceDomainsService,
-    private readonly applicationService: ApplicationService,
-    private readonly applicationStopService: ApplicationStopService,
-    @InjectRepository(WorkspaceEntity)
-    private readonly workspaceRepository: Repository<WorkspaceEntity>,
     @InjectRepository(ApplicationRegistrationVariableEntity)
     private readonly applicationRegistrationVariableRepository: Repository<ApplicationRegistrationVariableEntity>,
   ) {}
@@ -107,26 +86,20 @@ export class LogicFunctionExecutorService {
     payload,
     userId,
     userWorkspaceId,
-    executionMode,
   }: {
     logicFunctionId: string;
     workspaceId: string;
     payload: object;
     userId?: string;
     userWorkspaceId?: string;
-    executionMode?: LogicFunctionExecutionMode;
   }): Promise<LogicFunctionExecuteResult> {
+    await this.throttleExecution(workspaceId);
+
     const { flatApplication, flatLogicFunction, flatApplicationVariables } =
       await this.getFlatEntitiesOrThrow({
         workspaceId,
         logicFunctionId,
       });
-
-    // Checked before the shared workspace throttle so a flood from a stopped
-    // application cannot exhaust the token bucket of the other applications.
-    await this.assertApplicationNotStopped(flatApplication);
-
-    await this.throttleExecution(workspaceId);
 
     const envVariables = await this.getExecutionEnvVariables({
       workspaceId,
@@ -138,19 +111,6 @@ export class LogicFunctionExecutorService {
 
     const driver = this.logicFunctionDriverFactory.getCurrentDriver();
 
-    const effectiveExecutionMode = await this.resolveEffectiveExecutionMode({
-      workspaceId,
-      flatLogicFunction,
-      callerOverride: executionMode,
-    });
-
-    if (effectiveExecutionMode === LogicFunctionExecutionMode.PREBUILT) {
-      await this.assertPrebuiltBundleInstalled({
-        driver,
-        flatLogicFunction,
-      });
-    }
-
     let resultLogicFunction: LogicFunctionExecuteResult;
 
     try {
@@ -161,15 +121,13 @@ export class LogicFunctionExecutorService {
         payload,
         env: envVariables,
         timeoutMs: flatLogicFunction.timeoutSeconds * 1_000,
-        forceExecutionMode: effectiveExecutionMode,
       });
     } catch (error) {
       this.logger.error(
         `Logic function execution failed: ` +
           `functionId=${logicFunctionId}, ` +
           `workspaceId=${workspaceId}, ` +
-          `driver=${driver.constructor.name}, ` +
-          `mode=${effectiveExecutionMode}: ` +
+          `driver=${driver.constructor.name}: ` +
           `${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error.stack : undefined,
       );
@@ -186,73 +144,12 @@ export class LogicFunctionExecutorService {
     return resultLogicFunction;
   }
 
-  private async resolveEffectiveExecutionMode({
-    workspaceId,
-    flatLogicFunction,
-    callerOverride,
-  }: {
-    workspaceId: string;
-    flatLogicFunction: FlatLogicFunction;
-    callerOverride?: LogicFunctionExecutionMode;
-  }): Promise<LogicFunctionExecutionMode> {
-    if (isDefined(callerOverride)) {
-      return callerOverride;
-    }
-
-    const isPrebuiltModeEnabled =
-      await this.featureFlagService.isFeatureEnabled(
-        FeatureFlagKey.IS_LOGIC_FUNCTION_PREBUILT_MODE_ENABLED,
-        workspaceId,
-      );
-
-    if (!isPrebuiltModeEnabled) {
-      return LogicFunctionExecutionMode.LIVE;
-    }
-
-    return flatLogicFunction.executionMode ?? LogicFunctionExecutionMode.LIVE;
-  }
-
-  private async assertPrebuiltBundleInstalled({
-    driver,
-    flatLogicFunction,
-  }: {
-    driver: ReturnType<LogicFunctionDriverFactory['getCurrentDriver']>;
-    flatLogicFunction: FlatLogicFunction;
-  }): Promise<void> {
-    const installedChecksum =
-      await driver.getInstalledBundleChecksum(flatLogicFunction);
-
-    if (installedChecksum !== flatLogicFunction.checksum) {
-      throw new LogicFunctionException(
-        `Prebuilt bundle is not installed for function '${flatLogicFunction.id}' ` +
-          `(installed=${installedChecksum ?? 'none'}, expected=${flatLogicFunction.checksum ?? 'none'}). ` +
-          `Rebuild and try again.`,
-        LogicFunctionExceptionCode.LOGIC_FUNCTION_PREBUILT_BUNDLE_NOT_INSTALLED,
-      );
-    }
-  }
-
   async transpile(
     params: LogicFunctionTranspileParams,
   ): Promise<LogicFunctionTranspileResult> {
     const driver = this.logicFunctionDriverFactory.getCurrentDriver();
 
     return driver.transpile(params);
-  }
-
-  private async assertApplicationNotStopped(
-    flatApplication: FlatApplication,
-  ): Promise<void> {
-    if (
-      await this.applicationStopService.isApplicationStopped(
-        flatApplication.universalIdentifier,
-      )
-    ) {
-      throw new LogicFunctionException(
-        `Application ${flatApplication.universalIdentifier} is temporarily stopped`,
-        LogicFunctionExceptionCode.LOGIC_FUNCTION_DISABLED,
-      );
-    }
   }
 
   private async throttleExecution(workspaceId: string) {
@@ -351,10 +248,6 @@ export class LogicFunctionExecutorService {
       });
 
     const baseUrl = cleanServerUrl(this.twentyConfigService.get('SERVER_URL'));
-    const functionsBaseUrl = await this.buildFunctionsBaseUrl({
-      workspaceId,
-      flatApplication,
-    });
 
     const serverVariables = await this.buildServerVariableEnvMap(
       flatApplication.applicationRegistrationId,
@@ -368,41 +261,23 @@ export class LogicFunctionExecutorService {
       [DEFAULT_API_URL_NAME]: baseUrl ?? '',
       [DEFAULT_APP_ACCESS_TOKEN_NAME]: applicationAccessToken.token,
       [DEFAULT_API_KEY_NAME]: applicationAccessToken.token,
-      [DEFAULT_FUNCTIONS_URL_NAME]: functionsBaseUrl ?? '',
       APPLICATION_ID: flatApplication.id,
+      // Server variables first, workspace variables override. Workspace-level
+      // values let a specific tenant customize a server default.
       ...serverVariables,
       ...workspaceVariables,
     };
   }
 
-  private async buildFunctionsBaseUrl({
-    workspaceId,
-    flatApplication,
-  }: {
-    workspaceId: string;
-    flatApplication: FlatApplication;
-  }): Promise<string | undefined> {
-    const workspace = await this.workspaceRepository.findOne({
-      where: { id: workspaceId },
-      select: { subdomain: true },
-    });
-
-    if (!isDefined(workspace)) {
-      return undefined;
-    }
-
-    const primaryPublicDomain =
-      await this.applicationService.findPrimaryPublicDomainName({
-        applicationId: flatApplication.id,
-        workspaceId,
-      });
-
-    return this.workspaceDomainsService.buildPublicFunctionBaseUrl({
-      workspace,
-      primaryPublicDomain,
-    });
-  }
-
+  // Resolves encrypted server-level variables (ApplicationRegistrationVariable)
+  // for the application's registration. Returns an empty object when the
+  // application isn't linked to a registration (legacy LOCAL apps).
+  //
+  // Runs on every logic function execution — the query is indexed on
+  // applicationRegistrationId and filters unfilled rows server-side. Most
+  // apps have 0-3 server variables so the round-trip is cheap, but if this
+  // becomes a hot path, move to a WorkspaceCacheProvider mirroring
+  // WorkspaceApplicationVariableMapCacheService.
   private async buildServerVariableEnvMap(
     applicationRegistrationId: string | null,
   ): Promise<Record<string, string>> {
@@ -420,56 +295,18 @@ export class LogicFunctionExecutorService {
 
     const envMap: Record<string, string> = {};
 
+    // ApplicationRegistrationVariable.encryptedValue is always written
+    // encrypted (ApplicationRegistrationVariableService.createVariable and
+    // .updateVariable call encrypt unconditionally), independent of
+    // `isSecret`. `isSecret` is display metadata — the storage contract is
+    // not conditional, so decryption isn't either.
     for (const variable of serverVariables) {
-      if (variable.encryptedValue !== '') {
-        envMap[variable.key] =
-          this.secretEncryptionService.decryptVersionedOrThrow(
-            variable.encryptedValue,
-          );
-      }
+      envMap[variable.key] = this.secretEncryptionService.decrypt(
+        variable.encryptedValue,
+      );
     }
 
     return envMap;
-  }
-
-  private async publishLogicFunctionLogsToCli({
-    result,
-    flatApplication,
-    flatLogicFunction,
-    workspaceId,
-  }: {
-    result: LogicFunctionExecuteResult;
-    workspaceId: string;
-    flatLogicFunction: FlatLogicFunction;
-    flatApplication: FlatApplication;
-  }): Promise<void> {
-    try {
-      const isWatched = await this.eventLogLiveService.isWatched(
-        workspaceId,
-        SubscriptionChannel.LOGIC_FUNCTION_LOGS_CHANNEL,
-      );
-
-      if (!isWatched) {
-        return;
-      }
-
-      await this.subscriptionService.publish({
-        channel: SubscriptionChannel.LOGIC_FUNCTION_LOGS_CHANNEL,
-        workspaceId,
-        payload: {
-          logicFunctionLogs: {
-            logs: result.logs,
-            id: flatLogicFunction.id,
-            name: flatLogicFunction.name,
-            universalIdentifier: flatLogicFunction.universalIdentifier,
-            applicationId: flatApplication.id,
-            applicationUniversalIdentifier: flatApplication.universalIdentifier,
-          },
-        },
-      });
-    } catch (error) {
-      this.logger.error('Failed to publish logic function logs', error);
-    }
   }
 
   private async handleExecutionResult({
@@ -495,22 +332,24 @@ export class LogicFunctionExecutorService {
       executionId,
     }));
 
-    if (this.eventLogEmitterService.isEnabled()) {
-      void this.eventLogEmitterService
-        .dispatch(buildApplicationLogEnvelopes(logEntries))
-        .catch((error) => {
-          this.logger.error('Failed to record application logs', error);
-        });
-    }
+    this.applicationLogsService.writeLogs(logEntries);
 
-    void this.publishLogicFunctionLogsToCli({
-      result,
-      flatApplication,
-      flatLogicFunction,
+    await this.subscriptionService.publish({
+      channel: SubscriptionChannel.LOGIC_FUNCTION_LOGS_CHANNEL,
       workspaceId,
+      payload: {
+        logicFunctionLogs: {
+          logs: result.logs,
+          id: flatLogicFunction.id,
+          name: flatLogicFunction.name,
+          universalIdentifier: flatLogicFunction.universalIdentifier,
+          applicationId: flatApplication.id,
+          applicationUniversalIdentifier: flatApplication.universalIdentifier,
+        },
+      },
     });
 
-    void this.eventLogEmitterService
+    this.auditService
       .createContext({
         workspaceId,
       })
@@ -524,35 +363,21 @@ export class LogicFunctionExecutorService {
         functionName: flatLogicFunction.name,
       });
 
-    // Billing-exempt apps (first-party maintenance apps whose per-record
-    // triggers fire during mailbox/calendar import) do not consume the
-    // workspace's credits for the invocation itself. Explicit chargeCredits
-    // calls and AI token usage from within the function are billed separately
-    // and stay untouched.
-    const creditsUsedMicro = isBillingExemptApplication(
-      flatApplication.universalIdentifier,
-    )
-      ? 0
-      : 100;
-
     let periodStart: Date | undefined;
 
     if (this.billingService.isBillingEnabled()) {
-      const { currentBillingSubscription } =
-        await this.workspaceCacheService.getOrRecompute(workspaceId, [
-          'currentBillingSubscription',
-        ]);
+      const {
+        billingSubscription: { currentPeriodStart },
+      } = await this.workspaceCacheService.getOrRecompute(workspaceId, [
+        'billingSubscription',
+      ]);
 
-      if (currentBillingSubscription !== NO_BILLING_SUBSCRIPTION) {
-        periodStart = currentBillingSubscription.currentPeriodStart;
+      periodStart = currentPeriodStart;
 
-        if (creditsUsedMicro > 0) {
-          await this.billingUsageService.decrementAvailableCreditsInCache({
-            workspaceId,
-            usedCredits: creditsUsedMicro,
-          });
-        }
-      }
+      await this.billingUsageService.decrementAvailableCredits({
+        workspaceId,
+        usedCredits: 100,
+      });
     }
 
     this.workspaceEventEmitter.emitCustomBatchEvent<UsageEvent>(
@@ -561,7 +386,7 @@ export class LogicFunctionExecutorService {
         {
           resourceType: UsageResourceType.LOGIC_FUNCTION,
           operationType: UsageOperationType.CODE_EXECUTION,
-          creditsUsedMicro,
+          creditsUsedMicro: 100,
           quantity: 1,
           unit: UsageUnit.INVOCATION,
           resourceId: flatLogicFunction.id,

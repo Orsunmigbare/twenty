@@ -1,3 +1,4 @@
+import { type DropResult } from '@hello-pangea/dnd';
 import { useStore } from 'jotai';
 import { useCallback, useContext } from 'react';
 import { isDefined } from 'twenty-shared/utils';
@@ -39,31 +40,18 @@ export const useProcessBoardCardDrop = () => {
   );
 
   const processBoardCardDrop = useCallback(
-    (
-      droppableId: string,
-      draggableId: string,
-      targetIndex: number,
-      selectedRecordIds: string[],
-      options?: { shouldUpdatePosition?: boolean },
-    ) => {
+    (boardCardDropResult: DropResult, selectedRecordIds: string[]) => {
       if (!isDefined(selectFieldMetadataItem)) return;
 
-      const shouldUpdatePosition = options?.shouldUpdatePosition ?? true;
-
       processGroupDrop({
-        droppableId,
-        draggableId,
-        targetIndex,
+        groupDropResult: boardCardDropResult,
         store,
         selectedRecordIds,
         recordIdsByGroupFamilyState:
           recordIndexRecordIdsByGroupCallbackFamilyState,
         onUpdateRecord: ({ recordId, position }, targetRecordGroupValue) => {
           updateDroppedRecordOnBoard(
-            {
-              recordId,
-              position: shouldUpdatePosition ? position : undefined,
-            },
+            { recordId, position },
             targetRecordGroupValue,
           );
         },

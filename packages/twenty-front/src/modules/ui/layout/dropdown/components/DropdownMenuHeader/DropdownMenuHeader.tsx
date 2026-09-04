@@ -6,13 +6,8 @@ import { themeCssVariables } from 'twenty-ui/theme-constants';
 const StyledHeader = styled.li`
   align-items: center;
   border-bottom: 1px solid ${themeCssVariables.border.color.light};
-  border-top-left-radius: calc(
-    ${themeCssVariables.border.radius.md} - ${themeCssVariables.spacing[1]}
-  );
-  border-top-right-radius: calc(
-    ${themeCssVariables.border.radius.md} - ${themeCssVariables.spacing[1]}
-  );
-  box-sizing: content-box;
+  border-top-left-radius: ${themeCssVariables.border.radius.sm};
+  border-top-right-radius: ${themeCssVariables.border.radius.sm};
   color: ${themeCssVariables.font.color.primary};
   cursor: ${({ onClick }) => (onClick ? 'pointer' : 'default')};
   display: flex;

@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { CoreEntityCacheModule } from 'src/engine/core-entity-cache/core-entity-cache.module';
-import { ApplicationModule } from 'src/engine/core-modules/application/application.module';
 import { ApplicationRegistrationModule } from 'src/engine/core-modules/application/application-registration/application-registration.module';
+import { ApplicationInstallModule } from 'src/engine/core-modules/application/application-install/application-install.module';
 import { MarketplaceCatalogSyncCronCommand } from 'src/engine/core-modules/application/application-marketplace/crons/commands/marketplace-catalog-sync.cron.command';
 import { MarketplaceCatalogSyncCronJob } from 'src/engine/core-modules/application/application-marketplace/crons/marketplace-catalog-sync.cron.job';
-import { MarketplaceCatalogCacheProviderService } from 'src/engine/core-modules/application/application-marketplace/marketplace-catalog-cache-provider.service';
 import { MarketplaceCatalogSyncService } from 'src/engine/core-modules/application/application-marketplace/marketplace-catalog-sync.service';
-import { MarketplacePublicResolver } from 'src/engine/core-modules/application/application-marketplace/marketplace-public.resolver';
 import { MarketplaceQueryService } from 'src/engine/core-modules/application/application-marketplace/marketplace-query.service';
 import { MarketplaceResolver } from 'src/engine/core-modules/application/application-marketplace/marketplace.resolver';
 import { MarketplaceService } from 'src/engine/core-modules/application/application-marketplace/marketplace.service';
@@ -18,9 +15,8 @@ import { MarketplaceCatalogSyncCommand } from 'src/engine/core-modules/applicati
 
 @Module({
   imports: [
-    ApplicationModule,
     ApplicationRegistrationModule,
-    CoreEntityCacheModule,
+    ApplicationInstallModule,
     FeatureFlagModule,
     PermissionsModule,
     TwentyConfigModule,
@@ -29,12 +25,10 @@ import { MarketplaceCatalogSyncCommand } from 'src/engine/core-modules/applicati
     MarketplaceService,
     MarketplaceCatalogSyncService,
     MarketplaceQueryService,
-    MarketplaceCatalogCacheProviderService,
     MarketplaceCatalogSyncCronJob,
     MarketplaceCatalogSyncCronCommand,
     MarketplaceCatalogSyncCommand,
     MarketplaceResolver,
-    MarketplacePublicResolver,
   ],
   exports: [
     MarketplaceCatalogSyncService,

@@ -1,7 +1,7 @@
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 
-import { IconChevronDown } from 'twenty-ui/icon';
+import { IconChevronDown } from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 type FieldWidgetShowMoreButtonProps = {

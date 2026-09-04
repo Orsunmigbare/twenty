@@ -21,6 +21,18 @@ export class MessagingMonitoringService {
     messageChannelId: _messageChannelId,
     message: _message,
   }: MessagingMonitoringTrackInput): Promise<void> {
-    // TODO: emit monitoring once Prometheus lands
+    // TODO: replace once we have Prometheus
+    /*
+    await this.auditService
+      .createContext({
+        userId,
+        workspaceId,
+      })
+      .insertWorkspaceEvent(MONITORING_EVENT, {
+        eventName: `messaging.${eventName}`,
+        connectedAccountId,
+        messageChannelId,
+        message,
+      }); */
   }
 }

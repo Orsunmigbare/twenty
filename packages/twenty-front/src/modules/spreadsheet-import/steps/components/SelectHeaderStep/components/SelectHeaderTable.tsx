@@ -28,17 +28,16 @@ export const SelectHeaderTable = ({
       rows={importedRows}
       columns={columns}
       selectedRows={selectedRowIndexes}
-      onSelectedRowsChange={(newSelectedRows) => {
-        for (const value of newSelectedRows) {
-          const rowIndex = Number(value);
-          if (!selectedRowIndexes.has(rowIndex)) {
-            setSelectedRowIndexes(new Set([rowIndex]));
+      onSelectedRowsChange={(newRowIndexes: number[]) => {
+        newRowIndexes.forEach((value) => {
+          if (!selectedRowIndexes.has(value)) {
+            setSelectedRowIndexes(new Set([value]));
             return;
           }
-        }
+        });
       }}
-      onCellClick={(args) => {
-        setSelectedRowIndexes(new Set([importedRows.indexOf(args.row)]));
+      onRowClick={(row: any) => {
+        setSelectedRowIndexes(new Set([importedRows.indexOf(row)]));
       }}
       headerRowHeight={0}
     />

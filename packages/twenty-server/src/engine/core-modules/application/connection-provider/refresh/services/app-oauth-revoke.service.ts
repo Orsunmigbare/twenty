@@ -5,7 +5,6 @@ import { isDefined } from 'twenty-shared/utils';
 import { ConnectionProviderService } from 'src/engine/core-modules/application/connection-provider/connection-provider.service';
 import { SecureHttpClientService } from 'src/engine/core-modules/secure-http-client/secure-http-client.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
-import { ConnectedAccountTokenEncryptionService } from 'src/engine/metadata-modules/connected-account/services/connected-account-token-encryption.service';
 
 @Injectable()
 export class AppOAuthRevokeService {
@@ -14,7 +13,6 @@ export class AppOAuthRevokeService {
   constructor(
     private readonly connectionProviderService: ConnectionProviderService,
     private readonly secureHttpClientService: SecureHttpClientService,
-    private readonly connectedAccountTokenEncryptionService: ConnectedAccountTokenEncryptionService,
   ) {}
 
   // Best-effort: failures are logged but never block disconnect.
@@ -43,12 +41,6 @@ export class AppOAuthRevokeService {
     }
 
     try {
-      const decryptedAccessToken =
-        this.connectedAccountTokenEncryptionService.decrypt({
-          ciphertext: connectedAccount.accessToken,
-          workspaceId: connectedAccount.workspaceId,
-        });
-
       const response = await this.secureHttpClientService.createSsrfSafeFetch()(
         revokeEndpoint,
         {
@@ -57,7 +49,7 @@ export class AppOAuthRevokeService {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            token: decryptedAccessToken,
+            token: connectedAccount.accessToken,
             token_type_hint: 'access_token',
           }).toString(),
         },

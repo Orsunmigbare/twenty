@@ -1,23 +1,23 @@
 import { SummaryCard } from '@/object-record/record-show/components/SummaryCard';
-import { PageLayoutWidgetDndProvider } from '@/page-layout/components/dnd/PageLayoutWidgetDndProvider';
 import { PageLayoutContent } from '@/page-layout/components/PageLayoutContent';
 import { PageLayoutEditModeProvider } from '@/page-layout/components/PageLayoutEditModeProvider';
 import { PageLayoutInitializationQueryEffect } from '@/page-layout/components/PageLayoutInitializationQueryEffect';
 import { PageLayoutRecordPageCustomizationSessionRegistrationEffect } from '@/page-layout/components/PageLayoutRecordPageCustomizationSessionRegistrationEffect';
+import { PageLayoutRelationWidgetsSyncEffect } from '@/page-layout/components/PageLayoutRelationWidgetsSyncEffect';
 import { PageLayoutContentProvider } from '@/page-layout/contexts/PageLayoutContentContext';
 import { useCurrentPageLayoutOrThrow } from '@/page-layout/hooks/useCurrentPageLayoutOrThrow';
-import { useIsPageLayoutInEditMode } from '@/page-layout/hooks/useIsPageLayoutInEditMode';
 import { usePageLayoutTabWithVisibleWidgetsOrThrow } from '@/page-layout/hooks/usePageLayoutTabWithVisibleWidgetsOrThrow';
 import { PageLayoutComponentInstanceContext } from '@/page-layout/states/contexts/PageLayoutComponentInstanceContext';
 import { pageLayoutIsInitializedComponentState } from '@/page-layout/states/pageLayoutIsInitializedComponentState';
 import { getTabLayoutMode } from '@/page-layout/utils/getTabLayoutMode';
 import { getTabListInstanceIdFromPageLayoutAndRecord } from '@/page-layout/utils/getTabListInstanceIdFromPageLayoutAndRecord';
-import { getTabPresentation } from '@/page-layout/utils/getTabPresentation';
 import { sortTabsByPosition } from '@/page-layout/utils/sortTabsByPosition';
 import { useLayoutRenderingContext } from '@/ui/layout/contexts/LayoutRenderingContext';
 import { useTargetRecord } from '@/ui/layout/contexts/useTargetRecord';
 import { TabListComponentInstanceContext } from '@/ui/layout/tab-list/states/contexts/TabListComponentInstanceContext';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
+import { useFeatureFlagsMap } from '@/workspace/hooks/useFeatureFlagsMap';
+import { FeatureFlagKey } from '~/generated-metadata/graphql';
 
 type PageLayoutSingleTabRendererProps = {
   pageLayoutId: string;
@@ -39,7 +39,6 @@ const PageLayoutSingleTabRendererInner = () => {
   const { currentPageLayout } = useCurrentPageLayoutOrThrow();
   const targetRecordIdentifier = useTargetRecord();
   const { isInSidePanel } = useLayoutRenderingContext();
-  const isPageLayoutInEditMode = useIsPageLayoutInEditMode();
 
   const sortedActiveTabs = sortTabsByPosition(
     currentPageLayout.tabs.filter((tab) => tab.isActive),
@@ -55,12 +54,6 @@ const PageLayoutSingleTabRendererInner = () => {
     pageLayoutType: currentPageLayout.type,
   });
 
-  const presentation = getTabPresentation({
-    widgets: firstTabWithVisibleWidgets.widgets,
-    layoutMode,
-    isInEditMode: isPageLayoutInEditMode,
-  });
-
   return (
     <>
       <SummaryCard
@@ -73,12 +66,9 @@ const PageLayoutSingleTabRendererInner = () => {
         value={{
           tabId: firstTab.id,
           layoutMode,
-          presentation,
         }}
       >
-        <PageLayoutWidgetDndProvider>
-          <PageLayoutContent />
-        </PageLayoutWidgetDndProvider>
+        <PageLayoutContent />
       </PageLayoutContentProvider>
     </>
   );
@@ -88,6 +78,10 @@ export const PageLayoutSingleTabRenderer = ({
   pageLayoutId,
 }: PageLayoutSingleTabRendererProps) => {
   const { targetRecordIdentifier, layoutType } = useLayoutRenderingContext();
+
+  const featureFlags = useFeatureFlagsMap();
+  const isRecordPageLayoutEditingEnabled =
+    featureFlags[FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED];
 
   const tabListInstanceId = getTabListInstanceIdFromPageLayoutAndRecord({
     pageLayoutId,
@@ -112,6 +106,9 @@ export const PageLayoutSingleTabRenderer = ({
         >
           <PageLayoutInitializationQueryEffect pageLayoutId={pageLayoutId} />
           <PageLayoutRecordPageCustomizationSessionRegistrationEffect />
+          {!isRecordPageLayoutEditingEnabled && (
+            <PageLayoutRelationWidgetsSyncEffect pageLayoutId={pageLayoutId} />
+          )}
           <PageLayoutSingleTabRendererContent />
         </PageLayoutEditModeProvider>
       </TabListComponentInstanceContext.Provider>

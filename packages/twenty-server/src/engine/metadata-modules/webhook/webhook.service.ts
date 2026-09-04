@@ -13,8 +13,6 @@ import { fromDeleteWebhookInputToFlatWebhookOrThrow } from 'src/engine/metadata-
 import { fromFlatWebhookToWebhookDto } from 'src/engine/metadata-modules/flat-webhook/utils/from-flat-webhook-to-webhook-dto.util';
 import { fromUpdateWebhookInputToFlatWebhookToUpdateOrThrow } from 'src/engine/metadata-modules/flat-webhook/utils/from-update-webhook-input-to-flat-webhook-to-update-or-throw.util';
 import { fromWebhookEntityToFlatWebhook } from 'src/engine/metadata-modules/flat-webhook/utils/from-webhook-entity-to-flat-webhook.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { type CreateWebhookInput } from 'src/engine/metadata-modules/webhook/dtos/create-webhook.input';
 import { type UpdateWebhookInput } from 'src/engine/metadata-modules/webhook/dtos/update-webhook.input';
 import { type WebhookDTO } from 'src/engine/metadata-modules/webhook/dtos/webhook.dto';
@@ -26,8 +24,8 @@ import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspa
 @Injectable()
 export class WebhookService {
   constructor(
-    @InjectWorkspaceScopedRepository(WebhookEntity)
-    private readonly webhookRepository: WorkspaceScopedRepository<WebhookEntity>,
+    @InjectRepository(WebhookEntity)
+    private readonly webhookRepository: Repository<WebhookEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
@@ -47,8 +45,8 @@ export class WebhookService {
 
   async findAll(workspaceId: string): Promise<WebhookDTO[]> {
     const [webhooks, applications] = await Promise.all([
-      this.webhookRepository.find(workspaceId, {
-        where: { deletedAt: IsNull() },
+      this.webhookRepository.find({
+        where: { workspaceId, deletedAt: IsNull() },
         order: { createdAt: 'ASC' },
       }),
       this.applicationRepository.find({
@@ -72,8 +70,8 @@ export class WebhookService {
 
   async findById(id: string, workspaceId: string): Promise<WebhookDTO | null> {
     const [webhook, applications] = await Promise.all([
-      this.webhookRepository.findOne(workspaceId, {
-        where: { id, deletedAt: IsNull() },
+      this.webhookRepository.findOne({
+        where: { id, workspaceId, deletedAt: IsNull() },
       }),
       this.applicationRepository.find({
         where: { workspaceId },

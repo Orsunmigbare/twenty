@@ -19,7 +19,6 @@ export const METADATA_EVENTS_TO_EMIT = {
   pageLayoutTab: true,
   commandMenuItem: true,
   navigationMenuItem: true,
-  rolePermissionFlag: true,
   permissionFlag: true,
   objectPermission: true,
   fieldPermission: true,
@@ -31,5 +30,4 @@ export const METADATA_EVENTS_TO_EMIT = {
   webhook: false,
   applicationVariable: false,
   connectionProvider: true,
-  searchFieldMetadata: true,
 } as const satisfies { [P in AllMetadataName]: boolean };

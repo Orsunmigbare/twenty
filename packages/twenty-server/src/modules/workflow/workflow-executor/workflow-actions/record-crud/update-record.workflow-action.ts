@@ -82,10 +82,7 @@ export class UpdateRecordWorkflowAction implements WorkflowAction {
       );
     }
 
-    const {
-      formattedRecord: formattedObjectRecord,
-      joinColumnNamesByMorphFieldName,
-    } = formatWorkflowRecordRelationFields(
+    const formattedObjectRecord = formatWorkflowRecordRelationFields(
       workflowActionInput.objectRecord,
       objectMetadataInfo,
     );
@@ -96,11 +93,7 @@ export class UpdateRecordWorkflowAction implements WorkflowAction {
       objectMetadataInfo.flatFieldMetadataMaps,
     );
 
-    const expandedFieldsToUpdate = workflowActionInput.fieldsToUpdate?.flatMap(
-      (fieldName) => joinColumnNamesByMorphFieldName[fieldName] ?? [fieldName],
-    );
-
-    const filteredFieldsToUpdate = expandedFieldsToUpdate?.filter(
+    const filteredFieldsToUpdate = workflowActionInput.fieldsToUpdate?.filter(
       (fieldName) => fieldName in filteredObjectRecord,
     );
 

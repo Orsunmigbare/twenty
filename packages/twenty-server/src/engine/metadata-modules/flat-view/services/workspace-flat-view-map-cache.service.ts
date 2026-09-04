@@ -18,8 +18,6 @@ import { ViewFilterEntity } from 'src/engine/metadata-modules/view-filter/entiti
 import { ViewGroupEntity } from 'src/engine/metadata-modules/view-group/entities/view-group.entity';
 import { ViewSortEntity } from 'src/engine/metadata-modules/view-sort/entities/view-sort.entity';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { regroupEntitiesByRelatedEntityId } from 'src/engine/workspace-cache/utils/regroup-entities-by-related-entity-id';
@@ -29,26 +27,26 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatViewMaps')
 export class WorkspaceFlatViewMapCacheService extends WorkspaceCacheProvider<FlatViewMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(ViewEntity)
-    private readonly viewRepository: WorkspaceScopedRepository<ViewEntity>,
+    @InjectRepository(ViewEntity)
+    private readonly viewRepository: Repository<ViewEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
     @InjectRepository(ObjectMetadataEntity)
     private readonly objectMetadataRepository: Repository<ObjectMetadataEntity>,
     @InjectRepository(FieldMetadataEntity)
     private readonly fieldMetadataRepository: Repository<FieldMetadataEntity>,
-    @InjectWorkspaceScopedRepository(ViewFieldEntity)
-    private readonly viewFieldRepository: WorkspaceScopedRepository<ViewFieldEntity>,
-    @InjectWorkspaceScopedRepository(ViewFilterEntity)
-    private readonly viewFilterRepository: WorkspaceScopedRepository<ViewFilterEntity>,
-    @InjectWorkspaceScopedRepository(ViewGroupEntity)
-    private readonly viewGroupRepository: WorkspaceScopedRepository<ViewGroupEntity>,
-    @InjectWorkspaceScopedRepository(ViewFilterGroupEntity)
-    private readonly viewFilterGroupRepository: WorkspaceScopedRepository<ViewFilterGroupEntity>,
-    @InjectWorkspaceScopedRepository(ViewSortEntity)
-    private readonly viewSortRepository: WorkspaceScopedRepository<ViewSortEntity>,
-    @InjectWorkspaceScopedRepository(ViewFieldGroupEntity)
-    private readonly viewFieldGroupRepository: WorkspaceScopedRepository<ViewFieldGroupEntity>,
+    @InjectRepository(ViewFieldEntity)
+    private readonly viewFieldRepository: Repository<ViewFieldEntity>,
+    @InjectRepository(ViewFilterEntity)
+    private readonly viewFilterRepository: Repository<ViewFilterEntity>,
+    @InjectRepository(ViewGroupEntity)
+    private readonly viewGroupRepository: Repository<ViewGroupEntity>,
+    @InjectRepository(ViewFilterGroupEntity)
+    private readonly viewFilterGroupRepository: Repository<ViewFilterGroupEntity>,
+    @InjectRepository(ViewSortEntity)
+    private readonly viewSortRepository: Repository<ViewSortEntity>,
+    @InjectRepository(ViewFieldGroupEntity)
+    private readonly viewFieldGroupRepository: Repository<ViewFieldGroupEntity>,
   ) {
     super();
   }
@@ -66,7 +64,8 @@ export class WorkspaceFlatViewMapCacheService extends WorkspaceCacheProvider<Fla
       viewSorts,
       viewFieldGroups,
     ] = await Promise.all([
-      this.viewRepository.find(workspaceId, {
+      this.viewRepository.find({
+        where: { workspaceId },
         withDeleted: true,
       }),
       this.applicationRepository.find({
@@ -84,27 +83,33 @@ export class WorkspaceFlatViewMapCacheService extends WorkspaceCacheProvider<Fla
         select: ['id', 'universalIdentifier'],
         withDeleted: true,
       }),
-      this.viewFieldRepository.find(workspaceId, {
+      this.viewFieldRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),
-      this.viewFilterRepository.find(workspaceId, {
+      this.viewFilterRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),
-      this.viewGroupRepository.find(workspaceId, {
+      this.viewGroupRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),
-      this.viewFilterGroupRepository.find(workspaceId, {
+      this.viewFilterGroupRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),
-      this.viewSortRepository.find(workspaceId, {
+      this.viewSortRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),
-      this.viewFieldGroupRepository.find(workspaceId, {
+      this.viewFieldGroupRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier', 'viewId'],
         withDeleted: true,
       }),

@@ -33,17 +33,16 @@ import { AgentDTO } from 'src/engine/metadata-modules/ai/ai-agent/dtos/agent.dto
 import { fromFlatAgentWithRoleIdToAgentDto } from 'src/engine/metadata-modules/flat-agent/utils/from-agent-entity-to-agent-dto.util';
 import { FieldPermissionDTO } from 'src/engine/metadata-modules/object-permission/dtos/field-permission.dto';
 import { ObjectPermissionDTO } from 'src/engine/metadata-modules/object-permission/dtos/object-permission.dto';
-import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
 import { UpsertFieldPermissionsInput } from 'src/engine/metadata-modules/object-permission/dtos/upsert-field-permissions.input';
 import { UpsertObjectPermissionsInput } from 'src/engine/metadata-modules/object-permission/dtos/upsert-object-permissions.input';
 import { FieldPermissionService } from 'src/engine/metadata-modules/object-permission/field-permission/field-permission.service';
 import { ObjectPermissionService } from 'src/engine/metadata-modules/object-permission/object-permission.service';
 import { fromFlatFieldPermissionToFieldPermissionDto } from 'src/engine/metadata-modules/object-permission/utils/from-flat-field-permission-to-field-permission-dto.util';
 import { fromFlatObjectPermissionToObjectPermissionDto } from 'src/engine/metadata-modules/object-permission/utils/from-flat-object-permission-to-object-permission-dto.util';
-import { RolePermissionFlagDTO } from 'src/engine/metadata-modules/role-permission-flag/dtos/role-permission-flag.dto';
-import { UpsertPermissionFlagsInput } from 'src/engine/metadata-modules/role-permission-flag/dtos/upsert-permission-flags.input';
-import { RolePermissionFlagService } from 'src/engine/metadata-modules/role-permission-flag/role-permission-flag.service';
-import { fromFlatRolePermissionFlagToRolePermissionFlagDto } from 'src/engine/metadata-modules/role-permission-flag/utils/from-flat-role-permission-flag-to-role-permission-flag-dto.util';
+import { PermissionFlagDTO } from 'src/engine/metadata-modules/permission-flag/dtos/permission-flag.dto';
+import { UpsertPermissionFlagsInput } from 'src/engine/metadata-modules/permission-flag/dtos/upsert-permission-flag-input';
+import { PermissionFlagService } from 'src/engine/metadata-modules/permission-flag/permission-flag.service';
+import { fromFlatPermissionFlagToPermissionFlagDto } from 'src/engine/metadata-modules/permission-flag/utils/from-flat-permission-flag-to-permission-flag-dto.util';
 import {
   PermissionsException,
   PermissionsExceptionCode,
@@ -57,6 +56,7 @@ import {
 } from 'src/engine/metadata-modules/role/dtos/role.dto';
 import { UpdateRoleInput } from 'src/engine/metadata-modules/role/dtos/update-role.input';
 import { RoleService } from 'src/engine/metadata-modules/role/role.service';
+import { fromRoleEntitiesToRoleDtos } from 'src/engine/metadata-modules/role/utils/fromRoleEntityToRoleDto.util';
 import { UpsertRowLevelPermissionPredicatesInput } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/inputs/upsert-row-level-permission-predicates.input';
 import { RowLevelPermissionPredicateGroupDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate-group.dto';
 import { RowLevelPermissionPredicateDTO } from 'src/engine/metadata-modules/row-level-permission-predicate/dtos/row-level-permission-predicate.dto';
@@ -87,7 +87,7 @@ export class RoleResolver {
     private readonly roleService: RoleService,
     private readonly userWorkspaceService: UserWorkspaceService,
     private readonly objectPermissionService: ObjectPermissionService,
-    private readonly rolePermissionFlagService: RolePermissionFlagService,
+    private readonly settingPermissionService: PermissionFlagService,
     private readonly agentRoleService: AiAgentRoleService,
     private readonly apiKeyRoleService: ApiKeyRoleService,
     private readonly fieldPermissionService: FieldPermissionService,
@@ -95,14 +95,15 @@ export class RoleResolver {
     private readonly rowLevelPermissionPredicateService: RowLevelPermissionPredicateService,
     private readonly rowLevelPermissionPredicateGroupService: RowLevelPermissionPredicateGroupService,
     private readonly workspaceCacheService: WorkspaceCacheService,
-    private readonly workspaceManyOrAllFlatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
   ) {}
 
   @Query(() => [RoleDTO])
   async getRoles(
     @AuthWorkspace() workspace: WorkspaceEntity,
   ): Promise<RoleDTO[]> {
-    return this.roleService.getWorkspaceRoles(workspace.id);
+    const roleEntities = await this.roleService.getWorkspaceRoles(workspace.id);
+
+    return fromRoleEntitiesToRoleDtos(roleEntities);
   }
 
   @Mutation(() => WorkspaceMemberDTO)
@@ -222,31 +223,18 @@ export class RoleResolver {
     );
   }
 
-  @Mutation(() => [RolePermissionFlagDTO])
+  @Mutation(() => [PermissionFlagDTO])
   async upsertPermissionFlags(
     @AuthWorkspace() workspace: WorkspaceEntity,
     @Args('upsertPermissionFlagsInput')
     upsertPermissionFlagsInput: UpsertPermissionFlagsInput,
-  ): Promise<RolePermissionFlagDTO[]> {
-    const flatRolePermissionFlags =
-      await this.rolePermissionFlagService.upsertPermissionFlags({
+  ): Promise<PermissionFlagDTO[]> {
+    const flatPermissionFlags =
+      await this.settingPermissionService.upsertPermissionFlags({
         workspaceId: workspace.id,
         input: upsertPermissionFlagsInput,
       });
-    const { flatPermissionFlagMaps } =
-      await this.workspaceManyOrAllFlatEntityMapsCacheService.getOrRecomputeManyOrAllFlatEntityMaps(
-        {
-          workspaceId: workspace.id,
-          flatMapsKeys: ['flatPermissionFlagMaps'],
-        },
-      );
-
-    return flatRolePermissionFlags.map((flatRolePermissionFlag) =>
-      fromFlatRolePermissionFlagToRolePermissionFlagDto(
-        flatRolePermissionFlag,
-        flatPermissionFlagMaps,
-      ),
-    );
+    return flatPermissionFlags.map(fromFlatPermissionFlagToPermissionFlagDto);
   }
 
   @Mutation(() => [FieldPermissionDTO])

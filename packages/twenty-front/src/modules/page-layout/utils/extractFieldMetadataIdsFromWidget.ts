@@ -35,6 +35,9 @@ export const extractFieldMetadataIdsFromWidget = (
     case 'AggregateChartConfiguration':
       return [config.aggregateFieldMetadataId].filter(isDefined);
 
+    case 'GaugeChartConfiguration':
+      return [config.aggregateFieldMetadataId].filter(isDefined);
+
     case 'IframeConfiguration':
       return [];
 

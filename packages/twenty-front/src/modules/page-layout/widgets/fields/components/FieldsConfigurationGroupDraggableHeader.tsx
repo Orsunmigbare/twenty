@@ -1,14 +1,11 @@
 import { styled } from '@linaria/react';
 import { useContext } from 'react';
 
-import { IconGripVertical } from 'twenty-ui/icon';
-import { Label } from 'twenty-ui/typography';
+import { IconGripVertical, Label } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledContainer = styled.div`
   align-items: center;
-  /* Height below is sized against the content box. */
-  box-sizing: content-box;
   cursor: grab;
   display: flex;
   gap: ${themeCssVariables.spacing[2]};

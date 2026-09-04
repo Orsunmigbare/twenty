@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { isDefined } from 'twenty-shared/utils';
-import { In, IsNull, Not } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 
 import { ApiKeyEntity } from 'src/engine/core-modules/api-key/api-key.entity';
 import {
@@ -14,24 +15,19 @@ import { RoleTargetService } from 'src/engine/metadata-modules/role-target/servi
 import { type RoleDTO } from 'src/engine/metadata-modules/role/dtos/role.dto';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { fromFlatRoleToRoleDto } from 'src/engine/metadata-modules/role/utils/fromFlatRoleToRoleDto.util';
-import {
-  fromRoleEntitiesToRoleDtos,
-  fromRoleEntityToRoleDto,
-} from 'src/engine/metadata-modules/role/utils/fromRoleEntityToRoleDto.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
+import { fromRoleEntityToRoleDto } from 'src/engine/metadata-modules/role/utils/fromRoleEntityToRoleDto.util';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 
 @Injectable()
 export class ApiKeyRoleService {
   constructor(
-    @InjectWorkspaceScopedRepository(RoleTargetEntity)
-    private readonly roleTargetRepository: WorkspaceScopedRepository<RoleTargetEntity>,
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
+    @InjectRepository(RoleTargetEntity)
+    private readonly roleTargetRepository: Repository<RoleTargetEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
 
-    @InjectWorkspaceScopedRepository(ApiKeyEntity)
-    private readonly apiKeyRepository: WorkspaceScopedRepository<ApiKeyEntity>,
+    @InjectRepository(ApiKeyEntity)
+    private readonly apiKeyRepository: Repository<ApiKeyEntity>,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly roleTargetService: RoleTargetService,
   ) {}
@@ -132,8 +128,8 @@ export class ApiKeyRoleService {
     workspaceId: string;
     roleId: string;
   }) {
-    const apiKey = await this.apiKeyRepository.findOne(workspaceId, {
-      where: { id: apiKeyId },
+    const apiKey = await this.apiKeyRepository.findOne({
+      where: { id: apiKeyId, workspaceId },
     });
 
     if (!apiKey) {
@@ -143,8 +139,8 @@ export class ApiKeyRoleService {
       );
     }
 
-    const role = await this.roleRepository.findOne(workspaceId, {
-      where: { id: roleId },
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId, workspaceId },
     });
 
     if (!role) {
@@ -161,30 +157,17 @@ export class ApiKeyRoleService {
       );
     }
 
-    const existingRoleTarget = await this.roleTargetRepository.findOne(
-      workspaceId,
-      {
-        where: {
-          apiKeyId,
-          roleId,
-        },
+    const existingRoleTarget = await this.roleTargetRepository.findOne({
+      where: {
+        apiKeyId,
+        roleId,
+        workspaceId,
       },
-    );
+    });
 
     return {
       roleToAssignIsSameAsCurrentRole: Boolean(existingRoleTarget),
     };
-  }
-
-  public async getApiKeyAssignableRoles(
-    workspaceId: string,
-  ): Promise<RoleDTO[]> {
-    const roles = await this.roleRepository.find(workspaceId, {
-      where: { canBeAssignedToApiKeys: true },
-      order: { label: 'ASC' },
-    });
-
-    return fromRoleEntitiesToRoleDtos(roles);
   }
 
   public async getRolesByApiKeys({
@@ -198,9 +181,10 @@ export class ApiKeyRoleService {
       return new Map();
     }
 
-    const roleTargets = await this.roleTargetRepository.find(workspaceId, {
+    const roleTargets = await this.roleTargetRepository.find({
       where: {
         apiKeyId: In(apiKeyIds),
+        workspaceId,
       },
       relations: ['role'],
     });
@@ -223,9 +207,10 @@ export class ApiKeyRoleService {
     roleId: string,
     workspaceId: string,
   ): Promise<ApiKeyEntity[]> {
-    const roleTargets = await this.roleTargetRepository.find(workspaceId, {
+    const roleTargets = await this.roleTargetRepository.find({
       where: {
         roleId,
+        workspaceId,
         apiKeyId: Not(IsNull()),
       },
     });
@@ -238,8 +223,12 @@ export class ApiKeyRoleService {
       return [];
     }
 
-    const apiKeys = await this.apiKeyRepository.find(workspaceId, {
-      where: { id: In(apiKeyIds), revokedAt: IsNull() },
+    const apiKeys = await this.apiKeyRepository.find({
+      where: {
+        id: In(apiKeyIds),
+        workspaceId,
+        revokedAt: IsNull(),
+      },
     });
 
     return apiKeys;

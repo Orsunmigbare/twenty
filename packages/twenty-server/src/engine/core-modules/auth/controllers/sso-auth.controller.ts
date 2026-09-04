@@ -34,7 +34,6 @@ import { GuardRedirectService } from 'src/engine/core-modules/guard-redirect/ser
 import { SSOService } from 'src/engine/core-modules/sso/services/sso.service';
 import {
   IdentityProviderType,
-  SSOIdentityProviderStatus,
   WorkspaceSSOIdentityProviderEntity,
 } from 'src/engine/core-modules/sso/workspace-sso-identity-provider.entity';
 import { UserService } from 'src/engine/core-modules/user/services/user.service';
@@ -63,7 +62,7 @@ export class SSOAuthController {
     PublicEndpointGuard,
     NoPermissionGuard,
   )
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   async generateMetadata(@Req() req: any): Promise<string | void> {
     return generateServiceProviderMetadata({
       wantAssertionsSigned: true,
@@ -139,10 +138,7 @@ export class SSOAuthController {
       });
 
     try {
-      if (
-        !workspaceIdentityProvider ||
-        workspaceIdentityProvider.status !== SSOIdentityProviderStatus.Active
-      ) {
+      if (!workspaceIdentityProvider) {
         throw new AuthException(
           'Identity provider not found',
           AuthExceptionCode.OAUTH_ACCESS_DENIED,
@@ -170,13 +166,6 @@ export class SSOAuthController {
           AuthExceptionCode.OAUTH_ACCESS_DENIED,
         ),
       );
-
-      if (currentWorkspace.id !== workspaceIdentityProvider.workspaceId) {
-        throw new AuthException(
-          'Identity provider does not belong to this workspace',
-          AuthExceptionCode.OAUTH_ACCESS_DENIED,
-        );
-      }
 
       const oidcTokenClaims =
         'oidcTokenClaims' in req.user ? req.user.oidcTokenClaims : undefined;

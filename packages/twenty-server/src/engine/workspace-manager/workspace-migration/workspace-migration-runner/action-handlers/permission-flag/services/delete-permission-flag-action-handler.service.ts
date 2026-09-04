@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
+import { WorkspaceMigrationRunnerActionHandler } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/interfaces/workspace-migration-runner-action-handler-service.interface';
 import { PermissionFlagEntity } from 'src/engine/metadata-modules/permission-flag/permission-flag.entity';
 import {
-  type FlatDeletePermissionFlagAction,
-  type UniversalDeletePermissionFlagAction,
+  FlatDeletePermissionFlagAction,
+  UniversalDeletePermissionFlagAction,
 } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/permission-flag/types/workspace-migration-permission-flag-action.type';
-import { WorkspaceMigrationRunnerActionHandler } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/interfaces/workspace-migration-runner-action-handler-service.interface';
 import {
-  type WorkspaceMigrationActionRunnerArgs,
-  type WorkspaceMigrationActionRunnerContext,
+  WorkspaceMigrationActionRunnerArgs,
+  WorkspaceMigrationActionRunnerContext,
 } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/types/workspace-migration-action-runner-args.type';
 
 @Injectable()
@@ -31,12 +31,12 @@ export class DeletePermissionFlagActionHandlerService extends WorkspaceMigration
   ): Promise<void> {
     const { flatAction, queryRunner, workspaceId } = context;
 
-    const repository =
+    const permissionFlagRepository =
       queryRunner.manager.getRepository<PermissionFlagEntity>(
         PermissionFlagEntity,
       );
 
-    await repository.delete({
+    await permissionFlagRepository.delete({
       id: flatAction.entityId,
       workspaceId,
     });

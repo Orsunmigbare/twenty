@@ -13,6 +13,4 @@ export const currentUserWorkspaceState =
   createAtomState<CurrentUserWorkspace | null>({
     key: 'currentUserWorkspaceState',
     defaultValue: null,
-    useLocalStorage: true,
-    localStorageOptions: { getOnInit: true },
   });

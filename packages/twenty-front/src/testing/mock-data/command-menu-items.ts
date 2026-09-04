@@ -7,7 +7,6 @@ import {
 export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-go-to-people',
     workflowVersionId: null,
     frontComponentId: null,
@@ -25,7 +24,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-go-to-opportunities',
     workflowVersionId: null,
     frontComponentId: null,
@@ -44,7 +42,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-go-to-settings',
     workflowVersionId: null,
     frontComponentId: null,
@@ -62,7 +59,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-go-to-tasks',
     workflowVersionId: null,
     frontComponentId: null,
@@ -80,7 +76,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-go-to-notes',
     workflowVersionId: null,
     frontComponentId: null,
@@ -98,7 +93,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-search-records',
     workflowVersionId: null,
     frontComponentId: null,
@@ -116,7 +110,6 @@ export const mockedBackendCommandMenuItems: CommandMenuItemFieldsFragment[] = [
   },
   {
     __typename: 'CommandMenuItem',
-    isActive: true,
     id: 'mock-search-records-fallback',
     workflowVersionId: null,
     frontComponentId: null,

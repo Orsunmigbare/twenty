@@ -1,76 +1,115 @@
 import { getWidgetCardVariant } from '@/page-layout/widgets/utils/getWidgetCardVariant';
-import { PageLayoutType } from '~/generated-metadata/graphql';
-
-const baseParams = {
-  isInPinnedTab: false,
-  isMobile: false,
-  isInSidePanel: false,
-};
+import {
+  PageLayoutTabLayoutMode,
+  PageLayoutType,
+} from '~/generated-metadata/graphql';
 
 describe('getWidgetCardVariant', () => {
-  describe('when presentation is solo', () => {
-    it.each([
-      PageLayoutType.RECORD_PAGE,
-      PageLayoutType.STANDALONE_PAGE,
-      PageLayoutType.DASHBOARD,
-      PageLayoutType.RECORD_INDEX,
-    ])("returns 'solo' regardless of pageLayoutType (%s)", (pageLayoutType) => {
-      expect(
-        getWidgetCardVariant({
-          ...baseParams,
-          presentation: 'solo',
-          pageLayoutType,
-        }),
-      ).toBe('solo');
-    });
+  it('should return dashboard for DASHBOARD page layout type', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.DASHBOARD,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('dashboard');
   });
 
-  describe('when presentation is stack', () => {
-    it("returns 'dashboard' for DASHBOARD page", () => {
-      expect(
-        getWidgetCardVariant({
-          ...baseParams,
-          presentation: 'stack',
-          pageLayoutType: PageLayoutType.DASHBOARD,
-        }),
-      ).toBe('dashboard');
-    });
-
-    it("returns 'standalone' for STANDALONE_PAGE", () => {
-      expect(
-        getWidgetCardVariant({
-          ...baseParams,
-          presentation: 'stack',
-          pageLayoutType: PageLayoutType.STANDALONE_PAGE,
-        }),
-      ).toBe('standalone');
-    });
-
-    it("returns 'record-page' for RECORD_PAGE by default", () => {
-      expect(
-        getWidgetCardVariant({
-          ...baseParams,
-          presentation: 'stack',
-          pageLayoutType: PageLayoutType.RECORD_PAGE,
-        }),
-      ).toBe('record-page');
-    });
+  it('should return standalone for STANDALONE_PAGE page layout type', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.STANDALONE_PAGE,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('standalone');
   });
 
-  describe('side-column context for record pages', () => {
-    it.each([
-      ['isInPinnedTab', { isInPinnedTab: true }],
-      ['isMobile', { isMobile: true }],
-      ['isInSidePanel', { isInSidePanel: true }],
-    ])("returns 'side-column' when %s is true", (_label, override) => {
-      expect(
-        getWidgetCardVariant({
-          ...baseParams,
-          ...override,
-          presentation: 'stack',
-          pageLayoutType: PageLayoutType.RECORD_PAGE,
-        }),
-      ).toBe('side-column');
-    });
+  it('should prioritize standalone over canvas', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.CANVAS,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.STANDALONE_PAGE,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('standalone');
+  });
+
+  it('should return canvas for CANVAS layout mode', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.CANVAS,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('canvas');
+  });
+
+  it('should return side-column when isInPinnedTab is true', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: true,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('side-column');
+  });
+
+  it('should return side-column when isMobile is true', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        isMobile: true,
+        isInSidePanel: false,
+      }),
+    ).toBe('side-column');
+  });
+
+  it('should return side-column when isInSidePanel is true', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        isMobile: false,
+        isInSidePanel: true,
+      }),
+    ).toBe('side-column');
+  });
+
+  it('should return record-page as default', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.GRID,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('record-page');
+  });
+
+  it('should prioritize dashboard over canvas', () => {
+    expect(
+      getWidgetCardVariant({
+        layoutMode: PageLayoutTabLayoutMode.CANVAS,
+        isInPinnedTab: false,
+        pageLayoutType: PageLayoutType.DASHBOARD,
+        isMobile: false,
+        isInSidePanel: false,
+      }),
+    ).toBe('dashboard');
   });
 });

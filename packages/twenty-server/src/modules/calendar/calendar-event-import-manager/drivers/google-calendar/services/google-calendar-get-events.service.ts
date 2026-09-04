@@ -1,13 +1,14 @@
+//
 import { Injectable, Logger } from '@nestjs/common';
 
-import { isString } from '@sniptt/guards';
 import { type GaxiosError } from 'gaxios';
-import { google } from 'googleapis';
+import { google, type calendar_v3 as calendarV3 } from 'googleapis';
 
+import { formatGoogleCalendarEvents } from 'src/modules/calendar/calendar-event-import-manager/drivers/google-calendar/utils/format-google-calendar-event.util';
 import { parseGaxiosError } from 'src/modules/calendar/calendar-event-import-manager/drivers/google-calendar/utils/parse-gaxios-error.util';
 import { parseGoogleCalendarError } from 'src/modules/calendar/calendar-event-import-manager/drivers/google-calendar/utils/parse-google-calendar-error.util';
 import { type GetCalendarEventsResponse } from 'src/modules/calendar/calendar-event-import-manager/services/calendar-get-events.service';
-import { GoogleOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 
 @Injectable()
@@ -15,16 +16,20 @@ export class GoogleCalendarGetEventsService {
   private readonly logger = new Logger(GoogleCalendarGetEventsService.name);
 
   constructor(
-    private readonly googleOAuth2ClientProvider: GoogleOAuth2ClientProvider,
+    private readonly oAuth2ClientManagerService: OAuth2ClientManagerService,
   ) {}
 
   public async getCalendarEvents(
-    connectedAccount: Pick<ConnectedAccountEntity, 'provider' | 'id'>,
+    connectedAccount: Pick<
+      ConnectedAccountEntity,
+      'provider' | 'refreshToken' | 'id'
+    >,
     syncCursor?: string,
   ): Promise<GetCalendarEventsResponse> {
-    const oAuth2Client = await this.googleOAuth2ClientProvider.getClient(
-      connectedAccount.id,
-    );
+    const oAuth2Client =
+      await this.oAuth2ClientManagerService.getGoogleOAuth2Client(
+        connectedAccount,
+      );
 
     const googleCalendarClient = google.calendar({
       version: 'v3',
@@ -33,8 +38,7 @@ export class GoogleCalendarGetEventsService {
 
     let nextSyncToken: string | null | undefined;
     let nextPageToken: string | undefined;
-    const calendarEventIds: string[] = [];
-    const calendarEventIdsToDelete: string[] = [];
+    const events: calendarV3.Schema$Event[] = [];
 
     let hasMoreEvents = true;
 
@@ -69,17 +73,7 @@ export class GoogleCalendarGetEventsService {
         break;
       }
 
-      for (const item of items) {
-        if (!isString(item.id)) {
-          continue;
-        }
-
-        if (item.status === 'cancelled') {
-          calendarEventIdsToDelete.push(item.id);
-        } else {
-          calendarEventIds.push(item.id);
-        }
-      }
+      events.push(...items);
 
       if (!nextPageToken) {
         hasMoreEvents = false;
@@ -87,8 +81,8 @@ export class GoogleCalendarGetEventsService {
     }
 
     return {
-      calendarEventIds,
-      calendarEventIdsToDelete,
+      fullEvents: true,
+      calendarEvents: formatGoogleCalendarEvents(events),
       nextSyncCursor: nextSyncToken || '',
     };
   }
@@ -100,7 +94,7 @@ export class GoogleCalendarGetEventsService {
       error,
     );
     if (
-      isString(error.code) &&
+      error.code &&
       [
         'ECONNRESET',
         'ENOTFOUND',

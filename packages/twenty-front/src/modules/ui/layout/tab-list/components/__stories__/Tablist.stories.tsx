@@ -9,14 +9,11 @@ import {
   IconMail,
   IconPhone,
   IconUser,
-} from 'twenty-ui/icon';
-import {
-  AVATAR_URL_MOCK,
-  ComponentWithRouterDecorator,
-} from 'twenty-ui/testing';
+} from 'twenty-ui/display';
+import { ComponentWithRouterDecorator } from 'twenty-ui/testing';
 
 const tabs = [
-  { id: 'general', title: 'General', logo: AVATAR_URL_MOCK },
+  { id: 'general', title: 'General', logo: 'https://picsum.photos/200' },
   { id: 'contacts', title: 'Contacts', Icon: IconUser },
   { id: 'messages', title: 'Messages', Icon: IconMail },
   { id: 'calls', title: 'Calls', Icon: IconPhone },
@@ -26,7 +23,7 @@ const tabs = [
   {
     id: 'time',
     title: 'Time Tracking',
-    logo: AVATAR_URL_MOCK,
+    logo: 'https://picsum.photos/192/192',
   },
   {
     id: 'activity',

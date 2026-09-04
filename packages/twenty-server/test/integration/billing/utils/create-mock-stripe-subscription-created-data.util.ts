@@ -7,7 +7,6 @@ export const createMockStripeSubscriptionCreatedData = (
     object: 'subscription',
     id: 'sub_default',
     customer: 'cus_default1',
-    customer_account: null,
     status: 'active',
     items: {
       data: [

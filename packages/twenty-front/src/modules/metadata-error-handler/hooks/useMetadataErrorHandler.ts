@@ -30,7 +30,6 @@ export const useMetadataErrorHandler = () => {
     viewFilter: t`view filter`,
     index: t`index`,
     logicFunction: t`logic function`,
-    rolePermissionFlag: t`role permission flag`,
     permissionFlag: t`permission flag`,
     objectPermission: t`object permission`,
     fieldPermission: t`field permission`,
@@ -51,7 +50,6 @@ export const useMetadataErrorHandler = () => {
     viewSort: t`view sort`,
     applicationVariable: t`application variable`,
     connectionProvider: t`connection provider`,
-    searchFieldMetadata: t`search field metadata`,
   } as const satisfies Record<AllMetadataName, string>;
 
   const handleMetadataError = (

@@ -1,8 +1,7 @@
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { useContext } from 'react';
-import { IconLock } from 'twenty-ui/icon';
-import { AppTooltip, TooltipDelay } from 'twenty-ui/surfaces';
+import { AppTooltip, IconLock, TooltipDelay } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { MessageChannelVisibility } from '~/generated/graphql';
 
@@ -10,7 +9,7 @@ const StyledContainer = styled.div<{ isCompact?: boolean }>`
   align-items: center;
   background: ${themeCssVariables.background.transparent.lighter};
   border: 1px solid ${themeCssVariables.border.color.light};
-  border-radius: ${themeCssVariables.border.radius.sm};
+  border-radius: 4px;
   color: ${themeCssVariables.font.color.tertiary};
   display: flex;
   flex: 1;

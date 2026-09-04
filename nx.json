@@ -44,12 +44,12 @@
       "cache": true,
       "options": {
         "cwd": "{projectRoot}",
-        "command": "npx oxlint -c .oxlintrc.json . && (npx oxfmt --check . || (echo 'ERROR: oxfmt formatting check failed! Fix with: npx nx lint --configuration=fix' && false))"
+        "command": "npx oxlint -c .oxlintrc.json . && (prettier . --check --cache --cache-location ../../.cache/prettier/{projectRoot} --cache-strategy metadata || (echo 'ERROR: Prettier formatting check failed! Fix with: npx nx lint --configuration=fix' && false))"
       },
       "configurations": {
         "ci": {},
         "fix": {
-          "command": "npx oxlint --fix -c .oxlintrc.json . && npx oxfmt ."
+          "command": "npx oxlint --fix -c .oxlintrc.json . && prettier . --write --cache --cache-location ../../.cache/prettier/{projectRoot} --cache-strategy metadata"
         }
       },
       "dependsOn": ["^build", "twenty-oxlint-rules:build"]
@@ -57,14 +57,13 @@
     "lint:diff-with-main": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["twenty-oxlint-rules:build"],
       "options": {
-        "command": "FILES=$(git diff --name-only --diff-filter=d main -- {projectRoot}/ | grep -E '{args.pattern}'); [ -z \"$FILES\" ] && echo 'No changed files.' || (npx oxlint -c {projectRoot}/.oxlintrc.json $FILES && (npx oxfmt --check $FILES || (echo 'ERROR: oxfmt formatting check failed! Fix with: npx nx lint:diff-with-main --configuration=fix' && false)))",
+        "command": "FILES=$(git diff --name-only --diff-filter=d main -- {projectRoot}/ | grep -E '{args.pattern}'); [ -z \"$FILES\" ] && echo 'No changed files.' || (npx oxlint -c {projectRoot}/.oxlintrc.json $FILES && (prettier --check $FILES || (echo 'ERROR: Prettier formatting check failed! Fix with: npx nx lint:diff-with-main --configuration=fix' && false)))",
         "pattern": "\\.(ts|tsx|js|jsx)$"
       },
       "configurations": {
         "fix": {
-          "command": "FILES=$(git diff --name-only --diff-filter=d main -- {projectRoot}/ | grep -E '{args.pattern}'); [ -z \"$FILES\" ] && echo 'No changed files.' || (npx oxlint --fix -c {projectRoot}/.oxlintrc.json $FILES && npx oxfmt $FILES)"
+          "command": "FILES=$(git diff --name-only --diff-filter=d main -- {projectRoot}/ | grep -E '{args.pattern}'); [ -z \"$FILES\" ] && echo 'No changed files.' || (npx oxlint --fix -c {projectRoot}/.oxlintrc.json $FILES && prettier --write $FILES)"
         }
       }
     },
@@ -73,14 +72,18 @@
       "cache": true,
       "options": {
         "cwd": "{projectRoot}",
-        "command": "npx oxfmt --check {args.files} {args.write}",
-        "files": ".",
-        "write": ""
+        "command": "prettier {args.files} --check --cache {args.cache} --cache-location {args.cacheLocation} --write {args.write} --cache-strategy {args.cacheStrategy}",
+        "cache": true,
+        "cacheLocation": "../../.cache/prettier/{projectRoot}",
+        "cacheStrategy": "metadata",
+        "write": false
       },
       "configurations": {
-        "ci": {},
+        "ci": {
+          "cacheStrategy": "content"
+        },
         "fix": {
-          "command": "npx oxfmt {args.files}"
+          "write": true
         }
       },
       "dependsOn": ["^build"]
@@ -220,6 +223,25 @@
         }
       }
     },
+    "chromatic": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          {
+            "command": "nx storybook:build {projectName}",
+            "forwardAllArgs": false
+          },
+          "chromatic --storybook-build-dir=storybook-static {args.ci}"
+        ],
+        "parallel": false
+      },
+      "configurations": {
+        "ci": {
+          "ci": "--exit-zero-on-changes"
+        }
+      }
+    },
     "@nx/jest:jest": {
       "cache": true,
       "inputs": [
@@ -279,6 +301,5 @@
   "defaultBase": "main",
   "tui": {
     "enabled": false
-  },
-  "analytics": false
+  }
 }

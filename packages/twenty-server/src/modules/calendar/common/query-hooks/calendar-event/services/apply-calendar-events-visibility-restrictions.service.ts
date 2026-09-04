@@ -138,7 +138,6 @@ export class ApplyCalendarEventsVisibilityRestrictionsService {
         return calendarEvents;
       },
       authContext,
-      { lite: true },
     );
   }
 }

@@ -1,24 +1,29 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 
-import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
-import { IsNull, Not, type Repository } from 'typeorm';
+import { type Repository } from 'typeorm';
 
+import { ApprovedAccessDomainEntity } from 'src/engine/core-modules/approved-access-domain/approved-access-domain.entity';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
 import { BillingSubscriptionService } from 'src/engine/core-modules/billing/services/billing-subscription.service';
 import { BillingService } from 'src/engine/core-modules/billing/services/billing.service';
 import { DnsManagerService } from 'src/engine/core-modules/dns-manager/services/dns-manager.service';
 import { CustomDomainManagerService } from 'src/engine/core-modules/domain/custom-domain-manager/services/custom-domain-manager.service';
 import { SubdomainManagerService } from 'src/engine/core-modules/domain/subdomain-manager/services/subdomain-manager.service';
+import { EmailService } from 'src/engine/core-modules/email/email.service';
 import { ExceptionHandlerService } from 'src/engine/core-modules/exception-handler/exception-handler.service';
 import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { FileCorePictureService } from 'src/engine/core-modules/file/file-core-picture/services/file-core-picture.service';
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 import { type MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
 import { getQueueToken } from 'src/engine/core-modules/message-queue/utils/get-queue-token.util';
+import { OnboardingService } from 'src/engine/core-modules/onboarding/onboarding.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { UserWorkspaceService } from 'src/engine/core-modules/user-workspace/user-workspace.service';
+import { UserService } from 'src/engine/core-modules/user/services/user.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
+import { WorkspaceInvitationService } from 'src/engine/core-modules/workspace-invitation/services/workspace-invitation.service';
 import { WorkspaceService } from 'src/engine/core-modules/workspace/services/workspace.service';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { createEmptyAllFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/constant/create-empty-all-flat-entity-maps.constant';
@@ -26,6 +31,7 @@ import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadat
 import { UpgradeMigrationService } from 'src/engine/core-modules/upgrade/services/upgrade-migration.service';
 import { UpgradeSequenceReaderService } from 'src/engine/core-modules/upgrade/services/upgrade-sequence-reader.service';
 import { AiModelRegistryService } from 'src/engine/metadata-modules/ai/ai-models/services/ai-model-registry.service';
+import { ObjectMetadataService } from 'src/engine/metadata-modules/object-metadata/object-metadata.service';
 import { PermissionsService } from 'src/engine/metadata-modules/permissions/permissions.service';
 import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
 import { WorkspaceCacheStorageService } from 'src/engine/workspace-cache-storage/workspace-cache-storage.service';
@@ -33,7 +39,6 @@ import { WorkspaceDataSourceService } from 'src/engine/workspace-datasource/work
 import { PrefillLogicFunctionService } from 'src/engine/workspace-manager/standard-objects-prefill-data/services/prefill-logic-function.service';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { PreInstalledAppsService } from 'src/engine/core-modules/application/pre-installed-apps/pre-installed-apps.service';
-import { SdkClientGenerationService } from 'src/engine/core-modules/sdk-client/sdk-client-generation.service';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 import { WorkspaceManagerService } from 'src/engine/workspace-manager/workspace-manager.service';
 
@@ -58,11 +63,18 @@ describe('WorkspaceService', () => {
             findOne: jest.fn(),
             softDelete: jest.fn(),
             delete: jest.fn(),
-            update: jest.fn(),
-            manager: {
-              connection: { driver: { options: { type: 'postgres' } } },
-            },
-            metadata: { columns: [] },
+          },
+        },
+        {
+          provide: getRepositoryToken(ApprovedAccessDomainEntity),
+          useValue: {
+            findOneBy: jest.fn(),
+          },
+        },
+        {
+          provide: ObjectMetadataService,
+          useValue: {
+            deleteWorkspaceAllObjectMetadata: jest.fn(),
           },
         },
         {
@@ -88,24 +100,34 @@ describe('WorkspaceService', () => {
         {
           provide: BillingSubscriptionService,
           useValue: {
-            cancelSubscription: jest.fn(),
-            assertSubscriptionCanceledOrNone: jest.fn(),
+            deleteSubscriptions: jest.fn(),
+          },
+        },
+        {
+          provide: AuditService,
+          useValue: {
+            createContext: jest.fn(),
           },
         },
         ...[
           WorkspaceManagerService,
+          UserWorkspaceService,
+          UserService,
           DnsManagerService,
           CustomDomainManagerService,
           SubdomainManagerService,
           TwentyConfigService,
-          ExceptionHandlerService,
+          EmailService,
+          OnboardingService,
+          WorkspaceInvitationService,
           PermissionsService,
           FeatureFlagService,
+          ExceptionHandlerService,
+          PermissionsService,
           FileCorePictureService,
           AiModelRegistryService,
           ApplicationService,
           PreInstalledAppsService,
-          SdkClientGenerationService,
           PrefillLogicFunctionService,
           WorkspaceMigrationValidateBuildAndRunService,
           UpgradeMigrationService,
@@ -165,9 +187,6 @@ describe('WorkspaceService', () => {
               manager: {
                 delete: jest.fn().mockResolvedValue({ affected: 0 }),
               },
-            }),
-            getRepository: jest.fn().mockReturnValue({
-              find: jest.fn().mockResolvedValue([]),
             }),
           },
         },
@@ -230,7 +249,6 @@ describe('WorkspaceService', () => {
       expect(userWorkspaceRepository.delete).not.toHaveBeenCalled();
       expect(userRepository.softDelete).toHaveBeenCalledWith('user-id');
     });
-
     it('should destroy the user workspace record', async () => {
       jest.spyOn(userWorkspaceRepository, 'find').mockResolvedValue([
         {
@@ -288,7 +306,7 @@ describe('WorkspaceService', () => {
   });
 
   describe('deleteWorkspace', () => {
-    it('should hard delete the workspace', async () => {
+    it('should delete the workspace', async () => {
       const mockWorkspace = {
         id: 'workspace-id',
         metadataVersion: 0,
@@ -301,15 +319,12 @@ describe('WorkspaceService', () => {
 
       await service.deleteWorkspace(mockWorkspace.id, false);
 
-      expect(
-        billingSubscriptionService.assertSubscriptionCanceledOrNone,
-      ).toHaveBeenCalledWith(mockWorkspace.id);
+      expect(workspaceRepository.softDelete).not.toHaveBeenCalled();
       expect(workspaceCacheStorageService.flush).toHaveBeenCalledWith(
         mockWorkspace.id,
+        mockWorkspace.metadataVersion,
       );
       expect(messageQueueService.add).toHaveBeenCalled();
-      expect(workspaceRepository.delete).toHaveBeenCalledWith(mockWorkspace.id);
-      expect(workspaceRepository.softDelete).not.toHaveBeenCalled();
     });
 
     it('should soft delete the workspace', async () => {
@@ -325,9 +340,8 @@ describe('WorkspaceService', () => {
 
       await service.deleteWorkspace(mockWorkspace.id, true);
 
-      expect(
-        billingSubscriptionService.cancelSubscription,
-      ).toHaveBeenCalledWith(mockWorkspace.id);
+      expect(billingSubscriptionService.deleteSubscriptions).toHaveBeenCalled();
+
       expect(workspaceRepository.softDelete).toHaveBeenCalledWith({
         id: mockWorkspace.id,
       });
@@ -373,38 +387,6 @@ describe('WorkspaceService', () => {
       expect(workspaceRepository.softDelete).toHaveBeenCalledWith({
         id: mockWorkspace.id,
       });
-    });
-  });
-
-  describe('suspendWorkspace', () => {
-    it('should only suspend workspaces that are not already suspended and not soft-deleted', async () => {
-      jest
-        .spyOn(workspaceRepository, 'update')
-        .mockResolvedValue({ affected: 1 } as never);
-
-      const hasBeenSuspended = await service.suspendWorkspace('workspace-id');
-
-      expect(workspaceRepository.update).toHaveBeenCalledWith(
-        {
-          id: 'workspace-id',
-          activationStatus: Not(WorkspaceActivationStatus.SUSPENDED),
-          deletedAt: IsNull(),
-        },
-        expect.objectContaining({
-          activationStatus: WorkspaceActivationStatus.SUSPENDED,
-        }),
-      );
-      expect(hasBeenSuspended).toBe(true);
-    });
-
-    it('should report no suspension when the guarded update affects no rows', async () => {
-      jest
-        .spyOn(workspaceRepository, 'update')
-        .mockResolvedValue({ affected: 0 } as never);
-
-      const hasBeenSuspended = await service.suspendWorkspace('workspace-id');
-
-      expect(hasBeenSuspended).toBe(false);
     });
   });
 });

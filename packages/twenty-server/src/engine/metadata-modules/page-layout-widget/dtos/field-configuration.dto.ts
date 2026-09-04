@@ -1,13 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
-import {
-  IsEnum,
-  IsIn,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsString } from 'class-validator';
 
 import { type FieldConfiguration } from 'twenty-shared/types';
 
@@ -30,9 +23,4 @@ export class FieldConfigurationDTO implements FieldConfiguration {
   @IsEnum(FieldDisplayMode)
   @IsNotEmpty()
   fieldDisplayMode: FieldDisplayMode;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  viewId?: string;
 }

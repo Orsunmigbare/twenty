@@ -1,20 +1,18 @@
-import { Avatar } from 'twenty-ui/data-display';
-import { useIcons } from 'twenty-ui/icon';
-import {
-  CoreObjectNameSingular,
-  NavigationMenuItemType,
-} from 'twenty-shared/types';
-import { isDefined } from 'twenty-shared/utils';
+import { Avatar, IconFolder, useIcons } from 'twenty-ui/display';
 
+import { useAddRecordToNavigationMenuDraft } from '@/navigation-menu-item/edit/record/hooks/useAddRecordToNavigationMenuDraft';
+import { useDraftNavigationMenuItems } from '@/navigation-menu-item/edit/hooks/useDraftNavigationMenuItems';
+import { useOpenNavigationMenuItemInSidePanel } from '@/navigation-menu-item/edit/hooks/useOpenNavigationMenuItemInSidePanel';
 import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
 import type { AddToNavigationDragPayload } from '@/navigation-menu-item/common/types/add-to-navigation-drag-payload';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
-import { useOpenNavigationMenuItemInSidePanel } from '@/navigation-menu-item/edit/hooks/useOpenNavigationMenuItemInSidePanel';
 import { useObjectMetadataItems } from '@/object-metadata/hooks/useObjectMetadataItems';
 import { SidePanelItemWithAddToNavigationDrag } from '@/side-panel/components/SidePanelItemWithAddToNavigationDrag';
 import { SelectableListItem } from '@/ui/layout/selectable-list/components/SelectableListItem';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
-import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
+import {
+  CoreObjectNameSingular,
+  NavigationMenuItemType,
+} from 'twenty-shared/types';
 
 type SearchRecord = {
   recordId: string;
@@ -33,7 +31,8 @@ export const SidePanelNewSidebarItemRecordItem = ({
   dragIndex,
 }: SidePanelNewSidebarItemRecordItemProps) => {
   const { getIcon } = useIcons();
-  const { createItem } = useNavigationMenuItemEditController();
+  const { addRecordToDraft } = useAddRecordToNavigationMenuDraft();
+  const { currentDraft } = useDraftNavigationMenuItems();
   const [
     pendingInsertionNavigationMenuItem,
     setPendingInsertionNavigationMenuItem,
@@ -54,30 +53,24 @@ export const SidePanelNewSidebarItemRecordItem = ({
   };
 
   const handleSelectRecord = () => {
-    if (!isDefined(objectMetadataItem)) {
-      return;
-    }
-    const itemId = createItem(
+    const itemId = addRecordToDraft(
       {
-        type: NavigationMenuItemType.RECORD,
-        targetObjectMetadataId: objectMetadataItem.id,
-        targetRecordId: record.recordId,
-        targetRecordIdentifier: {
-          id: record.recordId,
-          labelIdentifier: record.label,
-          imageIdentifier: record.imageUrl ?? null,
-        },
+        recordId: record.recordId,
+        objectNameSingular: record.objectNameSingular,
+        label: record.label,
+        imageUrl: record.imageUrl,
       },
-      {
-        targetFolderId: pendingInsertionNavigationMenuItem?.folderId ?? null,
-        targetIndex: pendingInsertionNavigationMenuItem?.position,
-      },
+      currentDraft,
+      pendingInsertionNavigationMenuItem?.folderId ?? null,
+      pendingInsertionNavigationMenuItem?.position,
     );
     setPendingInsertionNavigationMenuItem(null);
     openNavigationMenuItemInSidePanel({
       itemId,
       pageTitle: record.label,
-      pageIcon: getIcon(objectMetadataItem.icon),
+      pageIcon: objectMetadataItem
+        ? getIcon(objectMetadataItem.icon)
+        : IconFolder,
     });
   };
 
@@ -91,7 +84,7 @@ export const SidePanelNewSidebarItemRecordItem = ({
                 ? 'squared'
                 : 'rounded'
             }
-            avatarUrl={getAbsoluteImageUrl(record.imageUrl)}
+            avatarUrl={record.imageUrl}
             placeholderColorSeed={record.recordId}
             placeholder={record.label}
           />

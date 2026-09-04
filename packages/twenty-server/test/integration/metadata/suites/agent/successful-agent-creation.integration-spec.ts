@@ -208,15 +208,7 @@ describe('Agent creation should succeed', () => {
       isCustom: true,
     });
 
-    // Delete the agent first so its role_target is removed; otherwise
-    // deleting the role would refuse to orphan the agent (the workspace
-    // default role isn't agent-assignable).
-    await deleteOneAgent({
-      expectToFail: false,
-      input: { id: createdAgentId },
-    });
-    createdAgentId = '';
-
+    // Clean up the role
     await deleteOneRole({
       expectToFail: false,
       input: { idToDelete: createdRoleId },

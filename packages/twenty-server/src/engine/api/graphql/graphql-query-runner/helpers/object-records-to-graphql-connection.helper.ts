@@ -17,7 +17,6 @@ import {
 import { encodeCursor } from 'src/engine/api/graphql/graphql-query-runner/utils/cursors.util';
 import { getTargetObjectMetadataOrThrow } from 'src/engine/api/graphql/graphql-query-runner/utils/get-target-object-metadata.util';
 import { type AggregationField } from 'src/engine/api/graphql/workspace-schema-builder/utils/get-available-aggregations-from-object-fields.util';
-import { RelationType } from 'src/engine/metadata-modules/field-metadata/interfaces/relation-type.interface';
 import { type CompositeFieldMetadataType } from 'src/engine/metadata-modules/field-metadata/types/composite-field-metadata-type.type';
 import { isCompositeFieldMetadataType } from 'src/engine/metadata-modules/field-metadata/utils/is-composite-field-metadata-type.util';
 import { type FlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/flat-entity-maps.type';
@@ -58,9 +57,9 @@ export class ObjectRecordsToGraphqlConnectionHelper {
   }: {
     objectRecords: T[];
     parentObjectRecord?: T;
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     objectRecordsAggregatedValues?: Record<string, any>;
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     selectedAggregatedFields?: Record<string, any>;
     objectName: string;
     take: number;
@@ -70,12 +69,6 @@ export class ObjectRecordsToGraphqlConnectionHelper {
     hasPreviousPage: boolean;
     depth?: number;
   }): IConnection<T> {
-    const objectMetadataId = this.objectIdByNameSingular[objectName];
-    const flatObjectMetadata = findFlatEntityByIdInFlatEntityMapsOrThrow({
-      flatEntityId: objectMetadataId,
-      flatEntityMaps: this.flatObjectMetadataMaps,
-    });
-
     const edges = (objectRecords ?? []).map((objectRecord) => ({
       node: this.processRecord({
         objectRecord,
@@ -87,12 +80,7 @@ export class ObjectRecordsToGraphqlConnectionHelper {
         order,
         depth,
       }),
-      cursor: encodeCursor({
-        objectRecord,
-        order,
-        flatObjectMetadata,
-        flatFieldMetadataMaps: this.flatFieldMetadataMaps,
-      }),
+      cursor: encodeCursor(objectRecord, order),
     }));
 
     const aggregatedFieldsValues = this.extractAggregatedFieldsValues({
@@ -120,7 +108,7 @@ export class ObjectRecordsToGraphqlConnectionHelper {
     objectRecordsAggregatedValues,
   }: {
     selectedAggregatedFields: Record<string, AggregationField[]>;
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     objectRecordsAggregatedValues: Record<string, any>;
   }) => {
     if (!isDefined(objectRecordsAggregatedValues)) {
@@ -146,7 +134,7 @@ export class ObjectRecordsToGraphqlConnectionHelper {
     );
   };
 
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   public processRecord<T extends Record<string, any>>({
     objectRecord,
     objectName,
@@ -159,9 +147,9 @@ export class ObjectRecordsToGraphqlConnectionHelper {
   }: {
     objectRecord: T;
     objectName: string;
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     objectRecordsAggregatedValues?: Record<string, any>;
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     selectedAggregatedFields?: Record<string, any>;
     take: number;
     totalCount: number;
@@ -183,7 +171,7 @@ export class ObjectRecordsToGraphqlConnectionHelper {
       flatEntityMaps: this.flatObjectMetadataMaps,
     });
 
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     const processedObjectRecord: Record<string, any> = {};
 
     for (const fieldId of flatObjectMetadata.fieldIds) {
@@ -222,13 +210,7 @@ export class ObjectRecordsToGraphqlConnectionHelper {
             objectRecord[fieldMetadataNameWithId];
         }
 
-        const isToManyRelation =
-          fieldMetadata.settings?.relationType === RelationType.ONE_TO_MANY;
-
-        const objectValue =
-          !isDefined(objectRecord[fieldMetadata.name]) && isToManyRelation
-            ? []
-            : objectRecord[fieldMetadata.name];
+        const objectValue = objectRecord[fieldMetadata.name];
 
         if (!isDefined(objectValue)) {
           continue;
@@ -291,9 +273,9 @@ export class ObjectRecordsToGraphqlConnectionHelper {
 
   private processCompositeField(
     fieldMetadata: FlatFieldMetadata,
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     fieldValue: any,
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   ): Record<string, any> {
     const compositeType = compositeTypeDefinitions.get(
       fieldMetadata.type as CompositeFieldMetadataType,
@@ -326,12 +308,12 @@ export class ObjectRecordsToGraphqlConnectionHelper {
 
         return acc;
       },
-      // oxlint-disable-next-line typescript/no-explicit-any
+      // oxlint-disable-next-line @typescripttypescript/no-explicit-any
       {} as Record<string, any>,
     );
   }
 
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   private formatFieldValue(value: any, fieldType: FieldMetadataType) {
     switch (fieldType) {
       case FieldMetadataType.DATE:

@@ -174,13 +174,6 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
       isNullable: true,
       universalForeignKey: 'calendarFieldMetadataUniversalIdentifier',
     },
-    calendarEndFieldMetadata: {
-      metadataName: 'fieldMetadata',
-      foreignKey: 'calendarEndFieldMetadataId',
-      inverseOneToManyProperty: 'calendarEndViews',
-      isNullable: true,
-      universalForeignKey: 'calendarEndFieldMetadataUniversalIdentifier',
-    },
     kanbanAggregateOperationFieldMetadata: {
       metadataName: 'fieldMetadata',
       foreignKey: 'kanbanAggregateOperationFieldMetadataId',
@@ -248,13 +241,6 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
       isNullable: false,
       universalForeignKey: 'viewUniversalIdentifier',
     },
-    relationTargetFieldMetadata: {
-      metadataName: 'fieldMetadata',
-      foreignKey: 'relationTargetFieldMetadataId',
-      inverseOneToManyProperty: null,
-      isNullable: true,
-      universalForeignKey: 'relationTargetFieldMetadataUniversalIdentifier',
-    },
     viewFilterGroup: {
       metadataName: 'viewFilterGroup',
       foreignKey: 'viewFilterGroupId',
@@ -303,38 +289,20 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
       isNullable: false,
       universalForeignKey: 'roleUniversalIdentifier',
     },
-    agent: {
-      metadataName: 'agent',
-      foreignKey: 'agentId',
-      inverseOneToManyProperty: null,
-      isNullable: true,
-      universalForeignKey: 'agentUniversalIdentifier',
-    },
     apiKey: null,
     workspace: null,
     application: null,
   },
-  rolePermissionFlag: {
+  permissionFlag: {
     workspace: null,
     application: null,
     role: {
       metadataName: 'role',
       foreignKey: 'roleId',
-      inverseOneToManyProperty: 'rolePermissionFlags',
+      inverseOneToManyProperty: 'permissionFlags',
       isNullable: false,
       universalForeignKey: 'roleUniversalIdentifier',
     },
-    permissionFlag: {
-      metadataName: 'permissionFlag',
-      foreignKey: 'permissionFlagId',
-      inverseOneToManyProperty: 'rolePermissionFlags',
-      isNullable: false,
-      universalForeignKey: 'permissionFlagUniversalIdentifier',
-    },
-  },
-  permissionFlag: {
-    workspace: null,
-    application: null,
   },
   objectPermission: {
     workspace: null,
@@ -544,31 +512,6 @@ export const ALL_MANY_TO_ONE_METADATA_RELATIONS = {
   connectionProvider: {
     workspace: null,
     application: null,
-  },
-  searchFieldMetadata: {
-    workspace: null,
-    application: null,
-    objectMetadata: {
-      metadataName: 'objectMetadata',
-      foreignKey: 'objectMetadataId',
-      inverseOneToManyProperty: 'searchFieldMetadatas',
-      isNullable: false,
-      universalForeignKey: 'objectMetadataUniversalIdentifier',
-    },
-    fieldMetadata: {
-      metadataName: 'fieldMetadata',
-      foreignKey: 'fieldMetadataId',
-      inverseOneToManyProperty: 'searchFieldMetadatas',
-      isNullable: false,
-      universalForeignKey: 'fieldMetadataUniversalIdentifier',
-    },
-    tsVectorFieldMetadata: {
-      metadataName: 'fieldMetadata',
-      foreignKey: 'tsVectorFieldMetadataId',
-      inverseOneToManyProperty: null,
-      isNullable: false,
-      universalForeignKey: 'tsVectorFieldMetadataUniversalIdentifier',
-    },
   },
 } as const satisfies ManyToOneMetadataRelationsProperties;
 

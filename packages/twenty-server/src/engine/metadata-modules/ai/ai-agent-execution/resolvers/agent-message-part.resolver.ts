@@ -13,10 +13,10 @@ export class AgentMessagePartResolver {
   constructor(private readonly fileUrlService: FileUrlService) {}
 
   @ResolveField(() => String, { nullable: true })
-  async fileUrl(
+  fileUrl(
     @Parent() part: AgentMessagePartEntity,
     @AuthWorkspace() workspace: WorkspaceEntity,
-  ): Promise<string | null> {
+  ): string | null {
     if (!part.fileId) {
       return null;
     }

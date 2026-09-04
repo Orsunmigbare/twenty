@@ -33,8 +33,8 @@ import {
   IconUser,
   IconUserCircle,
   IconUsers,
-} from 'twenty-ui/icon';
-import { AdvancedSettingsToggle } from 'twenty-ui/input';
+} from 'twenty-ui/display';
+import { AdvancedSettingsToggle } from 'twenty-ui/navigation';
 import { getOsControlSymbol } from 'twenty-ui/utilities';
 
 import { NavigationDrawer } from '@/ui/navigation/navigation-drawer/components/NavigationDrawer';
@@ -164,7 +164,7 @@ export const Settings: Story = {
           <NavigationDrawerSectionTitle label="Workspace" />
           <NavigationDrawerItem
             label="General"
-            to={getSettingsPath(SettingsPath.General)}
+            to={getSettingsPath(SettingsPath.Workspace)}
             Icon={IconSettings}
           />
           <NavigationDrawerItem

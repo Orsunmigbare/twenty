@@ -16,10 +16,7 @@ import { SkillGraphqlApiExceptionInterceptor } from 'src/engine/metadata-modules
 import { SkillService } from 'src/engine/metadata-modules/skill/skill.service';
 import { WorkspaceMigrationGraphqlApiExceptionInterceptor } from 'src/engine/workspace-manager/workspace-migration/interceptors/workspace-migration-graphql-api-exception.interceptor';
 
-@UseGuards(
-  WorkspaceAuthGuard,
-  SettingsPermissionGuard(PermissionFlagType.AI_SETTINGS),
-)
+@UseGuards(WorkspaceAuthGuard, SettingsPermissionGuard(PermissionFlagType.AI))
 @UseInterceptors(
   WorkspaceMigrationGraphqlApiExceptionInterceptor,
   SkillGraphqlApiExceptionInterceptor,

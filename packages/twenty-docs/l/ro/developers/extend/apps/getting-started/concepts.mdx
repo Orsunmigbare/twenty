@@ -65,11 +65,11 @@ your-app/
 │   npx create-twenty-app → yarn twenty dev (live sync)   │
 ├─────────────────────────────────────────────────────────┤
 │ Build & Deploy                                          │
-│   yarn twenty dev:build → yarn twenty app:publish        │
+│   yarn twenty build → yarn twenty deploy                │
 ├─────────────────────────────────────────────────────────┤
 │ Install flow                                            │
 │   upload → [pre-install] → metadata migration →         │
-│   generate SDK → [post-install] → … → [uninstall]       │
+│   generate SDK → [post-install]                         │
 ├─────────────────────────────────────────────────────────┤
 │ Publish                                                 │
 │   npm publish → appears in Twenty marketplace           │
@@ -77,14 +77,14 @@ your-app/
 ```
 
 * **`yarn twenty dev`** — monitorizează fișierele sursă și sincronizează în timp real modificările către un server Twenty conectat. Clientul API tipizat este regenerat automat atunci când schema se schimbă.
-* **`yarn twenty dev:build`** — compilează TypeScript, împachetează funcțiile logice și componentele front-end cu esbuild și produce un manifest.
-* **Hook-uri pre/post-instalare și dezinstalare** — funcții opționale care rulează în timpul instalării sau chiar înainte de eliminare. Vezi [Install Hooks](/l/ro/developers/extend/apps/config/install-hooks) pentru detalii.
+* **`yarn twenty build`** — compilează TypeScript, împachetează funcțiile logice și componentele front-end cu esbuild și produce un manifest.
+* **Hook-uri pre/post-instalare** — funcții opționale care rulează în timpul instalării. Vezi [Install Hooks](/l/ro/developers/extend/apps/config/install-hooks) pentru detalii.
 
 ## Pașii următori
 
 <CardGroup cols={2}>
   <Card title="Configurare" icon="screwdriver-wrench" href="/l/ro/developers/extend/apps/config/overview">
-    Identitatea aplicației, rolul implicit și hook-urile de instalare și dezinstalare.
+    Identitatea aplicației, rolul implicit și hook-urile de instalare.
   </Card>
   <Card title="Date" icon="database" href="/l/ro/developers/extend/apps/data/overview">
     Obiecte, câmpuri și relații bidirecționale.

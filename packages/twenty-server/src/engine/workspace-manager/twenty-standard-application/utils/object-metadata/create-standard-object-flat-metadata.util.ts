@@ -1,5 +1,4 @@
 import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
-import { TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER } from 'twenty-shared/application';
 
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
@@ -17,8 +16,7 @@ export type CreateStandardObjectContext<O extends AllStandardObjectName> = {
   isSystem?: boolean;
   isSearchable?: boolean;
   isAuditLogged?: boolean;
-  isUIEditable?: boolean;
-  isUICreatable?: boolean;
+  isUIReadOnly?: boolean;
   shortcut?: string | null;
   duplicateCriteria?: string[][] | null;
   labelIdentifierFieldMetadataName: AllStandardObjectFieldName<O>;
@@ -46,8 +44,7 @@ export const createStandardObjectFlatMetadata = <
     isSystem = false,
     isSearchable = false,
     isAuditLogged = true,
-    isUIEditable = true,
-    isUICreatable = true,
+    isUIReadOnly = false,
     shortcut = null,
     duplicateCriteria = null,
     labelIdentifierFieldMetadataName,
@@ -83,15 +80,15 @@ export const createStandardObjectFlatMetadata = <
     color: null,
     description,
     icon,
+    isCustom: false,
     isRemote: false,
     isActive: true,
     isSystem,
     isSearchable,
     isAuditLogged,
-    isUIEditable,
-    isUICreatable,
+    isUIReadOnly,
     isLabelSyncedWithName: false,
-    overrides: null,
+    standardOverrides: null,
     duplicateCriteria,
     shortcut,
     labelIdentifierFieldMetadataId:
@@ -106,21 +103,18 @@ export const createStandardObjectFlatMetadata = <
     targetTableName: 'DEPRECATED',
     fieldIds: [],
     indexMetadataIds: [],
-    searchFieldMetadataIds: [],
     objectPermissionIds: [],
     fieldPermissionIds: [],
     viewIds: [],
     createdAt: now,
     updatedAt: now,
     id: standardObjectMetadataRelatedEntityIds[nameSingular].id,
-    applicationUniversalIdentifier:
-      TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+    applicationUniversalIdentifier: twentyStandardApplicationId,
     fieldUniversalIdentifiers: [],
     objectPermissionUniversalIdentifiers: [],
     fieldPermissionUniversalIdentifiers: [],
     viewUniversalIdentifiers: [],
     indexMetadataUniversalIdentifiers: [],
-    searchFieldMetadataUniversalIdentifiers: [],
     labelIdentifierFieldMetadataUniversalIdentifier,
     imageIdentifierFieldMetadataUniversalIdentifier,
   };

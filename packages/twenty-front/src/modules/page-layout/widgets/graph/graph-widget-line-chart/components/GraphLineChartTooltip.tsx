@@ -11,7 +11,7 @@ import { type RefObject } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 
 type GraphLineChartTooltipProps = {
-  containerRef: RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement>;
   enrichedSeries: LineChartEnrichedSeries[];
   formatOptions: GraphValueFormatOptions;
   isStacked?: boolean;

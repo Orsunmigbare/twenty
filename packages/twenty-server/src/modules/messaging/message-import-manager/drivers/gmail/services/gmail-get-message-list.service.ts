@@ -5,7 +5,7 @@ import { google } from 'googleapis';
 
 import { MessageFolderImportPolicy } from 'twenty-shared/types';
 import { MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
-import { GoogleOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 import { type MessageFolderEntity } from 'src/engine/metadata-modules/message-folder/entities/message-folder.entity';
 import {
@@ -24,14 +24,14 @@ export class GmailGetMessageListService {
   private readonly logger = new Logger(GmailGetMessageListService.name);
   constructor(
     private readonly gmailGetHistoryService: GmailGetHistoryService,
-    private readonly googleOAuth2ClientProvider: GoogleOAuth2ClientProvider,
+    private readonly oAuth2ClientManagerService: OAuth2ClientManagerService,
     private readonly gmailMessageListFetchErrorHandler: GmailMessageListFetchErrorHandler,
   ) {}
 
-  async getMessageListWithoutCursor(
+  private async getMessageListWithoutCursor(
     connectedAccount: Pick<
       ConnectedAccountEntity,
-      'provider' | 'id' | 'handle'
+      'provider' | 'accessToken' | 'refreshToken' | 'id' | 'handle'
     >,
     messageFolders: Pick<
       MessageFolderEntity,
@@ -39,9 +39,10 @@ export class GmailGetMessageListService {
     >[],
     messageChannel: Pick<MessageChannelEntity, 'messageFolderImportPolicy'>,
   ): Promise<GetMessageListsResponse> {
-    const oAuth2Client = await this.googleOAuth2ClientProvider.getClient(
-      connectedAccount.id,
-    );
+    const oAuth2Client =
+      await this.oAuth2ClientManagerService.getGoogleOAuth2Client(
+        connectedAccount,
+      );
     const gmailClient = google.gmail({
       version: 'v1',
       auth: oAuth2Client,
@@ -159,9 +160,10 @@ export class GmailGetMessageListService {
       }
     }
 
-    const oAuth2Client = await this.googleOAuth2ClientProvider.getClient(
-      connectedAccount.id,
-    );
+    const oAuth2Client =
+      await this.oAuth2ClientManagerService.getGoogleOAuth2Client(
+        connectedAccount,
+      );
     const gmailClient = google.gmail({
       version: 'v1',
       auth: oAuth2Client,

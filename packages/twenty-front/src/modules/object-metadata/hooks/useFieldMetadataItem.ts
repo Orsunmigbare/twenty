@@ -24,7 +24,6 @@ export const useFieldMetadataItem = () => {
       | 'options'
       | 'settings'
       | 'isLabelSyncedWithName'
-      | 'isUnique'
     > & {
       objectMetadataId: string;
       relationCreationPayload?: RelationCreationPayload;

@@ -50,7 +50,7 @@ describe('isOneToManyRelationFieldReadOnlyDueToTargetUpdatePermission', () => {
       targetFieldMetadataName: 'person',
       settings: null,
       isCustom: true,
-      isUIEditable: true,
+      isUIReadOnly: false,
     },
   } as FieldDefinition<FieldMetadata>;
 

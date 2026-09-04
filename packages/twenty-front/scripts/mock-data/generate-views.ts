@@ -22,7 +22,6 @@ const FIND_ALL_VIEWS_QUERY = `
       calendarLayout
       visibility
       createdByUserWorkspaceId
-      isActive
       viewFields {
         id
         fieldMetadataId

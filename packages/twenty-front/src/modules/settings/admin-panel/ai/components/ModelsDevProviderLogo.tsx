@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import { useContext } from 'react';
-import { type IconComponentProps } from 'twenty-ui/icon';
+import { type IconComponentProps } from 'twenty-ui/display';
 import { ThemeContext } from 'twenty-ui/theme-constants';
 
 type ModelsDevProviderLogoProps = {

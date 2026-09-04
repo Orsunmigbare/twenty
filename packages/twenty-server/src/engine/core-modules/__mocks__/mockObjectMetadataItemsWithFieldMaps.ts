@@ -26,6 +26,7 @@ const personFlatObject = getFlatObjectMetadataMock({
   description: 'A person',
   icon: 'test-person-icon',
   targetTableName: 'DEPRECATED',
+  isCustom: false,
   isRemote: false,
   isActive: true,
   isSystem: false,
@@ -49,6 +50,7 @@ const companyFlatObject = getFlatObjectMetadataMock({
   description: 'A company',
   icon: 'test-company-icon',
   targetTableName: 'DEPRECATED',
+  isCustom: false,
   isRemote: false,
   isActive: true,
   isSystem: false,
@@ -72,6 +74,7 @@ const customObjectFlatObject = getFlatObjectMetadataMock({
   description: 'A regular custom object',
   icon: 'test-regular-custom-object-icon',
   targetTableName: 'DEPRECATED',
+  isCustom: true,
   isRemote: false,
   isActive: true,
   isSystem: false,
@@ -95,6 +98,7 @@ const nonSearchableFlatObject = getFlatObjectMetadataMock({
   description: '',
   icon: 'test-non-searchable-object-icon',
   targetTableName: 'DEPRECATED',
+  isCustom: false,
   isRemote: false,
   isActive: true,
   isSystem: true,
@@ -121,6 +125,7 @@ const personNameField = getFlatFieldMetadataMock({
     firstName: "''",
   },
   description: "Contact's name",
+  isCustom: false,
   isNullable: true,
   isUnique: false,
   isLabelSyncedWithName: true,
@@ -136,6 +141,7 @@ const companyNameField = getFlatFieldMetadataMock({
   name: 'name',
   label: 'Name',
   defaultValue: '',
+  isCustom: false,
   isNullable: true,
   isUnique: false,
   isLabelSyncedWithName: true,
@@ -155,6 +161,7 @@ const companyDomainNameField = getFlatFieldMetadataMock({
     primaryLinkUrl: '',
     secondaryLinks: [],
   },
+  isCustom: false,
   isNullable: true,
   isUnique: false,
   isLabelSyncedWithName: true,
@@ -170,6 +177,7 @@ const customObjectNameField = getFlatFieldMetadataMock({
   name: 'name',
   label: 'Name',
   defaultValue: '',
+  isCustom: false,
   isNullable: true,
   isUnique: false,
   isLabelSyncedWithName: true,
@@ -185,6 +193,7 @@ const customObjectImageField = getFlatFieldMetadataMock({
   name: 'imageIdentifierFieldName',
   label: 'Image Identifier Field Name',
   defaultValue: '',
+  isCustom: false,
   isNullable: true,
   isUnique: false,
   isLabelSyncedWithName: true,
@@ -270,5 +279,12 @@ export const getMockObjectMetadataInfo = (
   };
 };
 
+export const mockPersonObjectMetadataInfo = getMockObjectMetadataInfo('person');
 export const mockCompanyObjectMetadataInfo =
   getMockObjectMetadataInfo('company');
+export const mockCustomObjectMetadataInfo = getMockObjectMetadataInfo(
+  'regular-custom-object',
+);
+export const mockNonSearchableObjectMetadataInfo = getMockObjectMetadataInfo(
+  'non-searchable-object',
+);

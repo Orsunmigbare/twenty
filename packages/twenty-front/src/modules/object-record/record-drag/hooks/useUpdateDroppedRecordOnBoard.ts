@@ -4,7 +4,6 @@ import { RecordBoardContext } from '@/object-record/record-board/contexts/Record
 import { extractRecordPositions } from '@/object-record/record-drag/utils/extractRecordPositions';
 import { recordGroupDefinitionsComponentSelector } from '@/object-record/record-group/states/selectors/recordGroupDefinitionsComponentSelector';
 import { type RecordGroupDefinition } from '@/object-record/record-group/types/RecordGroupDefinition';
-import { getFieldMetadataItemGqlFieldName } from '@/object-metadata/utils/getFieldMetadataItemGqlFieldName';
 import { recordIndexRecordIdsByGroupComponentFamilyState } from '@/object-record/record-index/states/recordIndexRecordIdsByGroupComponentFamilyState';
 import { useUpsertRecordsInStore } from '@/object-record/record-store/hooks/useUpsertRecordsInStore';
 import { recordStoreFamilyState } from '@/object-record/record-store/states/recordStoreFamilyState';
@@ -46,6 +45,10 @@ export const useUpdateDroppedRecordOnBoard = () => {
         recordStoreFamilyState.atomFamily(recordId),
       ) as Record<string, unknown> | null | undefined;
 
+      if (!isDefined(newPosition)) {
+        return;
+      }
+
       if (!isDefined(initialRecord)) {
         return;
       }
@@ -86,19 +89,12 @@ export const useUpdateDroppedRecordOnBoard = () => {
 
       const targetRecordGroupId = targetRecordGroup.id;
 
-      const recordGroupColumnName = getFieldMetadataItemGqlFieldName(
-        selectFieldMetadataItem,
-      );
-
       const movingInsideSameRecordGroup =
         initialRecordGroupId === targetRecordGroupId;
 
       const isSamePosition = initialRecord.position === newPosition;
 
-      if (
-        movingInsideSameRecordGroup &&
-        (!isDefined(newPosition) || isSamePosition)
-      ) {
+      if (movingInsideSameRecordGroup && isSamePosition) {
         return;
       }
 
@@ -130,32 +126,25 @@ export const useUpdateDroppedRecordOnBoard = () => {
         );
       }
 
-      if (isDefined(newPosition)) {
-        const targetGroupRecordsWithIds = extractRecordPositions(
-          currentRecordIdsInTargetRecordGroup,
-          store,
-        );
+      const targetGroupRecordsWithIds = extractRecordPositions(
+        currentRecordIdsInTargetRecordGroup,
+        store,
+      );
 
-        const newTargetRecordGroupWithIds = [
-          ...targetGroupRecordsWithIds,
-          {
-            id: recordId,
-            position: newPosition,
-          },
-        ];
+      const newTargetRecordGroupWithIds = [
+        ...targetGroupRecordsWithIds,
+        {
+          id: recordId,
+          position: newPosition,
+        },
+      ];
 
-        newTargetRecordGroupWithIds.sort(sortByProperty('position', 'asc'));
+      newTargetRecordGroupWithIds.sort(sortByProperty('position', 'asc'));
 
-        store.set(
-          recordIndexRecordIdsByGroupCallbackFamilyState(targetRecordGroupId),
-          newTargetRecordGroupWithIds.map((record) => record.id),
-        );
-      } else {
-        store.set(
-          recordIndexRecordIdsByGroupCallbackFamilyState(targetRecordGroupId),
-          [...currentRecordIdsInTargetRecordGroup, recordId],
-        );
-      }
+      store.set(
+        recordIndexRecordIdsByGroupCallbackFamilyState(targetRecordGroupId),
+        newTargetRecordGroupWithIds.map((record) => record.id),
+      );
 
       upsertRecordsInStore({
         partialRecords: [
@@ -165,8 +154,8 @@ export const useUpdateDroppedRecordOnBoard = () => {
             __typename:
               (initialRecord as { __typename?: string })?.__typename ??
               'Record',
-            [recordGroupColumnName]: targetRecordGroupValue,
-            ...(isDefined(newPosition) && { position: newPosition }),
+            [selectFieldMetadataItem.name]: targetRecordGroupValue,
+            position: newPosition,
           } as ObjectRecord,
         ],
       });
@@ -174,8 +163,8 @@ export const useUpdateDroppedRecordOnBoard = () => {
       updateOneRecord({
         idToUpdate: recordId,
         updateOneRecordInput: {
-          [recordGroupColumnName]: targetRecordGroupValue,
-          ...(isDefined(newPosition) && { position: newPosition }),
+          [selectFieldMetadataItem.name]: targetRecordGroupValue,
+          position: newPosition,
         },
       });
     },

@@ -1,6 +1,5 @@
 import { TwoFactorAuthenticationStrategy } from 'twenty-shared/types';
 import {
-  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -12,18 +11,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { type EncryptedString } from 'src/engine/core-modules/secret-encryption/branded-strings/encrypted-string.type';
-
 import { OTPStatus } from 'src/engine/core-modules/two-factor-authentication/strategies/otp/otp.constants';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import type { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 
 @Index(['userWorkspaceId', 'strategy'], { unique: true })
 @Entity({ name: 'twoFactorAuthenticationMethod', schema: 'core' })
-@Check(
-  'CHK_twoFactorAuthenticationMethod_secret_encrypted',
-  `"secret" LIKE 'enc:v2:%'`,
-)
 export class TwoFactorAuthenticationMethodEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -50,7 +43,7 @@ export class TwoFactorAuthenticationMethodEntity {
   userWorkspace: Relation<UserWorkspaceEntity>;
 
   @Column({ nullable: false, type: 'text' })
-  secret: EncryptedString;
+  secret: string;
 
   @Column({
     type: 'enum',

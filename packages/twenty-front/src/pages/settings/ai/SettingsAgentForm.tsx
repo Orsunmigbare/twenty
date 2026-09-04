@@ -10,7 +10,7 @@ import { useSaveDraftRoleToDB } from '@/settings/roles/role/hooks/useSaveDraftRo
 import { settingsDraftRoleFamilyState } from '@/settings/roles/states/settingsDraftRoleFamilyState';
 import { settingsPersistedRoleFamilyState } from '@/settings/roles/states/settingsPersistedRoleFamilyState';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
@@ -22,10 +22,9 @@ import {
   IconListCheck,
   IconLock,
   IconSettings,
-  useIcons,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
-import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { useMutation, useQuery } from '@apollo/client/react';
 import {
   type CreateAgentInput,
@@ -38,7 +37,7 @@ import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { useSetAtomFamilyState } from '@/ui/utilities/state/jotai/hooks/useSetAtomFamilyState';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 import { SettingsAgentDetailSkeletonLoader } from './components/SettingsAgentDetailSkeletonLoader';
 import { SettingsAgentEvalsTab } from './components/SettingsAgentEvalsTab';
@@ -61,8 +60,6 @@ const StyledTabListContainer = styled.div`
 `;
 
 export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
-  const { theme } = useContext(ThemeContext);
-  const { getIcon } = useIcons();
   const { agentId = '' } = useParams<{ agentId: string }>();
   const navigate = useNavigateSettings();
   const navigateApp = useNavigateApp();
@@ -384,7 +381,6 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
       ? t`Agent`
       : agent?.label
     : t`New Agent`;
-  const AgentIcon = getIcon(formValues.icon || 'IconRobot');
   const breadcrumbText = !isCreateMode
     ? loading
       ? t`Agent`
@@ -405,11 +401,8 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
   return (
     <>
       <SettingsRolesQueryEffect />
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={title}
-        icon={
-          <AgentIcon size={theme.icon.size.md} stroke={theme.icon.stroke.sm} />
-        }
         actionButton={
           isCreateMode ? (
             <SaveAndCancelButtons
@@ -424,7 +417,7 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
           { children: breadcrumbText },
@@ -477,7 +470,7 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
             )}
           </Section>
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     </>
   );
 };

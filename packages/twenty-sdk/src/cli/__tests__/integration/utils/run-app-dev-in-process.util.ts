@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { OUTPUT_DIR } from 'twenty-shared/application';
 
-import { AppDevCommand } from '@/cli/commands/dev/dev';
+import { AppDevCommand } from '@/cli/commands/dev';
 import { pathExists } from '@/cli/utilities/file/fs-utils';
 
 export type RunAppDevResult = {

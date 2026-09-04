@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import React, { useContext } from 'react';
-import { IconCheck } from 'twenty-ui/icon';
+import { IconCheck } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledBenefitContainer = styled.div`
@@ -14,7 +14,6 @@ const StyledCheckContainer = styled.div`
   align-items: center;
   background-color: ${themeCssVariables.background.tertiary};
   border-radius: 50%;
-  corner-shape: round;
   display: flex;
   height: 16px;
   justify-content: center;

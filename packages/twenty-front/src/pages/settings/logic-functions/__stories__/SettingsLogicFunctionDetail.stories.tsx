@@ -4,7 +4,6 @@ import { within } from 'storybook/test';
 import { getImageAbsoluteURI } from 'twenty-shared/utils';
 import { REACT_APP_SERVER_BASE_URL } from '~/config';
 import { SettingsLogicFunctionDetail } from '~/pages/settings/logic-functions/SettingsLogicFunctionDetail';
-import { ARGOS_CAPTURE_DISABLED } from '~/testing/constants/ArgosCaptureDisabled';
 import {
   PageDecorator,
   type PageDecoratorArgs,
@@ -30,7 +29,6 @@ const meta: Meta<PageDecoratorArgs> = {
     },
   },
   parameters: {
-    argos: ARGOS_CAPTURE_DISABLED,
     msw: {
       handlers: [
         ...graphqlMocks.handlers,

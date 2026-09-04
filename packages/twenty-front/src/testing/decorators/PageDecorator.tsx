@@ -2,23 +2,23 @@ import { ApolloProvider } from '@apollo/client/react';
 import { loadDevMessages } from '@apollo/client/dev';
 import { type Decorator } from '@storybook/react-vite';
 import { Provider as JotaiProvider } from 'jotai';
-import { HelmetProvider } from '@dr.pogodin/react-helmet';
+import { HelmetProvider } from 'react-helmet-async';
 import {
   createMemoryRouter,
   createRoutesFromElements,
+  Outlet,
   Route,
   RouterProvider,
 } from 'react-router-dom';
 import { ClientConfigProviderEffect } from '@/client-config/components/ClientConfigProviderEffect';
-import { MinimalMetadataGate } from '@/metadata-store/components/MinimalMetadataGate';
 import { ApolloCoreClientMockedProvider } from '@/object-metadata/hooks/__mocks__/ApolloCoreClientMockedProvider';
 
 import { DefaultLayout } from '@/ui/layout/page/components/DefaultLayout';
+import { MinimalMetadataGater } from '@/metadata-store/components/MinimalMetadataGater';
 import { UserMetadataProviderInitialEffect } from '@/metadata-store/effect-components/UserMetadataProviderInitialEffect';
-import { UserContextProvider } from '@/users/components/UserContextProvider';
 import { MockedMetadataLoadEffect } from '~/testing/decorators/MockedMetadataLoadEffect';
 import { jotaiStore } from '@/ui/utilities/state/jotai/jotaiStore';
-import { type JSX, useState } from 'react';
+import { useState } from 'react';
 import { ClientConfigProvider } from '~/modules/client-config/components/ClientConfigProvider';
 import { mockedApolloClient } from '~/testing/mockedApolloClient';
 
@@ -30,7 +30,7 @@ import { WorkspaceProviderEffect } from '@/workspace/components/WorkspaceProvide
 import { i18n } from '@lingui/core';
 import { I18nProvider } from '@lingui/react';
 import { SOURCE_LOCALE } from 'twenty-shared/translations';
-import { IconsProvider } from 'twenty-ui/icon';
+import { IconsProvider } from 'twenty-ui/display';
 import { FullHeightStorybookLayout } from '~/testing/FullHeightStorybookLayout';
 import { dynamicActivate } from '~/utils/i18n/dynamicActivate';
 
@@ -38,7 +38,6 @@ export type PageDecoratorArgs = {
   routePath: string;
   routeParams: RouteParams;
   additionalRoutes?: string[];
-  searchParams?: RouteParams;
 };
 
 export type RouteParams = {
@@ -56,18 +55,12 @@ export const isRouteParams = (obj: any): obj is RouteParams => {
 export const computeLocation = (
   routePath: string,
   routeParams?: RouteParams,
-  searchParams?: RouteParams,
 ) => {
-  const search = searchParams
-    ? `?${new URLSearchParams(searchParams).toString()}`
-    : '';
-
   return {
     pathname: routePath.replace(
       /:(\w+)/g,
       (paramName) => routeParams?.[paramName] ?? '',
     ),
-    search,
   };
 };
 
@@ -95,14 +88,14 @@ const Providers = () => {
               <UserMetadataProviderInitialEffect />
               <MockedMetadataLoadEffect />
               <WorkspaceProviderEffect />
-              <UserContextProvider>
+              <MinimalMetadataGater>
                 <ApolloCoreClientMockedProvider>
                   <PreComputedChipGeneratorsProvider>
                     <FullHeightStorybookLayout>
                       <HelmetProvider>
                         <IconsProvider>
                           <RecordComponentInstanceContextsWrapper componentInstanceId="storybook-test-record">
-                            <MinimalMetadataGate />
+                            <Outlet />
                           </RecordComponentInstanceContextsWrapper>
                         </IconsProvider>
                       </HelmetProvider>
@@ -110,7 +103,7 @@ const Providers = () => {
                   </PreComputedChipGeneratorsProvider>
                   <MainContextStoreProvider />
                 </ApolloCoreClientMockedProvider>
-              </UserContextProvider>
+              </MinimalMetadataGater>
             </ClientConfigProvider>
           </I18nProvider>
         </ApolloProvider>
@@ -158,16 +151,13 @@ export const PageDecorator: Decorator<{
   routePath: string;
   routeParams: RouteParams;
   additionalRoutes?: string[];
-  searchParams?: RouteParams;
 }> = (Story, { args }) => {
   return (
     <RouterProvider
       router={createRouter({
         Story,
         args,
-        initialEntries: [
-          computeLocation(args.routePath, args.routeParams, args.searchParams),
-        ],
+        initialEntries: [computeLocation(args.routePath, args.routeParams)],
       })}
     />
   );

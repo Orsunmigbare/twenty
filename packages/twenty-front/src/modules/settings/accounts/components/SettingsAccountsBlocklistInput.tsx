@@ -1,6 +1,5 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { styled } from '@linaria/react';
-import { isNonEmptyString } from '@sniptt/guards';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Key } from 'ts-key-enum';
@@ -8,7 +7,7 @@ import { z } from 'zod';
 
 import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
 import { useLingui } from '@lingui/react/macro';
-import { isNonEmptyArray, isValidHostname } from 'twenty-shared/utils';
+import { isValidHostname } from 'twenty-shared/utils';
 import { Button } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -22,14 +21,8 @@ const StyledLinkContainer = styled.div`
   margin-right: ${themeCssVariables.spacing[2]};
 `;
 
-const parseHandles = (value: string): string[] =>
-  value
-    .split(',')
-    .map((handle) => handle.trim())
-    .filter((handle) => isNonEmptyString(handle));
-
 type SettingsAccountsBlocklistInputProps = {
-  updateBlockedEmailList: (emails: string[]) => void;
+  updateBlockedEmailList: (email: string) => void;
   blockedEmailOrDomainList: string[];
 };
 
@@ -44,46 +37,29 @@ export const SettingsAccountsBlocklistInput = ({
   const { t } = useLingui();
 
   const validationSchema = (blockedEmailOrDomainList: string[]) =>
-    z.object({
-      emailOrDomain: z
-        .string()
-        .trim()
-        .refine(
-          (value) => {
-            const handles = parseHandles(value);
-
-            return (
-              isNonEmptyArray(handles) &&
-              handles.every((handle) => {
-                const isEmail = z.email().safeParse(handle).success;
-
-                const isDomain =
-                  handle.startsWith('@') &&
-                  isValidHostname(handle.slice(1), {
-                    allowIp: false,
-                    allowLocalhost: false,
-                  });
-
-                return isEmail || isDomain;
-              })
-            );
-          },
-          t`Invalid email or domain`,
-        )
-        .refine(
-          (value) => {
-            const handles = parseHandles(value);
-
-            return (
-              isNonEmptyArray(handles) &&
-              handles.every(
-                (handle) => !blockedEmailOrDomainList.includes(handle),
-              )
-            );
-          },
-          t`Email or domain is already in blocklist`,
-        ),
-    });
+    z
+      .object({
+        emailOrDomain: z
+          .string()
+          .trim()
+          .pipe(z.email({ error: t`Invalid email or domain` }))
+          .or(
+            z.string().refine(
+              (value) =>
+                value.startsWith('@') &&
+                isValidHostname(value.slice(1), {
+                  allowIp: false,
+                  allowLocalhost: false,
+                }),
+              t`Invalid email or domain`,
+            ),
+          )
+          .refine(
+            (value) => !blockedEmailOrDomainList.includes(value),
+            t`Email or domain is already in blocklist`,
+          ),
+      })
+      .required();
 
   const { reset, handleSubmit, control, formState } = useForm<FormInput>({
     mode: 'onSubmit',
@@ -94,18 +70,11 @@ export const SettingsAccountsBlocklistInput = ({
   });
 
   const submit = handleSubmit((data) => {
-    const handles = parseHandles(data.emailOrDomain);
-    if (isNonEmptyArray(handles)) {
-      updateBlockedEmailList(handles);
-    }
+    updateBlockedEmailList(data.emailOrDomain);
   });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.nativeEvent.isComposing || e.keyCode === 229) {
-      return;
-    }
     if (e.key === Key.Enter) {
-      e.preventDefault();
       submit();
     }
   };

@@ -50,7 +50,7 @@ export const Elipsis: Story = {
 
 export const Performance = getProfilingStory({
   componentName: 'DateFieldDisplay',
-  averageThresholdInMs: 0.2,
+  averageThresholdInMs: 0.1,
   numberOfRuns: 50,
   numberOfTestsPerRun: 100,
 });

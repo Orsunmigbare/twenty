@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { msg } from '@lingui/core/macro';
-import { IsNull } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { type QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import { ApiKeyEntity } from 'src/engine/core-modules/api-key/api-key.entity';
@@ -10,31 +11,26 @@ import {
   ApiKeyExceptionCode,
 } from 'src/engine/core-modules/api-key/exceptions/api-key.exception';
 import { type ApiKeyToken } from 'src/engine/core-modules/auth/dto/api-key-token.dto';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { RoleTargetService } from 'src/engine/metadata-modules/role-target/services/role-target.service';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 
 @Injectable()
 export class ApiKeyService {
   constructor(
-    @InjectWorkspaceScopedRepository(ApiKeyEntity)
-    private readonly apiKeyRepository: WorkspaceScopedRepository<ApiKeyEntity>,
+    @InjectRepository(ApiKeyEntity)
+    private readonly apiKeyRepository: Repository<ApiKeyEntity>,
     private readonly jwtWrapperService: JwtWrapperService,
     private readonly roleTargetService: RoleTargetService,
     private readonly workspaceCacheService: WorkspaceCacheService,
   ) {}
 
   async create(
-    apiKeyData: Partial<ApiKeyEntity> & { roleId: string; workspaceId: string },
+    apiKeyData: Partial<ApiKeyEntity> & { roleId: string },
   ): Promise<ApiKeyEntity> {
-    const { roleId, workspaceId, ...apiKeyFields } = apiKeyData;
-    const savedApiKey = await this.apiKeyRepository.save(
-      workspaceId,
-      apiKeyFields,
-    );
+    const { roleId, ...apiKeyFields } = apiKeyData;
+    const savedApiKey = await this.apiKeyRepository.save(apiKeyFields);
 
     try {
       await this.roleTargetService.create({
@@ -46,7 +42,7 @@ export class ApiKeyService {
         workspaceId: savedApiKey.workspaceId,
       });
     } catch (error) {
-      await this.apiKeyRepository.delete(workspaceId, { id: savedApiKey.id });
+      await this.apiKeyRepository.delete(savedApiKey.id);
       throw error;
     }
 
@@ -59,18 +55,28 @@ export class ApiKeyService {
     id: string,
     workspaceId: string,
   ): Promise<ApiKeyEntity | null> {
-    return this.apiKeyRepository.findOne(workspaceId, {
-      where: { id },
+    return await this.apiKeyRepository.findOne({
+      where: {
+        id,
+        workspaceId,
+      },
     });
   }
 
   async findByWorkspaceId(workspaceId: string): Promise<ApiKeyEntity[]> {
-    return this.apiKeyRepository.find(workspaceId);
+    return await this.apiKeyRepository.find({
+      where: {
+        workspaceId,
+      },
+    });
   }
 
   async findActiveByWorkspaceId(workspaceId: string): Promise<ApiKeyEntity[]> {
-    return this.apiKeyRepository.find(workspaceId, {
-      where: { revokedAt: IsNull() },
+    return await this.apiKeyRepository.find({
+      where: {
+        workspaceId,
+        revokedAt: IsNull(),
+      },
     });
   }
 
@@ -85,14 +91,16 @@ export class ApiKeyService {
       return null;
     }
 
-    await this.apiKeyRepository.update(workspaceId, { id }, updateData);
+    await this.apiKeyRepository.update(id, updateData);
     await this.invalidateApiKeyCache(workspaceId);
 
     return this.findById(id, workspaceId);
   }
 
   async revoke(id: string, workspaceId: string): Promise<ApiKeyEntity | null> {
-    return this.update(id, workspaceId, { revokedAt: new Date() });
+    return await this.update(id, workspaceId, {
+      revokedAt: new Date(),
+    });
   }
 
   async validateApiKey(id: string, workspaceId: string): Promise<ApiKeyEntity> {
@@ -139,6 +147,11 @@ export class ApiKeyService {
 
     await this.validateApiKey(apiKeyId, workspaceId);
 
+    const secret = this.jwtWrapperService.generateAppSecret(
+      JwtTokenTypeEnum.API_KEY,
+      workspaceId,
+    );
+
     let expiresIn: string | number;
 
     if (expiresAt) {
@@ -149,13 +162,14 @@ export class ApiKeyService {
       expiresIn = '100y';
     }
 
-    const token = await this.jwtWrapperService.signAsyncOrThrow(
+    const token = this.jwtWrapperService.sign(
       {
         sub: workspaceId,
         type: JwtTokenTypeEnum.API_KEY,
         workspaceId,
       },
       {
+        secret,
         expiresIn,
         jwtid: apiKeyId,
       },

@@ -3,14 +3,12 @@ import { type Manifest } from 'twenty-shared/application';
 
 export const syncApplicationQueryFactory = ({
   manifest,
-  dryRun,
 }: {
   manifest: Manifest;
-  dryRun?: boolean;
 }) => ({
   query: gql`
-    mutation SyncApplication($manifest: JSON!, $dryRun: Boolean) {
-      syncApplication(manifest: $manifest, dryRun: $dryRun) {
+    mutation SyncApplication($manifest: JSON!) {
+      syncApplication(manifest: $manifest) {
         applicationUniversalIdentifier
         actions
       }
@@ -18,6 +16,5 @@ export const syncApplicationQueryFactory = ({
   `,
   variables: {
     manifest,
-    dryRun,
   },
 });

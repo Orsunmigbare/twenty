@@ -2,10 +2,8 @@
 
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
-import { IconArrowUp, IconLock } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
-import { Section } from 'twenty-ui/layout';
-import { Card } from 'twenty-ui/surfaces';
+import { H2Title, IconArrowUp, IconLock } from 'twenty-ui/display';
+import { Card, Section } from 'twenty-ui/layout';
 
 import { billingState } from '@/client-config/states/billingState';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
@@ -66,7 +64,7 @@ export const SettingsRolePermissionsObjectLevelRecordLevelSection = ({
                   onClick={() =>
                     navigateSettings(
                       isBillingEnabled
-                        ? SettingsPath.BillingPlans
+                        ? SettingsPath.Billing
                         : SettingsPath.AdminPanelEnterprise,
                     )
                   }

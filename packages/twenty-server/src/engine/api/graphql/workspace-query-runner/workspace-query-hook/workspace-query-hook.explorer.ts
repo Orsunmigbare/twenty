@@ -41,8 +41,8 @@ export class WorkspaceQueryHookExplorer implements OnModuleInit {
     private readonly workspaceQueryHookStorage: WorkspaceQueryHookStorage,
   ) {}
 
-  async onModuleInit() {
-    await this.explore();
+  onModuleInit() {
+    this.explore();
   }
 
   async explore() {

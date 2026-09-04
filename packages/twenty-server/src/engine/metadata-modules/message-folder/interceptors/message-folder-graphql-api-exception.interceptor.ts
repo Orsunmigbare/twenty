@@ -10,7 +10,9 @@ import { type Observable, catchError } from 'rxjs';
 import { messageFolderGraphqlApiExceptionHandler } from 'src/engine/metadata-modules/message-folder/utils/message-folder-graphql-api-exception-handler.util';
 
 @Injectable()
-export class MessageFolderGraphqlApiExceptionInterceptor implements NestInterceptor {
+export class MessageFolderGraphqlApiExceptionInterceptor
+  implements NestInterceptor
+{
   intercept(
     _context: ExecutionContext,
     next: CallHandler,

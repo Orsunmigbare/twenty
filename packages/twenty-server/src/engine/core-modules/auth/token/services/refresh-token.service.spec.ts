@@ -8,7 +8,7 @@ import {
   AppTokenType,
 } from 'src/engine/core-modules/app-token/app-token.entity';
 import { AuthException } from 'src/engine/core-modules/auth/auth.exception';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
@@ -31,7 +31,7 @@ describe('RefreshTokenService', () => {
           useValue: {
             verifyJwtToken: jest.fn(),
             decode: jest.fn(),
-            signAsyncOrThrow: jest.fn(),
+            sign: jest.fn(),
             generateAppSecret: jest.fn(),
           },
         },
@@ -126,8 +126,9 @@ describe('RefreshTokenService', () => {
 
       jest.spyOn(twentyConfigService, 'get').mockReturnValue(mockExpiresIn);
       jest
-        .spyOn(jwtWrapperService, 'signAsyncOrThrow')
-        .mockResolvedValue(mockToken);
+        .spyOn(jwtWrapperService, 'generateAppSecret')
+        .mockReturnValue('mock-secret');
+      jest.spyOn(jwtWrapperService, 'sign').mockReturnValue(mockToken);
       jest
         .spyOn(appTokenRepository, 'create')
         .mockReturnValue({ id: 'new-token-id' } as AppTokenEntity);
@@ -146,7 +147,7 @@ describe('RefreshTokenService', () => {
         expiresAt: expect.any(Date),
       });
       expect(appTokenRepository.save).toHaveBeenCalled();
-      expect(jwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(jwtWrapperService.sign).toHaveBeenCalledWith(
         {
           sub: userId,
           workspaceId,
@@ -155,6 +156,7 @@ describe('RefreshTokenService', () => {
           targetedTokenType: JwtTokenTypeEnum.ACCESS,
         },
         expect.objectContaining({
+          secret: 'mock-secret',
           expiresIn: mockExpiresIn,
           jwtid: 'new-token-id',
         }),

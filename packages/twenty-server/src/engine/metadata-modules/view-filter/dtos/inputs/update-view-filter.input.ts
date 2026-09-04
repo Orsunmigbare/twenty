@@ -46,11 +46,6 @@ class UpdateViewFilterInputUpdates {
   @IsString()
   @Field({ nullable: true })
   subFieldName?: string;
-
-  @IsOptional()
-  @IsUUID()
-  @Field(() => UUIDScalarType, { nullable: true })
-  relationTargetFieldMetadataId?: string;
 }
 
 @InputType()

@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import {
-  DEFAULT_LANGUAGE,
-  SUPPORTED_LANGUAGES,
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
 } from '../navigation/supported-languages';
 
 type BasePage = string | BaseGroup;
@@ -71,11 +71,15 @@ const baseStructure: BaseStructure = JSON.parse(
 
 const docsConfig = JSON.parse(fs.readFileSync(docsPath, 'utf8'));
 
-const collectTranslations = (file: TranslationFile | null): TranslationMaps => {
+const collectTranslations = (
+  file: TranslationFile | null,
+): TranslationMaps => {
   const tabLabels = new Map<string, string>();
   const groupLabels = new Map<string, string>();
 
-  const collectGroups = (groups?: Record<string, TranslationGroupEntry>) => {
+  const collectGroups = (
+    groups?: Record<string, TranslationGroupEntry>,
+  ) => {
     if (!groups) {
       return;
     }
@@ -95,15 +99,17 @@ const collectTranslations = (file: TranslationFile | null): TranslationMaps => {
 };
 
 const loadTranslationFile = (language: string): TranslationFile | null => {
-  const translationPath = path.join(localesRoot, language, 'navigation.json');
+  const translationPath = path.join(
+    localesRoot,
+    language,
+    'navigation.json',
+  );
 
   if (!fs.existsSync(translationPath)) {
     return null;
   }
 
-  return JSON.parse(
-    fs.readFileSync(translationPath, 'utf8'),
-  ) as TranslationFile;
+  return JSON.parse(fs.readFileSync(translationPath, 'utf8')) as TranslationFile;
 };
 
 const buildLanguageEntry = (language: string): GeneratedLanguage => {
@@ -113,54 +119,37 @@ const buildLanguageEntry = (language: string): GeneratedLanguage => {
 
   return {
     language,
-    tabs: baseStructure.tabs
-      .map((tab) => ({
-        tab: translationMaps.tabLabels.get(tab.key) ?? tab.label,
-        groups: tab.groups
-          .map((group) => buildGroup(group, translationMaps, language))
-          .filter((group): group is GeneratedGroup => group !== null),
-      }))
-      .filter((tab) => tab.groups.length > 0),
+    tabs: baseStructure.tabs.map((tab) => ({
+      tab: translationMaps.tabLabels.get(tab.key) ?? tab.label,
+      groups: tab.groups.map((group) =>
+        buildGroup(group, translationMaps, language),
+      ),
+    })),
   };
 };
 
-// Mintlify requires each page path to appear in only one language's navigation.
-// Duplicating a path across languages breaks the language switcher (it can no
-// longer resolve the equivalent page and falls back to the first page). So a
-// page is only included in a non-default language when its translation exists,
-// and empty groups/tabs are dropped entirely.
 const buildGroup = (
   group: BaseGroup,
   translations: TranslationMaps,
   language: string,
-): GeneratedGroup | null => {
-  const pages = group.pages
-    .map((page) =>
-      typeof page === 'string'
-        ? formatPageSlug(page, language)
-        : buildGroup(page, translations, language),
-    )
-    .filter((page): page is string | GeneratedGroup => page !== null);
+): GeneratedGroup => ({
+  group: translations.groupLabels.get(group.key) ?? group.label,
+  ...(group.icon ? { icon: group.icon } : {}),
+  pages: group.pages.map((page) =>
+    typeof page === 'string'
+      ? formatPageSlug(page, language)
+      : buildGroup(page, translations, language),
+  ),
+});
 
-  if (pages.length === 0) {
-    return null;
-  }
-
-  return {
-    group: translations.groupLabels.get(group.key) ?? group.label,
-    ...(group.icon ? { icon: group.icon } : {}),
-    pages,
-  };
-};
-
-const formatPageSlug = (slug: string, language: string): string | null => {
+const formatPageSlug = (slug: string, language: string): string => {
   if (language === DEFAULT_LANGUAGE) {
     return slug;
   }
 
   const localizedPagePath = path.join(localesRoot, language, `${slug}.mdx`);
 
-  return fs.existsSync(localizedPagePath) ? `l/${language}/${slug}` : null;
+  return fs.existsSync(localizedPagePath) ? `l/${language}/${slug}` : slug;
 };
 
 const hasLocaleContent = (language: string): boolean => {
@@ -172,8 +161,9 @@ const hasLocaleContent = (language: string): boolean => {
   return fs.existsSync(localeDir);
 };
 
-const languages =
-  SUPPORTED_LANGUAGES.filter(hasLocaleContent).map(buildLanguageEntry);
+const languages = SUPPORTED_LANGUAGES.filter(hasLocaleContent).map(
+  buildLanguageEntry,
+);
 
 if (!docsConfig.navigation) {
   docsConfig.navigation = {};

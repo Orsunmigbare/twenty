@@ -6,7 +6,7 @@ import { SettingsLogicFunctionLabelContainer } from '@/settings/logic-functions/
 import { SettingsLogicFunctionSettingsTab } from '@/settings/logic-functions/components/tabs/SettingsLogicFunctionSettingsTab';
 import { SettingsLogicFunctionTestTab } from '@/settings/logic-functions/components/tabs/SettingsLogicFunctionTestTab';
 import { SettingsLogicFunctionTriggersTab } from '@/settings/logic-functions/components/tabs/SettingsLogicFunctionTriggersTab';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
@@ -18,7 +18,7 @@ import {
   IconCode,
   IconPlayerPlay,
   IconSettings,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { useQuery } from '@apollo/client/react';
 import { FindOneApplicationDocument } from '~/generated-metadata/graphql';
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
@@ -43,11 +43,6 @@ export const SettingsLogicFunctionDetail = () => {
   );
 
   const applicationName = data?.findOneApplication?.name;
-
-  const applicationVariableKeys =
-    data?.findOneApplication?.applicationVariables?.map(
-      (variable) => variable.key,
-    ) ?? [];
 
   const workspaceCustomApplicationId =
     currentWorkspace?.workspaceCustomApplication?.id;
@@ -104,7 +99,7 @@ export const SettingsLogicFunctionDetail = () => {
         return [
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
             children: t`Applications`,
@@ -118,7 +113,7 @@ export const SettingsLogicFunctionDetail = () => {
     : [
         {
           children: t`Workspace`,
-          href: getSettingsPath(SettingsPath.General),
+          href: getSettingsPath(SettingsPath.Workspace),
         },
         {
           children: t`AI`,
@@ -139,7 +134,7 @@ export const SettingsLogicFunctionDetail = () => {
   return (
     !loading &&
     !applicationLoading && (
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={
           <SettingsLogicFunctionLabelContainer
             value={formValues.name}
@@ -157,7 +152,6 @@ export const SettingsLogicFunctionDetail = () => {
               handleExecute={handleTestFunction}
               onChange={onChange('sourceHandlerCode')}
               isTesting={isExecuting}
-              applicationVariableKeys={applicationVariableKeys}
             />
           )}
           {isTriggersTab && (
@@ -184,7 +178,7 @@ export const SettingsLogicFunctionDetail = () => {
             />
           )}
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     )
   );
 };

@@ -1,13 +1,11 @@
 import { FormNestedFieldInputContainer } from '@/object-record/record-field/ui/form-types/components/FormNestedFieldInputContainer';
+import { FormTextFieldInput } from '@/object-record/record-field/ui/form-types/components/FormTextFieldInput';
 import { type VariablePickerComponent } from '@/object-record/record-field/ui/form-types/types/VariablePickerComponent';
 import { InputLabel } from '@/ui/input/components/InputLabel';
-import { WorkflowEditActionCodeFieldLeaf } from '@/workflow/workflow-steps/workflow-actions/code-action/components/WorkflowEditActionCodeFieldLeaf';
-import { getInputSchemaPropertyAtPath } from '@/workflow/workflow-steps/workflow-actions/code-action/utils/getInputSchemaPropertyAtPath';
-import { getWorkflowCodeFieldsLeafKind } from '@/workflow/workflow-steps/workflow-actions/code-action/utils/getWorkflowCodeFieldsLeafKind';
+import { type FunctionInput } from 'twenty-shared/workflow';
 import { styled } from '@linaria/react';
-import { isNonEmptyString } from '@sniptt/guards';
-import { isPlainObject } from 'twenty-shared/utils';
-import { type FunctionInput, type InputSchema } from 'twenty-shared/workflow';
+import { t } from '@lingui/core/macro';
+import { isObject } from '@sniptt/guards';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledContainer = styled.div<{ fullWidth?: boolean }>`
@@ -28,7 +26,6 @@ type WorkflowEditActionCodeFieldsProps = {
   onInputChange?: (value: any, path: string[]) => void | Promise<void>;
   VariablePicker?: VariablePickerComponent;
   fullWidth?: boolean;
-  inputSchema?: InputSchema;
 };
 
 export const WorkflowEditActionCodeFields = ({
@@ -38,7 +35,6 @@ export const WorkflowEditActionCodeFields = ({
   onInputChange,
   VariablePicker,
   fullWidth,
-  inputSchema,
 }: WorkflowEditActionCodeFieldsProps) => {
   return (
     <StyledContainer fullWidth={fullWidth}>
@@ -46,24 +42,10 @@ export const WorkflowEditActionCodeFields = ({
         const currentPath = [...path, inputKey];
         const pathKey = currentPath.join('.');
 
-        const schemaProperty = getInputSchemaPropertyAtPath(
-          inputSchema,
-          currentPath,
-        );
-        const displayLabel = isNonEmptyString(schemaProperty?.label)
-          ? schemaProperty.label
-          : inputKey;
-
-        const leafKind = getWorkflowCodeFieldsLeafKind(schemaProperty);
-        const isNestedObject =
-          isPlainObject(inputValue) &&
-          leafKind !== 'record' &&
-          leafKind !== 'record-array';
-
-        if (isNestedObject) {
+        if (inputValue !== null && isObject(inputValue)) {
           return (
             <div key={pathKey}>
-              <InputLabel>{displayLabel}</InputLabel>
+              <InputLabel>{inputKey}</InputLabel>
               <FormNestedFieldInputContainer>
                 <WorkflowEditActionCodeFields
                   functionInput={inputValue}
@@ -72,7 +54,6 @@ export const WorkflowEditActionCodeFields = ({
                   onInputChange={onInputChange}
                   VariablePicker={VariablePicker}
                   fullWidth={fullWidth}
-                  inputSchema={inputSchema}
                 />
               </FormNestedFieldInputContainer>
             </div>
@@ -80,11 +61,11 @@ export const WorkflowEditActionCodeFields = ({
         }
 
         return (
-          <WorkflowEditActionCodeFieldLeaf
+          <FormTextFieldInput
             key={pathKey}
-            label={displayLabel}
-            inputValue={inputValue}
-            schemaProperty={schemaProperty}
+            label={inputKey}
+            placeholder={t`Enter value`}
+            defaultValue={inputValue ? `${inputValue}` : ''}
             readonly={readonly}
             onChange={(value) => onInputChange?.(value, currentPath)}
             VariablePicker={VariablePicker}

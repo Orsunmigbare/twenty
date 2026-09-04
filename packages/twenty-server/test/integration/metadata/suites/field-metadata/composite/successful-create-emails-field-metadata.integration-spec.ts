@@ -57,7 +57,10 @@ const SUCCESSFUL_TEST_CASES: EachTestingContext<{
       input: {
         name: 'emptyEmails',
         label: 'Empty Emails',
-        defaultValue: null,
+        defaultValue: {
+          primaryEmail: "''",
+          additionalEmails: null,
+        },
       },
     },
   },

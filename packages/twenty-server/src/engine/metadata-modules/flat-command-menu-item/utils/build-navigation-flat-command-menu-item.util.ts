@@ -1,11 +1,10 @@
-import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
-import { FeatureFlagKey } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { v5 } from 'uuid';
 
 import { CommandMenuItemAvailabilityType } from 'src/engine/metadata-modules/command-menu-item/enums/command-menu-item-availability-type.enum';
 import { EngineComponentKey } from 'src/engine/metadata-modules/command-menu-item/enums/engine-component-key.enum';
 import { type FlatCommandMenuItem } from 'src/engine/metadata-modules/flat-command-menu-item/types/flat-command-menu-item.type';
+import { TWENTY_STANDARD_APPLICATION } from 'src/engine/workspace-manager/twenty-standard-application/constants/twenty-standard-applications';
 
 export const NAVIGATION_COMMAND_UUID_NAMESPACE =
   'b31830da-2ae0-48eb-a915-12fa4ab96dd3';
@@ -17,38 +16,10 @@ export const NAVIGATION_INTERPOLATED_SHORT_LABEL =
 export const NAVIGATION_INTERPOLATED_ICON =
   '${navigateToObjectMetadataItem.icon}';
 
-const NAVIGATION_FEATURE_FLAG_GATE_BY_OBJECT_UNIVERSAL_IDENTIFIER: Partial<
-  Record<string, FeatureFlagKey>
-> = {
-  [STANDARD_OBJECTS.messageCampaign.universalIdentifier]:
-    FeatureFlagKey.IS_EMAIL_GROUP_ENABLED,
-  [STANDARD_OBJECTS.messageList.universalIdentifier]:
-    FeatureFlagKey.IS_EMAIL_GROUP_ENABLED,
-};
-
-export const buildNavigationConditionalAvailabilityExpression = ({
-  universalIdentifier,
-  nameSingular,
-}: {
-  universalIdentifier: string;
-  nameSingular: string;
-}): string => {
-  const targetObjectReadPermissionExpression = `targetObjectReadPermissions.${nameSingular}`;
-  const featureFlagGate =
-    NAVIGATION_FEATURE_FLAG_GATE_BY_OBJECT_UNIVERSAL_IDENTIFIER[
-      universalIdentifier
-    ];
-
-  return isDefined(featureFlagGate)
-    ? `featureFlags.${featureFlagGate} and ${targetObjectReadPermissionExpression}`
-    : targetObjectReadPermissionExpression;
-};
-
 export const buildNavigationFlatCommandMenuItem = ({
   objectMetadata,
   commandMenuItemId,
   applicationId,
-  applicationUniversalIdentifier,
   workspaceId,
   position,
   now,
@@ -61,7 +32,6 @@ export const buildNavigationFlatCommandMenuItem = ({
   };
   commandMenuItemId: string;
   applicationId: string;
-  applicationUniversalIdentifier: string;
   workspaceId: string;
   position: number;
   now: string;
@@ -71,17 +41,12 @@ export const buildNavigationFlatCommandMenuItem = ({
     NAVIGATION_COMMAND_UUID_NAMESPACE,
   );
 
-  const conditionalAvailabilityExpression =
-    buildNavigationConditionalAvailabilityExpression({
-      universalIdentifier: objectMetadata.universalIdentifier,
-      nameSingular: objectMetadata.nameSingular,
-    });
-
   return {
     id: commandMenuItemId,
     universalIdentifier,
     applicationId,
-    applicationUniversalIdentifier,
+    applicationUniversalIdentifier:
+      TWENTY_STANDARD_APPLICATION.universalIdentifier,
     workspaceId,
     label: NAVIGATION_INTERPOLATED_LABEL,
     shortLabel: NAVIGATION_INTERPOLATED_SHORT_LABEL,
@@ -89,7 +54,7 @@ export const buildNavigationFlatCommandMenuItem = ({
     position,
     isPinned: false,
     availabilityType: CommandMenuItemAvailabilityType.GLOBAL,
-    conditionalAvailabilityExpression,
+    conditionalAvailabilityExpression: `targetObjectReadPermissions.${objectMetadata.nameSingular}`,
     frontComponentId: null,
     frontComponentUniversalIdentifier: null,
     engineComponentKey: EngineComponentKey.NAVIGATION,
@@ -102,10 +67,6 @@ export const buildNavigationFlatCommandMenuItem = ({
     availabilityObjectMetadataUniversalIdentifier: null,
     pageLayoutId: null,
     pageLayoutUniversalIdentifier: null,
-    isActive: true,
-    isSystemSideEffect: true,
-    overrides: null,
-    universalOverrides: null,
     createdAt: now,
     updatedAt: now,
   };

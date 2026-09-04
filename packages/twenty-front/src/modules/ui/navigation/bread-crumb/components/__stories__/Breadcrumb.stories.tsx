@@ -15,9 +15,6 @@ const meta: Meta<typeof Breadcrumb> = {
       { children: 'New' },
     ],
   },
-  parameters: {
-    container: { width: 350 },
-  },
 };
 
 export default meta;

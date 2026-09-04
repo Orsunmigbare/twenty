@@ -5,5 +5,4 @@ export type VariablePickerComponent = React.FC<{
   onVariableSelect: (variableName: string) => void;
   shouldDisplayRecordObjects?: boolean;
   shouldDisplayRecordFields?: boolean;
-  objectNameSingularsToSelect?: string[];
 }>;

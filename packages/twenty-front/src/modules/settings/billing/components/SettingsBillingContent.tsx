@@ -1,79 +1,88 @@
 import { useLingui } from '@lingui/react/macro';
 
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
+import { useRedirect } from '@/domain-manager/hooks/useRedirect';
 import { SettingsBillingCreditsSection } from '@/settings/billing/components/SettingsBillingCreditsSection';
 import { SettingsBillingSubscriptionInfo } from '@/settings/billing/components/SettingsBillingSubscriptionInfo';
-import { SettingsBillingTrialNoPaymentMethodBanner } from '@/settings/billing/components/SettingsBillingTrialNoPaymentMethodBanner';
-import { useBillingPortalSession } from '@/settings/billing/hooks/useBillingPortalSession';
 import { useGetResourceCreditUsage } from '@/settings/billing/hooks/useGetResourceCreditUsage';
-import { billingHasPaymentMethodSelector } from '@/settings/billing/states/billingHasPaymentMethodSelector';
+import { useGetWorkflowNodeExecutionUsage } from '@/settings/billing/hooks/useGetWorkflowNodeExecutionUsage';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
 import { useSubscriptionStatus } from '@/workspace/hooks/useSubscriptionStatus';
-import { SettingsPath } from 'twenty-shared/types';
-import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { IconCircleX, IconCreditCard } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { useQuery } from '@apollo/client/react';
+import { isDefined } from 'twenty-shared/utils';
+import { H2Title, IconCircleX, IconCreditCard } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
-import { SubscriptionStatus } from '~/generated-metadata/graphql';
+import {
+  BillingPortalSessionDocument,
+  FeatureFlagKey,
+  SubscriptionStatus,
+} from '~/generated-metadata/graphql';
 export const SettingsBillingContent = () => {
   const { t } = useLingui();
 
+  const { redirect } = useRedirect();
+
   const currentWorkspace = useAtomStateValue(currentWorkspaceState);
 
-  const currentBillingSubscription =
-    currentWorkspace?.currentBillingSubscription;
+  const subscriptions = currentWorkspace?.billingSubscriptions;
+
+  const hasSubscriptions = (subscriptions?.length ?? 0) > 0;
 
   const subscriptionStatus = useSubscriptionStatus();
-  const billingHasPaymentMethod = useAtomStateValue(
-    billingHasPaymentMethodSelector,
-  );
 
-  const { isGetResourceCreditUsageQueryLoaded: isUsageQueryLoaded } =
-    useGetResourceCreditUsage();
+  const isV2 = useIsFeatureEnabled(FeatureFlagKey.IS_BILLING_V2_ENABLED);
 
-  const displayTrialNoPaymentMethodCard =
-    subscriptionStatus === SubscriptionStatus.Trialing &&
-    billingHasPaymentMethod === false;
+  const { isGetMeteredProductsUsageQueryLoaded } =
+    useGetWorkflowNodeExecutionUsage();
+  const { isGetResourceCreditUsageQueryLoaded } = useGetResourceCreditUsage();
+
+  const isUsageQueryLoaded = isV2
+    ? isGetResourceCreditUsageQueryLoaded
+    : isGetMeteredProductsUsageQueryLoaded;
 
   const hasNotCanceledCurrentSubscription =
     isDefined(subscriptionStatus) &&
     subscriptionStatus !== SubscriptionStatus.Canceled;
-  const hasScheduledCancellation =
-    currentBillingSubscription?.status !== SubscriptionStatus.Canceled &&
-    isDefined(currentBillingSubscription?.cancelAt);
-  const canCancelCurrentSubscription =
-    hasNotCanceledCurrentSubscription && !hasScheduledCancellation;
 
-  const { isBillingPortalSessionDisabled, openBillingPortal } =
-    useBillingPortalSession(getSettingsPath(SettingsPath.Billing));
+  const { data, loading } = useQuery(BillingPortalSessionDocument, {
+    variables: {
+      returnUrlPath: '/settings/billing',
+    },
+    skip: !hasSubscriptions,
+  });
+
+  const billingPortalButtonDisabled =
+    loading || !isDefined(data) || !isDefined(data.billingPortalSession.url);
+
+  const openBillingPortal = () => {
+    if (isDefined(data) && isDefined(data.billingPortalSession.url)) {
+      redirect(data.billingPortalSession.url);
+    }
+  };
 
   return (
     <SettingsPageContainer>
-      {displayTrialNoPaymentMethodCard && currentBillingSubscription && (
-        <SettingsBillingTrialNoPaymentMethodBanner
-          currentBillingSubscription={currentBillingSubscription}
-        />
-      )}
       {hasNotCanceledCurrentSubscription &&
         currentWorkspace &&
-        currentBillingSubscription && (
+        currentWorkspace.currentBillingSubscription && (
           <SettingsBillingSubscriptionInfo
             currentWorkspace={currentWorkspace}
-            currentBillingSubscription={currentBillingSubscription}
-            onUpdatePayment={openBillingPortal}
-            isUpdatePaymentDisabled={isBillingPortalSessionDisabled}
+            currentBillingSubscription={
+              currentWorkspace.currentBillingSubscription
+            }
           />
         )}
       {hasNotCanceledCurrentSubscription &&
         currentWorkspace &&
-        currentBillingSubscription &&
+        currentWorkspace.currentBillingSubscription &&
         isUsageQueryLoaded && (
           <SettingsBillingCreditsSection
-            currentBillingSubscription={currentBillingSubscription}
-            onUpdatePayment={openBillingPortal}
-            isUpdatePaymentDisabled={isBillingPortalSessionDisabled}
+            currentBillingSubscription={
+              currentWorkspace.currentBillingSubscription
+            }
           />
         )}
       <Section>
@@ -86,10 +95,10 @@ export const SettingsBillingContent = () => {
           title={t`View billing details`}
           variant="secondary"
           onClick={openBillingPortal}
-          disabled={isBillingPortalSessionDisabled}
+          disabled={billingPortalButtonDisabled}
         />
       </Section>
-      {canCancelCurrentSubscription && (
+      {hasNotCanceledCurrentSubscription && (
         <Section>
           <H2Title
             title={t`Cancel your subscription`}
@@ -101,7 +110,7 @@ export const SettingsBillingContent = () => {
             variant="secondary"
             accent="danger"
             onClick={openBillingPortal}
-            disabled={isBillingPortalSessionDisabled}
+            disabled={billingPortalButtonDisabled}
           />
         </Section>
       )}

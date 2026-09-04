@@ -16,7 +16,6 @@ import { WorkspaceMigrationPageLayoutTabActionsBuilderService } from 'src/engine
 import { WorkspaceMigrationPageLayoutWidgetActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/page-layout-widget/workspace-migration-page-layout-widget-actions-builder.service';
 import { WorkspaceMigrationPageLayoutActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/page-layout/workspace-migration-page-layout-actions-builder.service';
 import { WorkspaceMigrationPermissionFlagActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/permission-flag/workspace-migration-permission-flag-actions-builder.service';
-import { WorkspaceMigrationRolePermissionFlagActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/role-permission-flag/workspace-migration-role-permission-flag-actions-builder.service';
 import { WorkspaceMigrationRoleTargetActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/role-target/workspace-migration-role-target-actions-builder.service';
 import { WorkspaceMigrationRoleActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/role/workspace-migration-role-actions-builder.service';
 import { WorkspaceMigrationRowLevelPermissionPredicateGroupActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/row-level-permission-predicate-group/workspace-migration-row-level-permission-predicate-group-actions-builder.service';
@@ -32,7 +31,6 @@ import { WorkspaceMigrationViewActionsBuilderService } from 'src/engine/workspac
 import { WorkspaceMigrationApplicationVariableActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/application-variable/workspace-migration-application-variable-actions-builder.service';
 import { WorkspaceMigrationWebhookActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/webhook/workspace-migration-webhook-actions-builder.service';
 import { WorkspaceMigrationConnectionProviderActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/connection-provider/workspace-migration-connection-provider-actions-builder.service';
-import { WorkspaceMigrationSearchFieldMetadataActionsBuilderService } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/search-field-metadata/workspace-migration-search-field-metadata-actions.builder.service';
 import { WorkspaceMigrationBuilderValidatorsModule } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/validators/workspace-migration-builder-validators.module';
 
 @Module({
@@ -49,7 +47,6 @@ import { WorkspaceMigrationBuilderValidatorsModule } from 'src/engine/workspace-
     WorkspaceMigrationViewSortActionsBuilderService,
     WorkspaceMigrationFieldPermissionActionsBuilderService,
     WorkspaceMigrationObjectPermissionActionsBuilderService,
-    WorkspaceMigrationRolePermissionFlagActionsBuilderService,
     WorkspaceMigrationPermissionFlagActionsBuilderService,
     WorkspaceMigrationIndexActionsBuilderService,
     WorkspaceMigrationLogicFunctionActionsBuilderService,
@@ -69,7 +66,6 @@ import { WorkspaceMigrationBuilderValidatorsModule } from 'src/engine/workspace-
     WorkspaceMigrationWebhookActionsBuilderService,
     WorkspaceMigrationApplicationVariableActionsBuilderService,
     WorkspaceMigrationConnectionProviderActionsBuilderService,
-    WorkspaceMigrationSearchFieldMetadataActionsBuilderService,
   ],
   exports: [
     WorkspaceMigrationViewActionsBuilderService,
@@ -83,7 +79,6 @@ import { WorkspaceMigrationBuilderValidatorsModule } from 'src/engine/workspace-
     WorkspaceMigrationViewSortActionsBuilderService,
     WorkspaceMigrationFieldPermissionActionsBuilderService,
     WorkspaceMigrationObjectPermissionActionsBuilderService,
-    WorkspaceMigrationRolePermissionFlagActionsBuilderService,
     WorkspaceMigrationPermissionFlagActionsBuilderService,
     WorkspaceMigrationFieldActionsBuilderService,
     WorkspaceMigrationLogicFunctionActionsBuilderService,
@@ -103,7 +98,6 @@ import { WorkspaceMigrationBuilderValidatorsModule } from 'src/engine/workspace-
     WorkspaceMigrationWebhookActionsBuilderService,
     WorkspaceMigrationApplicationVariableActionsBuilderService,
     WorkspaceMigrationConnectionProviderActionsBuilderService,
-    WorkspaceMigrationSearchFieldMetadataActionsBuilderService,
   ],
 })
 export class WorkspaceMigrationBuilderModule {}

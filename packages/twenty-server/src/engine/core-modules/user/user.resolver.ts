@@ -149,14 +149,8 @@ export class UserResolver {
       return user;
     }
 
-    // The auth context workspace can be a stale cache snapshot right after activateWorkspace ran on another instance (#20322)
-    const refreshedWorkspace =
-      await this.userService.refreshWorkspaceIfPendingOrOngoingCreation(
-        workspace,
-      );
-
     const currentUserWorkspace = user.userWorkspaces.find(
-      (userWorkspace) => userWorkspace.workspaceId === refreshedWorkspace.id,
+      (userWorkspace) => userWorkspace.workspaceId === workspace.id,
     );
 
     if (!isDefined(currentUserWorkspace)) {
@@ -167,7 +161,7 @@ export class UserResolver {
       fromUserWorkspacePermissionsToUserWorkspacePermissionsDto(
         await this.getUserWorkspacePermissions({
           currentUserWorkspace,
-          workspace: refreshedWorkspace,
+          workspace,
         }),
       );
 
@@ -183,7 +177,7 @@ export class UserResolver {
         ...userWorkspacePermissions,
         twoFactorAuthenticationMethodSummary,
       },
-      currentWorkspace: refreshedWorkspace,
+      currentWorkspace: workspace,
     };
   }
 
@@ -443,7 +437,6 @@ export class UserResolver {
     return this.userService.deleteUserWorkspaceAndPotentiallyDeleteUser({
       userId: workspaceMemberToDelete.userId,
       workspaceId: workspace.id,
-      actingUserWorkspaceId: userWorkspaceId,
     });
   }
 
@@ -577,13 +570,7 @@ export class UserResolver {
     @AuthWorkspace({ allowUndefined: true })
     workspace: WorkspaceEntity | undefined,
   ) {
-    if (!isDefined(workspace)) {
-      return null;
-    }
-
-    return this.userService.refreshWorkspaceIfPendingOrOngoingCreation(
-      workspace,
-    );
+    return workspace;
   }
 
   @ResolveField(() => [UserWorkspaceEntity], {

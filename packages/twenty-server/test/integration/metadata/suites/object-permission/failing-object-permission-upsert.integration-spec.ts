@@ -115,8 +115,7 @@ const failingObjectPermissionUpsertTestCases: EachTestingContext<TestContext>[] 
       },
     },
     {
-      title:
-        'when read=false but canUpdateObjectRecords=true (read/write consistency)',
+      title: 'when read=false but canUpdateObjectRecords=true (read/write consistency)',
       context: {
         input: (globalContext) => ({
           roleId: globalContext.editableRoleWithNoReadId,

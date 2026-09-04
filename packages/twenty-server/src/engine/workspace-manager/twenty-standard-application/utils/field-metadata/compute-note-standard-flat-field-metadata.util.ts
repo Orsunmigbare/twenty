@@ -6,7 +6,6 @@ import {
   RelationType,
 } from 'twenty-shared/types';
 
-import { STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT } from 'src/engine/metadata-modules/object-metadata/constants/standard-relation-field-properties.constant';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
 import {
@@ -14,6 +13,9 @@ import {
   createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
+import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
+import { SEARCH_FIELDS_FOR_NOTES } from 'src/modules/note/standard-objects/note.workspace-entity';
+
 export const buildNoteStandardFlatFieldMetadatas = ({
   now,
   objectName,
@@ -37,7 +39,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'uuid',
     },
     standardObjectMetadataRelatedEntityIds,
@@ -56,7 +58,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
@@ -78,7 +80,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
@@ -100,7 +102,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
       },
@@ -172,7 +174,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`The creator of the record`),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -197,7 +199,7 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       ),
       icon: 'IconUserCircle',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -221,6 +223,12 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
+      settings: {
+        generatedType: 'STORED',
+        asExpression: getTsVectorColumnExpressionFromFields(
+          SEARCH_FIELDS_FOR_NOTES,
+        ),
+      },
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -258,13 +266,9 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'attachments',
-      isSystemSideEffect: true,
-      label: i18nLabel(
-        STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment.label,
-      ),
+      label: i18nLabel(msg`Attachments`),
       description: i18nLabel(msg`Note attachments`),
-      icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.attachment
-        .icon,
+      icon: 'IconFileImport',
       isNullable: true,
       targetObjectName: 'attachment',
       targetFieldName: 'targetNote',
@@ -284,14 +288,9 @@ export const buildNoteStandardFlatFieldMetadatas = ({
       type: FieldMetadataType.RELATION,
       morphId: null,
       fieldName: 'timelineActivities',
-      isSystemSideEffect: true,
-      label: i18nLabel(
-        STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT.timelineActivity
-          .label,
-      ),
+      label: i18nLabel(msg`Timeline Activities`),
       description: i18nLabel(msg`Timeline Activities linked to the note.`),
-      icon: STANDARD_RELATION_FIELD_PROPERTIES_BY_RELATION_OBJECT
-        .timelineActivity.icon,
+      icon: 'IconTimelineEvent',
       isNullable: true,
       targetObjectName: 'timelineActivity',
       targetFieldName: 'targetNote',

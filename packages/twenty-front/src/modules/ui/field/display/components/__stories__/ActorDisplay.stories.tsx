@@ -27,17 +27,7 @@ export const Catalog: Story = {
       dimensions: [
         {
           name: 'source',
-          values: [
-            'API',
-            'IMPORT',
-            'EMAIL',
-            'CALENDAR',
-            'WORKFLOW',
-            'WEBHOOK',
-            'APPLICATION',
-            'SYSTEM',
-            'MANUAL',
-          ],
+          values: ['API', 'IMPORT', 'EMAIL', 'CALENDAR', 'MANUAL'],
           props: (source: string) => ({ source }),
         },
         {

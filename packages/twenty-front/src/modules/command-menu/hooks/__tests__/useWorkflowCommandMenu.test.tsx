@@ -14,12 +14,11 @@ import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/use
 import { t } from '@lingui/core/macro';
 import { act } from 'react';
 import { SidePanelPages } from 'twenty-shared/types';
-import { IconBolt, IconSettingsAutomation, useIcons } from 'twenty-ui/icon';
+import { IconBolt, IconSettingsAutomation, useIcons } from 'twenty-ui/display';
 import { getJestMetadataAndApolloMocksAndCommandMenuWrapper } from '~/testing/jest/getJestMetadataAndApolloMocksAndCommandMenuWrapper';
 import { getTestEnrichedObjectMetadataItemsMock } from '~/testing/utils/getTestEnrichedObjectMetadataItemsMock';
 
 jest.mock('uuid', () => ({
-  ...jest.requireActual('uuid'),
   v4: jest.fn().mockReturnValue('mocked-uuid'),
 }));
 

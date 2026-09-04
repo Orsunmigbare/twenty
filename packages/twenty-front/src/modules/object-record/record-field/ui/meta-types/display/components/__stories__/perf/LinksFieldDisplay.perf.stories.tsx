@@ -69,7 +69,7 @@ export const Elipsis: Story = {
 
 export const Performance = getProfilingStory({
   componentName: 'LinksFieldDisplay',
-  averageThresholdInMs: 1,
+  averageThresholdInMs: 0.5,
   numberOfRuns: 50,
   numberOfTestsPerRun: 100,
 });

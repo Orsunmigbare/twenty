@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import { isDefined } from 'twenty-shared/utils';
 import { v4 } from 'uuid';
 
 import { WorkspaceMigrationRunnerActionHandler } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/interfaces/workspace-migration-runner-action-handler-service.interface';
@@ -11,7 +10,6 @@ import {
   FlatCreateViewAction,
   UniversalCreateViewAction,
 } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-builder/builders/view/types/workspace-migration-view-action.type';
-import { fromUniversalOverridesToViewOverrides } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/action-handlers/view/services/utils/from-universal-overrides-to-view-overrides.util';
 import {
   WorkspaceMigrationActionRunnerArgs,
   WorkspaceMigrationActionRunnerContext,
@@ -34,7 +32,6 @@ export class CreateViewActionHandlerService extends WorkspaceMigrationRunnerActi
   }: WorkspaceMigrationActionRunnerArgs<UniversalCreateViewAction>): Promise<FlatCreateViewAction> {
     const {
       calendarFieldMetadataId,
-      calendarEndFieldMetadataId,
       kanbanAggregateOperationFieldMetadataId,
       mainGroupByFieldMetadataId,
       objectMetadataId,
@@ -43,13 +40,6 @@ export class CreateViewActionHandlerService extends WorkspaceMigrationRunnerActi
       metadataName: action.metadataName,
       universalForeignKeyValues: action.flatEntity,
     });
-
-    const overrides = isDefined(action.flatEntity.universalOverrides)
-      ? fromUniversalOverridesToViewOverrides({
-          universalOverrides: action.flatEntity.universalOverrides,
-          flatFieldMetadataMaps: allFlatEntityMaps.flatFieldMetadataMaps,
-        })
-      : null;
 
     const emptyUniversalForeignKeyAggregators =
       getUniversalFlatEntityEmptyForeignKeyAggregators({
@@ -61,11 +51,9 @@ export class CreateViewActionHandlerService extends WorkspaceMigrationRunnerActi
       flatEntity: {
         ...action.flatEntity,
         calendarFieldMetadataId,
-        calendarEndFieldMetadataId,
         kanbanAggregateOperationFieldMetadataId,
         mainGroupByFieldMetadataId,
         objectMetadataId,
-        overrides,
         id: action.id ?? v4(),
         applicationId: flatApplication.id,
         workspaceId,

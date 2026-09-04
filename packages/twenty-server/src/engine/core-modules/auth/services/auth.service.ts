@@ -10,7 +10,6 @@ import ms from 'ms';
 import { PasswordUpdateNotifyEmail } from 'twenty-emails';
 import { PermissionFlagType } from 'twenty-shared/constants';
 import { AppPath, ConnectedAccountProvider } from 'twenty-shared/types';
-import { isNonEmptyString } from '@sniptt/guards';
 import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 import { IsNull, Repository } from 'typeorm';
 
@@ -18,10 +17,8 @@ import {
   AppTokenEntity,
   AppTokenType,
 } from 'src/engine/core-modules/app-token/app-token.entity';
-import { INVITATION_APP_TOKEN_TYPES } from 'src/engine/core-modules/workspace-invitation/constants/invitation-app-token-types';
 import { ApplicationRegistrationService } from 'src/engine/core-modules/application/application-registration/application-registration.service';
-import { EventLogEmitterService } from 'src/engine/core-modules/event-logs/emit/event-log-emitter.service';
-import { IMPERSONATION_EVENT } from 'src/engine/core-modules/event-logs/emit/events/workspace-event/impersonation/impersonation';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
 import {
   AuthException,
   AuthExceptionCode,
@@ -47,8 +44,10 @@ import { AccessTokenService } from 'src/engine/core-modules/auth/token/services/
 import { LoginTokenService } from 'src/engine/core-modules/auth/token/services/login-token.service';
 import { RefreshTokenService } from 'src/engine/core-modules/auth/token/services/refresh-token.service';
 import { WorkspaceAgnosticTokenService } from 'src/engine/core-modules/auth/token/services/workspace-agnostic-token.service';
-import { AuthContextUser } from 'src/engine/core-modules/auth/types/auth-context.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import {
+  AuthContextUser,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 import {
   type AuthProviderWithPasswordType,
   type ExistingUserOrNewUser,
@@ -72,7 +71,6 @@ import { AuthProviderEnum } from 'src/engine/core-modules/workspace/types/worksp
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { workspaceValidator } from 'src/engine/core-modules/workspace/workspace.validate';
 import { PermissionsService } from 'src/engine/metadata-modules/permissions/permissions.service';
-import { getDomainFromEmail } from 'src/utils/get-domain-from-email';
 // import { DEFAULT_FEATURE_FLAGS } from 'src/engine/workspace-manager/workspace-migration/constant/default-feature-flags';
 
 @Injectable()
@@ -101,7 +99,7 @@ export class AuthService {
     @InjectRepository(AppTokenEntity)
     private readonly appTokenRepository: Repository<AppTokenEntity>,
     private readonly i18nService: I18nService,
-    private readonly eventLogEmitterService: EventLogEmitterService,
+    private readonly auditService: AuditService,
     private readonly applicationRegistrationService: ApplicationRegistrationService,
     private readonly featureFlagService: FeatureFlagService,
     private readonly createSSOConnectedAccountService: CreateSSOConnectedAccountService,
@@ -429,14 +427,13 @@ export class AuthService {
   }): Promise<AuthTokens> {
     const correlationId = randomUUID();
 
-    const eventLogContext = this.eventLogEmitterService.createContext({
+    const analytics = this.auditService.createContext({
       workspaceId,
       userId: _impersonatorUserId,
     });
 
-    void eventLogContext.insertWorkspaceEvent(IMPERSONATION_EVENT, {
-      level: 'workspace',
-      action: 'attempted',
+    analytics.insertWorkspaceEvent('Monitoring', {
+      eventName: 'workspace.impersonation.attempted',
       message: `correlationId=${correlationId}; impersonatorUserWorkspaceId=${impersonatorUserWorkspaceId}; targetUserWorkspaceId=${impersonatedUserWorkspaceId}; workspaceId=${workspaceId}`,
     });
 
@@ -461,9 +458,8 @@ export class AuthService {
       true,
     );
 
-    void eventLogContext.insertWorkspaceEvent(IMPERSONATION_EVENT, {
-      level: 'workspace',
-      action: 'issued',
+    analytics.insertWorkspaceEvent('Monitoring', {
+      eventName: 'workspace.impersonation.issued',
       message: `correlationId=${correlationId}; impersonatorUserWorkspaceId=${impersonatorUserWorkspaceId}; targetUserWorkspaceId=${impersonatedUserWorkspaceId}; workspaceId=${workspaceId}`,
     });
 
@@ -765,12 +761,10 @@ export class AuthService {
     loginToken,
     workspace,
     billingCheckoutSessionState,
-    returnToPath,
   }: {
     loginToken: string;
     workspace: WorkspaceDomainConfig;
     billingCheckoutSessionState?: string;
-    returnToPath?: string;
   }) {
     const url = this.workspaceDomainsService.buildWorkspaceURL({
       workspace,
@@ -778,9 +772,6 @@ export class AuthService {
       searchParams: {
         loginToken,
         ...(billingCheckoutSessionState ? { billingCheckoutSessionState } : {}),
-        ...(isNonEmptyString(returnToPath) && returnToPath.startsWith('/')
-          ? { returnToPath }
-          : {}),
       },
     });
 
@@ -797,10 +788,9 @@ export class AuthService {
       .where('"appToken"."workspaceId" = :workspaceId', {
         workspaceId: params.currentWorkspace.id,
       })
-      .andWhere('"appToken".type IN (:...types)', {
-        types: INVITATION_APP_TOKEN_TYPES,
-      })
-      .andWhere('"appToken"."deletedAt" IS NULL');
+      .andWhere('"appToken".type = :type', {
+        type: AppTokenType.InvitationToken,
+      });
 
     if ('workspacePersonalInviteToken' in params) {
       qr.andWhere('"appToken".value = :personalInviteToken', {
@@ -899,8 +889,7 @@ export class AuthService {
     if (
       workspace?.approvedAccessDomains.some(
         (trustDomain) =>
-          trustDomain.isValidated &&
-          trustDomain.domain === getDomainFromEmail(email),
+          trustDomain.isValidated && trustDomain.domain === email.split('@')[1],
       )
     ) {
       return;
@@ -953,19 +942,27 @@ export class AuthService {
       workspaceInviteHash,
       workspaceId,
       billingCheckoutSessionState,
+      action,
       locale,
-      returnToPath,
     }: MicrosoftRequest['user'] | GoogleRequest['user'],
     authProvider: AuthProviderEnum.Google | AuthProviderEnum.Microsoft,
   ): Promise<string> {
     const email = rawEmail.toLowerCase();
 
+    const availableWorkspacesCount =
+      action === 'list-available-workspaces'
+        ? await this.countAvailableWorkspacesByEmail(email)
+        : 0;
+
     const existingUser =
       await this.userService.findUserByEmailWithWorkspaces(email);
 
-    // Route SSO sign-ins through the same create-or-select flow as credentials
-    // instead of landing straight on a workspace subdomain.
-    if (!workspaceId && !workspaceInviteHash) {
+    if (
+      !workspaceId &&
+      !workspaceInviteHash &&
+      action === 'list-available-workspaces' &&
+      availableWorkspacesCount > 1
+    ) {
       const user =
         existingUser ??
         (await this.signInUpService.signUpWithoutWorkspace(
@@ -974,7 +971,6 @@ export class AuthService {
             lastName,
             email,
             picture,
-            locale,
             isEmailAlreadyVerified: true,
           },
           {
@@ -999,21 +995,21 @@ export class AuthService {
               targetedTokenType: JwtTokenTypeEnum.WORKSPACE_AGNOSTIC,
             }),
           }),
-          ...(isNonEmptyString(returnToPath) && returnToPath.startsWith('/')
-            ? { returnToPath }
-            : {}),
         },
       });
 
       return url.toString();
     }
 
-    const currentWorkspace = await this.findWorkspaceForSignInUp({
-      workspaceId,
-      workspaceInviteHash,
-      email,
-      authProvider,
-    });
+    const currentWorkspace =
+      action === 'create-new-workspace'
+        ? undefined
+        : await this.findWorkspaceForSignInUp({
+            workspaceId,
+            workspaceInviteHash,
+            email,
+            authProvider,
+          });
 
     try {
       const invitation =
@@ -1070,7 +1066,6 @@ export class AuthService {
         loginToken: loginToken.token,
         workspace,
         billingCheckoutSessionState,
-        returnToPath,
       });
     } catch (error) {
       return this.guardRedirectService.getRedirectErrorUrlAndCaptureExceptions({

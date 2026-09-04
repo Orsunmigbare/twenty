@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useState } from 'react';
-import { IconAdjustments } from 'twenty-ui/icon';
+import { IconAdjustments } from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 
 import { AiChatThreadFilterDropdownContent } from '@/ai/components/AiChatThreadFilterDropdownContent';

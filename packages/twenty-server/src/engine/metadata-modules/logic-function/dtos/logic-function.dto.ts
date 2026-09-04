@@ -1,9 +1,4 @@
-import {
-  Field,
-  HideField,
-  ObjectType,
-  registerEnumType,
-} from '@nestjs/graphql';
+import { Field, HideField, ObjectType } from '@nestjs/graphql';
 
 import {
   Authorize,
@@ -12,7 +7,6 @@ import {
 } from '@ptc-org/nestjs-query-graphql';
 import {
   IsDateString,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -30,15 +24,10 @@ import {
 } from 'twenty-shared/application';
 
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
-import { LogicFunctionExecutionMode } from 'src/engine/metadata-modules/logic-function/logic-function.entity';
-
-registerEnumType(LogicFunctionExecutionMode, {
-  name: 'LogicFunctionExecutionMode',
-});
 
 @ObjectType('LogicFunction')
 @Authorize({
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   authorize: (context: any) => ({
     workspaceId: { eq: context?.req?.workspace?.id },
   }),
@@ -69,10 +58,6 @@ export class LogicFunctionDTO {
   @IsNumber()
   @Field()
   timeoutSeconds: number;
-
-  @IsEnum(LogicFunctionExecutionMode)
-  @Field(() => LogicFunctionExecutionMode)
-  executionMode: LogicFunctionExecutionMode;
 
   @IsString()
   @Field()

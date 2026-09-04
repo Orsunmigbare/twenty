@@ -1,11 +1,11 @@
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useQuery } from '@apollo/client/react';
 import { useParams } from 'react-router-dom';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 import { FindOneApplicationRegistrationDocument } from '~/generated-metadata/graphql';
 import { useLingui } from '@lingui/react/macro';
-import { Avatar, Tag } from 'twenty-ui/data-display';
+import { Tag } from 'twenty-ui/components';
 import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import {
@@ -13,14 +13,13 @@ import {
   IconKey,
   IconSettings,
   IconWorld,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { SettingsApplicationRegistrationConfigTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationConfigTab';
 import { SettingsApplicationRegistrationOAuthTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationOAuthTab';
 import { SettingsApplicationRegistrationDistributionTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationDistributionTab';
 import { SettingsApplicationRegistrationGeneralTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationGeneralTab';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
-import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
 
 const REGISTRATION_DETAIL_TAB_LIST_ID =
   'application-registration-detail-tab-list';
@@ -86,22 +85,13 @@ export const SettingsApplicationRegistrationDetails = () => {
   };
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       title={registration.name}
-      icon={
-        <Avatar
-          type="app"
-          size="md"
-          avatarUrl={getAbsoluteImageUrl(registration.logoUrl ?? undefined)}
-          placeholder={registration.name}
-          placeholderColorSeed={registration.name}
-        />
-      }
       tag={<Tag text={t`Owner`} color={'gray'} />}
       links={[
         {
           children: t`Workspace`,
-          href: getSettingsPath(SettingsPath.General),
+          href: getSettingsPath(SettingsPath.Workspace),
         },
         {
           children: t`Applications - Developer`,
@@ -122,6 +112,6 @@ export const SettingsApplicationRegistrationDetails = () => {
         />
         {renderActiveTabContent()}
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

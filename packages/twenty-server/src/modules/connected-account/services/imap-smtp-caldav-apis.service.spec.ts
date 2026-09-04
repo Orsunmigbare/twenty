@@ -9,12 +9,7 @@ import {
 
 import { CreateCalendarChannelService } from 'src/engine/core-modules/auth/services/create-calendar-channel.service';
 import { CreateMessageChannelService } from 'src/engine/core-modules/auth/services/create-message-channel.service';
-import {
-  type EncryptedImapSmtpCaldavParams,
-  type PlaintextImapSmtpCaldavParams,
-} from 'src/engine/core-modules/imap-smtp-caldav-connection/types/imap-smtp-caldav-connection.type';
-import { type EncryptedString } from 'src/engine/core-modules/secret-encryption/branded-strings/encrypted-string.type';
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
+import { type EmailAccountConnectionParameters } from 'src/engine/core-modules/imap-smtp-caldav-connection/dtos/imap-smtp-caldav-connection.dto';
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 import { getQueueToken } from 'src/engine/core-modules/message-queue/utils/get-queue-token.util';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
@@ -24,7 +19,6 @@ import { MessageChannelEntity } from 'src/engine/metadata-modules/message-channe
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { CalendarChannelSyncStatusService } from 'src/modules/calendar/common/services/calendar-channel-sync-status.service';
 import { CalendarEventListFetchJob } from 'src/modules/calendar/calendar-event-import-manager/jobs/calendar-event-list-fetch.job';
-import { ConnectedAccountTokenEncryptionService } from 'src/engine/metadata-modules/connected-account/services/connected-account-token-encryption.service';
 import { AccountsToReconnectService } from 'src/modules/connected-account/services/accounts-to-reconnect.service';
 import { ImapSmtpCalDavAPIService } from 'src/modules/connected-account/services/imap-smtp-caldav-apis.service';
 import { MessageChannelSyncStatusService } from 'src/modules/messaging/common/services/message-channel-sync-status.service';
@@ -32,7 +26,6 @@ import { MessagingMessageListFetchJob } from 'src/modules/messaging/message-impo
 import { SyncMessageFoldersService } from 'src/modules/messaging/message-folder-manager/services/sync-message-folders.service';
 
 jest.mock('uuid', () => ({
-  ...jest.requireActual('uuid'),
   v4: jest.fn(() => 'mocked-uuid'),
 }));
 
@@ -83,9 +76,7 @@ describe('ImapSmtpCalDavAPIService', () => {
   };
 
   const mockUserWorkspaceRepository = {
-    findOne: jest
-      .fn()
-      .mockResolvedValue({ id: 'user-workspace-id', userId: 'user-id' }),
+    findOne: jest.fn().mockResolvedValue({ id: 'user-workspace-id' }),
   };
 
   const mockWorkspaceMemberRepository = {
@@ -121,37 +112,6 @@ describe('ImapSmtpCalDavAPIService', () => {
 
   const mockCalendarChannelSyncStatusService = {
     resetAndMarkAsCalendarEventListFetchPending: jest.fn(),
-  };
-
-  const encryptPassword = (password: string): EncryptedString =>
-    `enc:v2:${password}` as EncryptedString;
-
-  const withEncryptedPasswords = (
-    params: PlaintextImapSmtpCaldavParams,
-  ): EncryptedImapSmtpCaldavParams => {
-    const result: EncryptedImapSmtpCaldavParams = {};
-
-    for (const protocol of ['IMAP', 'SMTP', 'CALDAV'] as const) {
-      if (params[protocol]) {
-        result[protocol] = {
-          ...params[protocol],
-          password: encryptPassword(params[protocol]!.password),
-        };
-      }
-    }
-
-    return result;
-  };
-
-  const mockConnectedAccountTokenEncryptionService = {
-    encryptConnectionParameters: jest.fn(
-      ({
-        connectionParameters,
-      }: {
-        connectionParameters: PlaintextImapSmtpCaldavParams;
-        workspaceId: string;
-      }) => withEncryptedPasswords(connectionParameters),
-    ),
   };
 
   beforeEach(async () => {
@@ -225,10 +185,6 @@ describe('ImapSmtpCalDavAPIService', () => {
           provide: CalendarChannelSyncStatusService,
           useValue: mockCalendarChannelSyncStatusService,
         },
-        {
-          provide: ConnectedAccountTokenEncryptionService,
-          useValue: mockConnectedAccountTokenEncryptionService,
-        },
       ],
     }).compile();
 
@@ -237,26 +193,26 @@ describe('ImapSmtpCalDavAPIService', () => {
     jest.clearAllMocks();
   });
 
-  describe('upsertConnectedAccount', () => {
+  describe('processAccount', () => {
     const baseInput = {
       handle: 'test@example.com',
-      userWorkspaceId: 'user-workspace-id',
+      workspaceMemberId: 'workspace-member-id',
       workspaceId: 'workspace-id',
       connectionParameters: {
         IMAP: {
           host: 'imap.example.com',
           port: 993,
-          connectionSecurity: 'SSL_TLS',
-          password: 'password' as PlaintextString,
+          secure: true,
+          password: 'password',
         },
         SMTP: {
           host: 'smtp.example.com',
           port: 587,
-          connectionSecurity: 'SSL_TLS',
+          secure: true,
           username: 'test@example.com',
-          password: 'password' as PlaintextString,
+          password: 'password',
         },
-      } as PlaintextImapSmtpCaldavParams,
+      } as EmailAccountConnectionParameters,
     };
 
     it('should create new account with message channel when account does not exist and IMAP is configured', async () => {
@@ -269,18 +225,15 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(baseInput);
+      await service.processAccount(baseInput);
 
       expect(mockTransactionManagerSave).toHaveBeenCalledWith({
         id: 'mocked-uuid',
         handle: 'test@example.com',
         provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
-        connectionParameters: withEncryptedPasswords(
-          baseInput.connectionParameters,
-        ),
+        connectionParameters: baseInput.connectionParameters,
         userWorkspaceId: 'user-workspace-id',
         workspaceId: 'workspace-id',
         authFailedAt: null,
@@ -333,7 +286,6 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
       const inputWithConnectedAccountId = {
@@ -343,23 +295,21 @@ describe('ImapSmtpCalDavAPIService', () => {
           CALDAV: {
             host: 'caldav.example.com',
             port: 443,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
         connectedAccountId: 'existing-account-id',
       };
 
-      await service.upsertConnectedAccount(inputWithConnectedAccountId);
+      await service.processAccount(inputWithConnectedAccountId);
 
       expect(mockTransactionManagerSave).toHaveBeenCalledWith({
         id: 'existing-account-id',
         handle: 'test@example.com',
         provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
-        connectionParameters: withEncryptedPasswords(
-          inputWithConnectedAccountId.connectionParameters,
-        ),
+        connectionParameters: inputWithConnectedAccountId.connectionParameters,
         userWorkspaceId: 'user-workspace-id',
         workspaceId: 'workspace-id',
         authFailedAt: null,
@@ -424,12 +374,11 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount({
+      await service.processAccount({
         ...baseInput,
-        existingAccount,
+        connectedAccountId: 'existing-account-id',
       });
 
       expect(
@@ -448,10 +397,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(baseInput);
+      await service.processAccount(baseInput);
 
       expect(
         mockAccountsToReconnectService.removeAccountToReconnect,
@@ -473,10 +421,10 @@ describe('ImapSmtpCalDavAPIService', () => {
           IMAP: {
             host: 'imap.example.com',
             port: 993,
-            connectionSecurity: 'SSL_TLS',
-            password: 'password' as PlaintextString,
+            secure: true,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
       };
 
       mockConnectedAccountRepository.findOne.mockResolvedValue(null);
@@ -488,10 +436,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(imapOnlyInput);
+      await service.processAccount(imapOnlyInput);
 
       expect(
         mockCreateMessageChannelService.createMessageChannel,
@@ -508,11 +455,11 @@ describe('ImapSmtpCalDavAPIService', () => {
           CALDAV: {
             host: 'caldav.example.com',
             port: 443,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
       };
 
       mockConnectedAccountRepository.findOne.mockResolvedValue(null);
@@ -524,10 +471,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(caldavOnlyInput);
+      await service.processAccount(caldavOnlyInput);
 
       expect(
         mockCreateMessageChannelService.createMessageChannel,
@@ -544,17 +490,17 @@ describe('ImapSmtpCalDavAPIService', () => {
           IMAP: {
             host: 'imap.example.com',
             port: 993,
-            connectionSecurity: 'SSL_TLS',
-            password: 'password' as PlaintextString,
+            secure: true,
+            password: 'password',
           },
           SMTP: {
             host: 'smtp.example.com',
             port: 587,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
       };
 
       mockConnectedAccountRepository.findOne.mockResolvedValue(null);
@@ -566,10 +512,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(imapSmtpInput);
+      await service.processAccount(imapSmtpInput);
 
       expect(
         mockCreateMessageChannelService.createMessageChannel,
@@ -586,24 +531,24 @@ describe('ImapSmtpCalDavAPIService', () => {
           IMAP: {
             host: 'imap.example.com',
             port: 993,
-            connectionSecurity: 'SSL_TLS',
-            password: 'password' as PlaintextString,
+            secure: true,
+            password: 'password',
           },
           SMTP: {
             host: 'smtp.example.com',
             port: 587,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
           CALDAV: {
             host: 'caldav.example.com',
             port: 443,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
       };
 
       mockConnectedAccountRepository.findOne.mockResolvedValue(null);
@@ -615,10 +560,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(fullConfigInput);
+      await service.processAccount(fullConfigInput);
 
       expect(
         mockCreateMessageChannelService.createMessageChannel,
@@ -648,17 +592,15 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(baseInput);
+      await service.processAccount(baseInput);
 
       expect(mockConnectedAccountRepository.findOne).toHaveBeenCalledWith({
         where: {
           handle: 'test@example.com',
           userWorkspaceId: 'user-workspace-id',
           workspaceId: 'workspace-id',
-          provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
         },
       });
 
@@ -666,45 +608,11 @@ describe('ImapSmtpCalDavAPIService', () => {
         id: 'existing-account-id',
         handle: 'test@example.com',
         provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
-        connectionParameters: withEncryptedPasswords(
-          baseInput.connectionParameters,
-        ),
+        connectionParameters: baseInput.connectionParameters,
         userWorkspaceId: 'user-workspace-id',
         workspaceId: 'workspace-id',
         authFailedAt: null,
       });
-    });
-
-    it('should create a new row instead of overriding an account with the same handle under a different provider', async () => {
-      mockConnectedAccountRepository.findOne.mockResolvedValue(null);
-      mockMessageChannelRepository.findOne.mockResolvedValue(null);
-      mockCalendarChannelRepository.findOne.mockResolvedValue(null);
-      mockWorkspaceMemberRepository.findOne.mockResolvedValue({
-        id: 'workspace-member-id',
-        userId: 'user-id',
-      });
-      mockUserWorkspaceRepository.findOne.mockResolvedValue({
-        id: 'user-workspace-id',
-        userId: 'user-id',
-      });
-
-      await service.upsertConnectedAccount(baseInput);
-
-      expect(mockConnectedAccountRepository.findOne).toHaveBeenCalledWith({
-        where: {
-          handle: 'test@example.com',
-          userWorkspaceId: 'user-workspace-id',
-          workspaceId: 'workspace-id',
-          provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
-        },
-      });
-
-      expect(mockTransactionManagerSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'mocked-uuid',
-          provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
-        }),
-      );
     });
 
     it('should not create channels when neither IMAP nor CALDAV is configured', async () => {
@@ -714,11 +622,11 @@ describe('ImapSmtpCalDavAPIService', () => {
           SMTP: {
             host: 'smtp.example.com',
             port: 587,
-            connectionSecurity: 'SSL_TLS',
+            secure: true,
             username: 'test@example.com',
-            password: 'password' as PlaintextString,
+            password: 'password',
           },
-        } as PlaintextImapSmtpCaldavParams,
+        } as EmailAccountConnectionParameters,
       };
 
       mockConnectedAccountRepository.findOne.mockResolvedValue(null);
@@ -730,10 +638,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(smtpOnlyInput);
+      await service.processAccount(smtpOnlyInput);
 
       expect(
         mockCreateMessageChannelService.createMessageChannel,
@@ -753,10 +660,9 @@ describe('ImapSmtpCalDavAPIService', () => {
       });
       mockUserWorkspaceRepository.findOne.mockResolvedValue({
         id: 'user-workspace-id',
-        userId: 'user-id',
       });
 
-      await service.upsertConnectedAccount(baseInput);
+      await service.processAccount(baseInput);
 
       expect(
         mockConnectedAccountRepository.manager.transaction,

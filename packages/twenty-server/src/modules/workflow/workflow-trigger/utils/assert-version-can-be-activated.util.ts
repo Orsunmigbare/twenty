@@ -4,9 +4,11 @@ import {
   WorkflowVersionStatus,
   type WorkflowVersionWorkspaceEntity,
 } from 'src/modules/workflow/common/standard-objects/workflow-version.workspace-entity';
-import { WorkflowActionType } from 'twenty-shared/workflow';
 import { type WorkflowWorkspaceEntity } from 'src/modules/workflow/common/standard-objects/workflow.workspace-entity';
-import { type WorkflowAction } from 'src/modules/workflow/workflow-executor/workflow-actions/types/workflow-action.type';
+import {
+  type WorkflowAction,
+  WorkflowActionType,
+} from 'src/modules/workflow/workflow-executor/workflow-actions/types/workflow-action.type';
 import {
   WorkflowTriggerException,
   WorkflowTriggerExceptionCode,
@@ -83,7 +85,7 @@ function assertVersionIsValid(workflowVersion: WorkflowVersionWorkspaceEntity) {
 
 function assertTriggerSettingsAreValid(
   triggerType: WorkflowTriggerType,
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   settings: any,
 ) {
   switch (triggerType) {
@@ -107,7 +109,7 @@ function assertTriggerSettingsAreValid(
   }
 }
 
-// oxlint-disable-next-line typescript/no-explicit-any
+// oxlint-disable-next-line @typescripttypescript/no-explicit-any
 function assertCronTriggerSettingsAreValid(settings: any) {
   if (!settings?.type) {
     throw new WorkflowTriggerException(
@@ -249,7 +251,7 @@ function assertCronTriggerSettingsAreValid(settings: any) {
   }
 }
 
-// oxlint-disable-next-line typescript/no-explicit-any
+// oxlint-disable-next-line @typescripttypescript/no-explicit-any
 function assertDatabaseEventTriggerSettingsAreValid(settings: any) {
   if (!settings?.eventName) {
     throw new WorkflowTriggerException(

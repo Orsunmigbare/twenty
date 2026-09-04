@@ -116,18 +116,13 @@ export class CommonFindOneQueryRunnerService extends CommonBaseQueryRunnerServic
     args: CommonInput<FindOneQueryArgs>,
     queryRunnerContext: CommonBaseQueryRunnerContext,
   ): Promise<CommonInput<FindOneQueryArgs>> {
-    const {
-      flatObjectMetadata,
-      flatObjectMetadataMaps,
-      flatFieldMetadataMaps,
-    } = queryRunnerContext;
+    const { flatObjectMetadata, flatFieldMetadataMaps } = queryRunnerContext;
 
     return {
       ...args,
       filter: this.filterArgProcessor.process({
         filter: args.filter,
         flatObjectMetadata,
-        flatObjectMetadataMaps,
         flatFieldMetadataMaps,
       }),
     };

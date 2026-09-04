@@ -17,7 +17,9 @@ import {
 import { WorkspaceMigrationActionRunnerArgs } from 'src/engine/workspace-manager/workspace-migration/workspace-migration-runner/types/workspace-migration-action-runner-args.type';
 
 @Injectable()
-export class WorkspaceMigrationRunnerActionHandlerRegistryService implements OnModuleInit {
+export class WorkspaceMigrationRunnerActionHandlerRegistryService
+  implements OnModuleInit
+{
   private readonly actionHandlers = new Map<
     WorkspaceMigrationActionHandlerKey,
     InstanceType<typeof BaseWorkspaceMigrationRunnerActionHandlerService>

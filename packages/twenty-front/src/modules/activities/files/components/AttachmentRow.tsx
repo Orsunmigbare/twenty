@@ -17,8 +17,7 @@ import { type AttachmentWithFile } from '@/activities/files/utils/filterAttachme
 import { FileIcon } from '@/file/components/FileIcon';
 import { useHasPermissionFlag } from '@/settings/roles/hooks/useHasPermissionFlag';
 import { CoreObjectNameSingular } from 'twenty-shared/types';
-import { IconCalendar } from 'twenty-ui/icon';
-import { OverflowingTextWithTooltip } from 'twenty-ui/surfaces';
+import { IconCalendar, OverflowingTextWithTooltip } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { isNavigationModifierPressed } from 'twenty-ui/utilities';
 import { PermissionFlagType } from '~/generated-metadata/graphql';
@@ -141,9 +140,6 @@ export const AttachmentRow = ({
   };
 
   const handleOnKeyDown = (e: React.KeyboardEvent) => {
-    if (e.nativeEvent.isComposing || e.keyCode === 229) {
-      return;
-    }
     if (e.key === 'Enter') {
       saveAttachmentName();
     }
@@ -176,7 +172,7 @@ export const AttachmentRow = ({
     >
       <ActivityRow disabled>
         <StyledLeftContent>
-          <FileIcon fileCategory={fileCategory} thumbnailUrl={fileUrl} />
+          <FileIcon fileCategory={fileCategory} />
           {isEditing ? (
             <SettingsTextInput
               instanceId={`attachment-${attachment.id}-name`}

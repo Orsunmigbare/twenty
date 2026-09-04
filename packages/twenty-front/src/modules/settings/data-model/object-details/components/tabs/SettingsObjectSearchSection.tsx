@@ -12,10 +12,9 @@ import { TableRow } from '@/ui/layout/table/components/TableRow';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { useContext, useMemo, useState } from 'react';
-import { isDefined } from 'twenty-shared/utils';
 
-import { IconEye, IconSearch, useIcons } from 'twenty-ui/icon';
-import { Card } from 'twenty-ui/surfaces';
+import { IconEye, IconSearch, useIcons } from 'twenty-ui/display';
+import { Card } from 'twenty-ui/layout';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 type SettingsObjectSearchSectionProps = {
@@ -45,34 +44,56 @@ const StyledNameLabel = styled.div`
 
 const INDEXED_FIELDS_GRID_TEMPLATE_COLUMNS = 'minmax(0, 1fr) 100px 148px';
 
+// TODO: This is very DIRTY ; let's migrate searchVector to be proper tables
+// Already tracked here: https://github.com/twentyhq/core-team-issues/issues/1428
 const extractIndexedFields = (
   objectMetadataItem: EnrichedObjectMetadataItem,
 ): IndexedFieldEntry[] => {
-  const fieldById = new Map(
-    objectMetadataItem.fields.map((field) => [field.id, field]),
+  const searchVectorField = objectMetadataItem.fields.find(
+    (field) => field.name === SEARCH_VECTOR_FIELD_NAME,
   );
 
-  return [...objectMetadataItem.searchFieldMetadatas]
-    .sort(
-      (searchFieldMetadataA, searchFieldMetadataB) =>
-        searchFieldMetadataA.position - searchFieldMetadataB.position,
-    )
-    .map((searchFieldMetadata) => {
-      const field = fieldById.get(searchFieldMetadata.fieldMetadataId);
+  const asExpression = (
+    searchVectorField?.settings as { asExpression?: string } | null
+  )?.asExpression;
 
-      if (!isDefined(field) || field.name === SEARCH_VECTOR_FIELD_NAME) {
-        return undefined;
-      }
+  if (!asExpression) {
+    return [];
+  }
 
-      return {
+  const columnNames = [
+    ...new Set(
+      Array.from(asExpression.matchAll(/"([^"]+)"/g), (match) => match[1]),
+    ),
+  ];
+
+  const seenFieldIds = new Set<string>();
+  const entries: IndexedFieldEntry[] = [];
+
+  for (const columnName of columnNames) {
+    const field = objectMetadataItem.fields.find(
+      (fieldItem) =>
+        fieldItem.name === columnName || columnName.startsWith(fieldItem.name),
+    );
+
+    if (
+      field &&
+      field.name !== SEARCH_VECTOR_FIELD_NAME &&
+      !seenFieldIds.has(field.id)
+    ) {
+      seenFieldIds.add(field.id);
+
+      entries.push({
         id: field.id,
         label: field.label,
         icon: field.icon,
         weight: 1,
         fieldType: field.type,
-      } satisfies IndexedFieldEntry;
-    })
-    .filter(isDefined);
+      });
+    }
+  }
+
+  return entries;
 };
 
 export const SettingsObjectSearchSection = ({
@@ -114,8 +135,8 @@ export const SettingsObjectSearchSection = ({
         <Card rounded>
           <SettingsOptionCardContentToggle
             Icon={IconEye}
-            title={t`Global search`}
-            description={t`Show this object's records in the command menu (⌘K).`}
+            title={t`Include in default search`}
+            description={t`If disabled, use advanced search filters to find these records`}
             checked={isSearchable}
             advancedMode
             onChange={handleToggleSearchable}

@@ -41,149 +41,145 @@ export class BlocklistItemDeleteCalendarEventsJob {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const blocklistItemIds = data.events.map(
-          (eventPayload) => eventPayload.recordId,
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      const blocklistItemIds = data.events.map(
+        (eventPayload) => eventPayload.recordId,
+      );
+
+      const blocklistRepository =
+        await this.globalWorkspaceOrmManager.getRepository<BlocklistWorkspaceEntity>(
+          workspaceId,
+          'blocklist',
         );
 
-        const blocklistRepository =
-          await this.globalWorkspaceOrmManager.getRepository<BlocklistWorkspaceEntity>(
-            workspaceId,
-            'blocklist',
-          );
+      const blocklist = await blocklistRepository.find({
+        where: {
+          id: Any(blocklistItemIds),
+        },
+      });
 
-        const blocklist = await blocklistRepository.find({
-          where: {
-            id: Any(blocklistItemIds),
-          },
-        });
+      const handlesToDeleteByWorkspaceMemberIdMap = blocklist.reduce(
+        (acc, blocklistItem) => {
+          const { handle, workspaceMemberId } = blocklistItem;
 
-        const handlesToDeleteByWorkspaceMemberIdMap = blocklist.reduce(
-          (acc, blocklistItem) => {
-            const { handle, workspaceMemberId } = blocklistItem;
+          if (!acc.has(workspaceMemberId)) {
+            acc.set(workspaceMemberId, []);
+          }
 
-            if (!acc.has(workspaceMemberId)) {
-              acc.set(workspaceMemberId, []);
-            }
-
-            if (!isDefined(handle)) {
-              return acc;
-            }
-
-            acc.get(workspaceMemberId)?.push(handle);
-
+          if (!isDefined(handle)) {
             return acc;
-          },
-          new Map<string, string[]>(),
+          }
+
+          acc.get(workspaceMemberId)?.push(handle);
+
+          return acc;
+        },
+        new Map<string, string[]>(),
+      );
+
+      const calendarChannelEventAssociationRepository =
+        await this.globalWorkspaceOrmManager.getRepository<CalendarChannelEventAssociationWorkspaceEntity>(
+          workspaceId,
+          'calendarChannelEventAssociation',
         );
 
-        const calendarChannelEventAssociationRepository =
-          await this.globalWorkspaceOrmManager.getRepository<CalendarChannelEventAssociationWorkspaceEntity>(
-            workspaceId,
-            'calendarChannelEventAssociation',
-          );
+      const workspaceMemberRepository =
+        await this.globalWorkspaceOrmManager.getRepository(
+          workspaceId,
+          'workspaceMember',
+          { shouldBypassPermissionChecks: true },
+        );
 
-        const workspaceMemberRepository =
-          await this.globalWorkspaceOrmManager.getRepository(
-            workspaceId,
-            'workspaceMember',
-            { shouldBypassPermissionChecks: true },
-          );
+      for (const workspaceMemberId of handlesToDeleteByWorkspaceMemberIdMap.keys()) {
+        const handles =
+          handlesToDeleteByWorkspaceMemberIdMap.get(workspaceMemberId);
 
-        for (const workspaceMemberId of handlesToDeleteByWorkspaceMemberIdMap.keys()) {
-          const handles =
-            handlesToDeleteByWorkspaceMemberIdMap.get(workspaceMemberId);
-
-          if (!handles) {
-            continue;
-          }
-
-          const workspaceMember = await workspaceMemberRepository.findOne({
-            where: { id: workspaceMemberId },
-          });
-
-          if (!workspaceMember) {
-            continue;
-          }
-
-          const userWorkspace = await this.userWorkspaceRepository.findOne({
-            where: { userId: workspaceMember.userId, workspaceId },
-            select: ['id'],
-          });
-
-          if (!userWorkspace) {
-            continue;
-          }
-
-          const calendarChannels = await this.calendarChannelRepository.find({
-            select: {
-              id: true,
-              handle: true,
-              connectedAccount: {
-                handleAliases: true,
-              },
-            },
-            where: {
-              connectedAccount: { userWorkspaceId: userWorkspace.id },
-              workspaceId,
-            },
-            relations: ['connectedAccount'],
-          });
-
-          for (const calendarChannel of calendarChannels) {
-            const calendarChannelHandles = [calendarChannel.handle];
-
-            if (calendarChannel.connectedAccount.handleAliases) {
-              const rawAliases = calendarChannel.connectedAccount
-                .handleAliases as string | string[];
-
-              const aliasList = Array.isArray(rawAliases)
-                ? rawAliases
-                : rawAliases.split(',').map((alias: string) => alias.trim());
-
-              calendarChannelHandles.push(...aliasList);
-            }
-
-            const handleConditions = handles.map((handle) => {
-              const isHandleDomain = handle.startsWith('@');
-
-              return isHandleDomain
-                ? {
-                    handle: And(
-                      Or(ILike(`%${handle}`), ILike(`%.${handle.slice(1)}`)),
-                      Not(In(calendarChannelHandles)),
-                    ),
-                  }
-                : { handle };
-            });
-
-            const calendarEventsAssociationsToDelete =
-              await calendarChannelEventAssociationRepository.find({
-                where: {
-                  calendarChannelId: calendarChannel.id,
-                  calendarEvent: {
-                    calendarEventParticipants: handleConditions,
-                  },
-                },
-              });
-
-            if (calendarEventsAssociationsToDelete.length === 0) {
-              continue;
-            }
-
-            await calendarChannelEventAssociationRepository.delete(
-              calendarEventsAssociationsToDelete.map(({ id }) => id),
-            );
-          }
+        if (!handles) {
+          continue;
         }
 
-        await this.calendarEventCleanerService.cleanWorkspaceCalendarEvents(
-          workspaceId,
-        );
-      },
-      authContext,
-      { lite: true },
-    );
+        const workspaceMember = await workspaceMemberRepository.findOne({
+          where: { id: workspaceMemberId },
+        });
+
+        if (!workspaceMember) {
+          continue;
+        }
+
+        const userWorkspace = await this.userWorkspaceRepository.findOne({
+          where: { userId: workspaceMember.userId, workspaceId },
+          select: ['id'],
+        });
+
+        if (!userWorkspace) {
+          continue;
+        }
+
+        const calendarChannels = await this.calendarChannelRepository.find({
+          select: {
+            id: true,
+            handle: true,
+            connectedAccount: {
+              handleAliases: true,
+            },
+          },
+          where: {
+            connectedAccount: { userWorkspaceId: userWorkspace.id },
+            workspaceId,
+          },
+          relations: ['connectedAccount'],
+        });
+
+        for (const calendarChannel of calendarChannels) {
+          const calendarChannelHandles = [calendarChannel.handle];
+
+          if (calendarChannel.connectedAccount.handleAliases) {
+            const rawAliases = calendarChannel.connectedAccount
+              .handleAliases as string | string[];
+
+            const aliasList = Array.isArray(rawAliases)
+              ? rawAliases
+              : rawAliases.split(',').map((alias: string) => alias.trim());
+
+            calendarChannelHandles.push(...aliasList);
+          }
+
+          const handleConditions = handles.map((handle) => {
+            const isHandleDomain = handle.startsWith('@');
+
+            return isHandleDomain
+              ? {
+                  handle: And(
+                    Or(ILike(`%${handle}`), ILike(`%.${handle.slice(1)}`)),
+                    Not(In(calendarChannelHandles)),
+                  ),
+                }
+              : { handle };
+          });
+
+          const calendarEventsAssociationsToDelete =
+            await calendarChannelEventAssociationRepository.find({
+              where: {
+                calendarChannelId: calendarChannel.id,
+                calendarEvent: {
+                  calendarEventParticipants: handleConditions,
+                },
+              },
+            });
+
+          if (calendarEventsAssociationsToDelete.length === 0) {
+            continue;
+          }
+
+          await calendarChannelEventAssociationRepository.delete(
+            calendarEventsAssociationsToDelete.map(({ id }) => id),
+          );
+        }
+      }
+
+      await this.calendarEventCleanerService.cleanWorkspaceCalendarEvents(
+        workspaceId,
+      );
+    }, authContext);
   }
 }

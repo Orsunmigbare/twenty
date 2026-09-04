@@ -2,13 +2,15 @@ import { useCallback } from 'react';
 
 import { useStore } from 'jotai';
 import { SidePanelPages } from 'twenty-shared/types';
-import { type IconComponent, IconArrowBackUp, IconMail } from 'twenty-ui/icon';
+import {
+  type IconComponent,
+  IconArrowBackUp,
+  IconMail,
+} from 'twenty-ui/display';
 import { v4 } from 'uuid';
 
-import { type EmailComposerContextRecord } from '@/activities/emails/recipients/types/EmailComposerContextRecord';
 import { useSidePanelMenu } from '@/side-panel/hooks/useSidePanelMenu';
 import { composeEmailConnectedAccountIdComponentState } from '@/side-panel/pages/compose-email/states/composeEmailConnectedAccountIdComponentState';
-import { composeEmailContextRecordComponentState } from '@/side-panel/pages/compose-email/states/composeEmailContextRecordComponentState';
 import { composeEmailDefaultInReplyToComponentState } from '@/side-panel/pages/compose-email/states/composeEmailDefaultInReplyToComponentState';
 import { composeEmailDefaultSubjectComponentState } from '@/side-panel/pages/compose-email/states/composeEmailDefaultSubjectComponentState';
 import { composeEmailDefaultToComponentState } from '@/side-panel/pages/compose-email/states/composeEmailDefaultToComponentState';
@@ -20,7 +22,6 @@ type OpenComposeEmailParams = {
   defaultTo?: string;
   defaultSubject?: string;
   defaultInReplyTo?: string;
-  contextRecord?: EmailComposerContextRecord;
   pageTitle?: string;
   pageIcon?: IconComponent;
 };
@@ -61,13 +62,6 @@ export const useOpenComposeEmailInSidePanel = () => {
           instanceId: pageId,
         }),
         params.defaultInReplyTo ?? '',
-      );
-
-      store.set(
-        composeEmailContextRecordComponentState.atomFamily({
-          instanceId: pageId,
-        }),
-        params.contextRecord ?? null,
       );
 
       navigateSidePanelMenu({

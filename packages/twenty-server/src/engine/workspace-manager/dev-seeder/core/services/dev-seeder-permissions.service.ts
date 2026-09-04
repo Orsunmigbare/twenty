@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 
-import { PermissionFlagType } from 'twenty-shared/constants';
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
 import { DataSource, Repository } from 'typeorm';
 
@@ -10,14 +9,11 @@ import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.ent
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { FieldPermissionService } from 'src/engine/metadata-modules/object-permission/field-permission/field-permission.service';
 import { ObjectPermissionService } from 'src/engine/metadata-modules/object-permission/object-permission.service';
-import { RolePermissionFlagService } from 'src/engine/metadata-modules/role-permission-flag/role-permission-flag.service';
 import { RoleTargetService } from 'src/engine/metadata-modules/role-target/services/role-target.service';
 import { RoleDTO } from 'src/engine/metadata-modules/role/dtos/role.dto';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { RoleService } from 'src/engine/metadata-modules/role/role.service';
 import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import {
   SEED_APPLE_WORKSPACE_ID,
   SEED_YCOMBINATOR_WORKSPACE_ID,
@@ -39,11 +35,10 @@ export class DevSeederPermissionsService {
     private readonly objectPermissionService: ObjectPermissionService,
     @InjectRepository(ObjectMetadataEntity)
     private readonly objectMetadataRepository: Repository<ObjectMetadataEntity>,
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
     private readonly fieldPermissionService: FieldPermissionService,
     private readonly roleTargetService: RoleTargetService,
-    private readonly rolePermissionFlagService: RolePermissionFlagService,
     @InjectDataSource()
     private readonly coreDataSource: DataSource,
   ) {}
@@ -59,9 +54,10 @@ export class DevSeederPermissionsService {
     workspaceCustomFlatApplication: FlatApplication;
     light?: boolean;
   }) {
-    const adminRole = await this.roleRepository.findOne(workspaceId, {
+    const adminRole = await this.roleRepository.findOne({
       where: {
         universalIdentifier: STANDARD_ROLE.admin.universalIdentifier,
+        workspaceId,
       },
     });
 
@@ -129,18 +125,6 @@ export class DevSeederPermissionsService {
           userWorkspaceIds: [limitedUserWorkspaceId],
           roleId: limitedRole.id,
         });
-
-        const impersonateOnlyRole =
-          await this.createImpersonateOnlyRoleForSeedWorkspace({
-            workspaceId,
-            ownerFlatApplication: workspaceCustomFlatApplication,
-          });
-
-        await this.userRoleService.assignRoleToManyUserWorkspace({
-          workspaceId,
-          userWorkspaceIds: [USER_WORKSPACE_DATA_SEED_IDS.SCOTT],
-          roleId: impersonateOnlyRole.id,
-        });
       }
     } else if (workspaceId === SEED_YCOMBINATOR_WORKSPACE_ID) {
       adminUserWorkspaceId = USER_WORKSPACE_DATA_SEED_IDS.TIM_ACME;
@@ -197,44 +181,6 @@ export class DevSeederPermissionsService {
       });
 
     return memberRole;
-  }
-
-  // Creates a non-admin role whose only elevated capability is the workspace
-  // IMPERSONATE permission flag. Assigned to Scott so the impersonation
-  // escalation guard can be exercised: a non-admin holding IMPERSONATE must
-  // still be blocked from impersonating an admin.
-  private async createImpersonateOnlyRoleForSeedWorkspace({
-    ownerFlatApplication,
-    workspaceId,
-  }: {
-    workspaceId: string;
-    ownerFlatApplication: FlatApplication;
-  }): Promise<RoleDTO> {
-    const impersonateOnlyRole = await this.roleService.createRole({
-      ownerFlatApplication,
-      workspaceId,
-      input: {
-        label: 'Impersonate-only',
-        description: 'Member role granted only the impersonate permission',
-        icon: 'IconSpy',
-        canUpdateAllSettings: false,
-        canAccessAllTools: false,
-        canReadAllObjectRecords: true,
-        canUpdateAllObjectRecords: false,
-        canSoftDeleteAllObjectRecords: false,
-        canDestroyAllObjectRecords: false,
-      },
-    });
-
-    await this.rolePermissionFlagService.upsertPermissionFlags({
-      workspaceId,
-      input: {
-        roleId: impersonateOnlyRole.id,
-        permissionFlagKeys: [PermissionFlagType.IMPERSONATE],
-      },
-    });
-
-    return impersonateOnlyRole;
   }
 
   private async createLimitedRoleForSeedWorkspace({
@@ -323,12 +269,12 @@ export class DevSeederPermissionsService {
       },
     });
 
-    const personJobTitleFieldMetadata = personObjectMetadata.fields.find(
-      (field) => field.name === 'jobTitle',
+    const personCityFieldMetadata = personObjectMetadata.fields.find(
+      (field) => field.name === 'city',
     );
 
-    if (!personJobTitleFieldMetadata) {
-      throw new Error('Person jobTitle field metadata not found');
+    if (!personCityFieldMetadata) {
+      throw new Error('Person city field metadata not found');
     }
 
     const companyLinkedinLinkFieldMetadata = companyObjectMetadata.fields.find(
@@ -339,9 +285,9 @@ export class DevSeederPermissionsService {
       throw new Error('Company linkedin link field metadata not found');
     }
 
-    const readOnlyOnPersonJobTitleFieldPermission = {
+    const readOnlyOnPersonCityFieldPermission = {
       objectMetadataId: personObjectMetadata.id,
-      fieldMetadataId: personJobTitleFieldMetadata.id,
+      fieldMetadataId: personCityFieldMetadata.id,
       canReadFieldValue: null,
       canUpdateFieldValue: false,
     };
@@ -358,7 +304,7 @@ export class DevSeederPermissionsService {
       input: {
         roleId: customRole.id,
         fieldPermissions: [
-          readOnlyOnPersonJobTitleFieldPermission,
+          readOnlyOnPersonCityFieldPermission,
           noReadOnCompanyLinkedinLinkFieldPermission,
         ],
       },

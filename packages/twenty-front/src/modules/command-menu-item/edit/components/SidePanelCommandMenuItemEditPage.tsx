@@ -2,6 +2,7 @@ import { CommandMenuItemEditRecordSelectionDropdown } from '@/command-menu-item/
 import { CommandMenuItemOptionsDropdown } from '@/command-menu-item/edit/components/CommandMenuItemOptionsDropdown';
 import { useEditableCommandMenuItems } from '@/command-menu-item/edit/hooks/useEditableCommandMenuItems';
 import { useReorderCommandMenuItemsInDraft } from '@/command-menu-item/edit/hooks/useReorderCommandMenuItemsInDraft';
+import { useResetCommandMenuItemsDraft } from '@/command-menu-item/edit/hooks/useResetCommandMenuItemsDraft';
 import { useUpdateCommandMenuItemInDraft } from '@/command-menu-item/edit/hooks/useUpdateCommandMenuItemInDraft';
 import { useCurrentCommandMenuContextApi } from '@/command-menu-item/hooks/useCurrentCommandMenuContextApi';
 import { commandMenuItemsSelector } from '@/command-menu-item/states/commandMenuItemsSelector';
@@ -13,8 +14,9 @@ import { sidePanelSearchState } from '@/side-panel/states/sidePanelSearchState';
 import { DraggableItem } from '@/ui/layout/draggable-list/components/DraggableItem';
 import { DraggableList } from '@/ui/layout/draggable-list/components/DraggableList';
 import { SelectableListItem } from '@/ui/layout/selectable-list/components/SelectableListItem';
+import { SidePanelFooter } from '@/ui/layout/side-panel/components/SidePanelFooter';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
-import { type DraggableListDropResult } from '@/ui/layout/draggable-list/types/DraggableListDropResult';
+import { type DropResult } from '@hello-pangea/dnd';
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { ContextStorePageType } from 'twenty-shared/types';
@@ -26,8 +28,10 @@ import {
   IconDotsVertical,
   IconPin,
   IconPinnedOff,
+  IconRefresh,
   useIcons,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
+import { Button } from 'twenty-ui/input';
 import { MenuItem, MenuItemDraggable } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { type CommandMenuItemFieldsFragment } from '~/generated-metadata/graphql';
@@ -75,6 +79,7 @@ export const SidePanelCommandMenuItemEditPage = () => {
   );
   const { updateCommandMenuItemInDraft } = useUpdateCommandMenuItemInDraft();
   const { reorderCommandMenuItemInDraft } = useReorderCommandMenuItemsInDraft();
+  const { resetCommandMenuItemsDraft } = useResetCommandMenuItemsDraft();
 
   const editableCommandMenuItems = useEditableCommandMenuItems();
 
@@ -145,7 +150,7 @@ export const SidePanelCommandMenuItemEditPage = () => {
       />
     );
 
-  const handlePinnedDragEnd = (result: DraggableListDropResult) => {
+  const handlePinnedDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
 
     if (!isDefined(destination)) {
@@ -293,6 +298,19 @@ export const SidePanelCommandMenuItemEditPage = () => {
           </SidePanelGroup>
         </SidePanelList>
       </StyledContent>
+      <SidePanelFooter
+        actions={[
+          <Button
+            key="reset"
+            Icon={IconRefresh}
+            title={t`Reset to default`}
+            variant="secondary"
+            accent="default"
+            size="small"
+            onClick={resetCommandMenuItemsDraft}
+          />,
+        ]}
+      />
     </StyledContainer>
   );
 };

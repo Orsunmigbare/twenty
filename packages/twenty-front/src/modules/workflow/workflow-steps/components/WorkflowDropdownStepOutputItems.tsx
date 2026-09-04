@@ -31,8 +31,11 @@ import {
 } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { extractRawVariableNamePart } from 'twenty-shared/workflow';
-import { IconChevronLeft, useIcons } from 'twenty-ui/icon';
-import { OverflowingTextWithTooltip } from 'twenty-ui/surfaces';
+import {
+  IconChevronLeft,
+  OverflowingTextWithTooltip,
+  useIcons,
+} from 'twenty-ui/display';
 import { MenuItemSelect } from 'twenty-ui/navigation';
 
 type WorkflowDropdownStepOutputItemsProps = {

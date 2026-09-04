@@ -46,7 +46,7 @@ export const WrongNumber: Story = {
 
 export const Performance = getProfilingStory({
   componentName: 'PhonesFieldDisplay',
-  averageThresholdInMs: 1,
+  averageThresholdInMs: 0.5,
   numberOfRuns: 20,
   numberOfTestsPerRun: 100,
 });

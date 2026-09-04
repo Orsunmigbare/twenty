@@ -9,7 +9,7 @@ export const useIsSettingsDrawer = () => {
   const currentMobileNavigationDrawer = useAtomStateValue(
     currentMobileNavigationDrawerState,
   );
-  return (
-    isSettingsPage || (isMobile && currentMobileNavigationDrawer === 'settings')
-  );
+  return isMobile
+    ? currentMobileNavigationDrawer === 'settings'
+    : isSettingsPage;
 };

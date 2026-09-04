@@ -37,14 +37,15 @@ const StyledSidePanelWrapper = styled.div<{
 
 const StyledSidePanel = styled.aside`
   background: ${themeCssVariables.background.primary};
-  border-left: 1px solid ${themeCssVariables.border.color.medium};
+  border: 1px solid ${themeCssVariables.border.color.medium};
+  border-radius: ${themeCssVariables.border.radius.md};
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   position: relative;
-  width: var(${SIDE_PANEL_WIDTH_VAR});
+  width: 100%;
 `;
 
 const StyledModalContainer = styled.div`
@@ -56,6 +57,8 @@ const StyledModalContainer = styled.div`
   width: 100%;
   z-index: 1;
 `;
+
+const GAP_WIDTH = 8;
 
 export const SidePanelForDesktop = () => {
   const isSidePanelOpened = useAtomStateValue(isSidePanelOpenedState);
@@ -127,7 +130,7 @@ export const SidePanelForDesktop = () => {
         currentWidth={sidePanelWidth}
         onWidthChange={handleWidthChange}
         onCollapse={handleCollapse}
-        gapWidth={0}
+        gapWidth={isSidePanelOpened ? GAP_WIDTH : 0}
         cssVariableName={SIDE_PANEL_WIDTH_VAR}
         onResizeStart={handleResizeStart}
       />

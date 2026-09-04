@@ -1,8 +1,5 @@
 import { defineFrontComponent } from 'twenty-sdk/define';
-import {
-  useFrontComponentExecutionContext,
-  useUserId,
-} from 'twenty-sdk/front-component';
+import { useFrontComponentExecutionContext, useUserId } from 'twenty-sdk/front-component';
 import { useState } from 'react';
 
 const HelloWorld = () => {

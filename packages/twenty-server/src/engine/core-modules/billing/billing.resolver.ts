@@ -10,9 +10,8 @@ import { MetadataResolver } from 'src/engine/api/graphql/graphql-config/decorato
 import { type ApiKeyEntity } from 'src/engine/core-modules/api-key/api-key.entity';
 import { type AuthContextUser } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { BillingEndTrialPeriodDTO } from 'src/engine/core-modules/billing/dtos/billing-end-trial-period.dto';
-import { BillingResourceCreditUsageDTO } from 'src/engine/core-modules/billing/dtos/billing-resource-credit-usage.dto';
+import { BillingMeteredProductUsageDTO } from 'src/engine/core-modules/billing/dtos/billing-metered-product-usage.dto';
 import { BillingPlanDTO } from 'src/engine/core-modules/billing/dtos/billing-plan.dto';
-import { BillingPaymentIntentDTO } from 'src/engine/core-modules/billing/dtos/billing-payment-intent.dto';
 import { BillingSessionDTO } from 'src/engine/core-modules/billing/dtos/billing-session.dto';
 import { BillingUpdateDTO } from 'src/engine/core-modules/billing/dtos/billing-update.dto';
 import { BillingCheckoutSessionInput } from 'src/engine/core-modules/billing/dtos/inputs/billing-checkout-session.input';
@@ -26,6 +25,7 @@ import { BillingSubscriptionService } from 'src/engine/core-modules/billing/serv
 import { BillingUsageService } from 'src/engine/core-modules/billing/services/billing-usage.service';
 import { BillingService } from 'src/engine/core-modules/billing/services/billing.service';
 import { formatBillingDatabaseProductToGraphqlDTO } from 'src/engine/core-modules/billing/utils/format-database-product-to-graphql-dto.util';
+import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { PreventNestToAutoLogGraphqlErrorsFilter } from 'src/engine/core-modules/graphql/filters/prevent-nest-to-auto-log-graphql-errors.filter';
 import { ResolverValidationPipe } from 'src/engine/core-modules/graphql/pipes/resolver-validation.pipe';
 import {
@@ -48,6 +48,8 @@ import {
 } from 'src/engine/metadata-modules/permissions/permissions.exception';
 import { PermissionsService } from 'src/engine/metadata-modules/permissions/permissions.service';
 import { PermissionsGraphqlApiExceptionFilter } from 'src/engine/metadata-modules/permissions/utils/permissions-graphql-api-exception.filter';
+import { FeatureFlagKey } from 'twenty-shared/types';
+
 @MetadataResolver()
 @UsePipes(ResolverValidationPipe)
 @UseFilters(
@@ -63,6 +65,7 @@ export class BillingResolver {
     private readonly billingService: BillingService,
     private readonly billingUsageService: BillingUsageService,
     private readonly permissionsService: PermissionsService,
+    private readonly featureFlagService: FeatureFlagService,
   ) {}
 
   @Query(() => BillingSessionDTO)
@@ -72,13 +75,12 @@ export class BillingResolver {
   )
   async billingPortalSession(
     @AuthWorkspace() workspace: WorkspaceEntity,
-    @Args() { returnUrlPath, forPaymentMethodUpdate }: BillingSessionInput,
+    @Args() { returnUrlPath }: BillingSessionInput,
   ) {
     return {
       url: await this.billingPortalWorkspaceService.computeBillingPortalSessionURLOrThrow(
         workspace,
         returnUrlPath,
-        forPaymentMethodUpdate,
       ),
     };
   }
@@ -142,53 +144,6 @@ export class BillingResolver {
         url: checkoutSessionURL,
       };
     }
-  }
-
-  @Mutation(() => BillingPaymentIntentDTO)
-  @UseGuards(WorkspaceAuthGuard, UserAuthGuard, NoPermissionGuard)
-  async createSubscriptionPaymentIntent(
-    @AuthWorkspace() workspace: WorkspaceEntity,
-    @AuthUser() user: AuthContextUser,
-    @AuthUserWorkspaceId() userWorkspaceId: string,
-    @Args() { recurringInterval, plan }: BillingCheckoutSessionInput,
-    @Args('idempotencyKey', { type: () => String }) idempotencyKey: string,
-    @AuthApiKey() apiKey?: ApiKeyEntity,
-  ): Promise<BillingPaymentIntentDTO> {
-    await this.validateCanCheckoutSessionPermissionOrThrow({
-      workspaceId: workspace.id,
-      userWorkspaceId,
-      apiKeyId: apiKey?.id,
-      workspaceActivationStatus: workspace.activationStatus,
-    });
-
-    const resolvedPlan = plan ?? BillingPlanKey.PRO;
-
-    const billingPricesPerPlan =
-      await this.billingPlanService.getPricesPerPlanByInterval({
-        planKey: resolvedPlan,
-        interval: recurringInterval,
-      });
-
-    return this.billingPortalWorkspaceService.createSubscriptionPaymentIntent({
-      user,
-      workspace,
-      plan: resolvedPlan,
-      billingPricesPerPlan,
-      idempotencyKey,
-    });
-  }
-
-  @Mutation(() => BillingPaymentIntentDTO)
-  @UseGuards(
-    WorkspaceAuthGuard,
-    SettingsPermissionGuard(PermissionFlagType.BILLING),
-  )
-  async createBillingPaymentMethodSetupIntent(
-    @AuthWorkspace() workspace: WorkspaceEntity,
-  ): Promise<BillingPaymentIntentDTO> {
-    return this.billingPortalWorkspaceService.createPaymentMethodSetupIntent(
-      workspace,
-    );
   }
 
   @Mutation(() => BillingUpdateDTO)
@@ -282,14 +237,26 @@ export class BillingResolver {
     WorkspaceAuthGuard,
     SettingsPermissionGuard(PermissionFlagType.BILLING),
   )
-  async setResourceCreditSubscriptionPrice(
+  async setMeteredSubscriptionPrice(
     @AuthWorkspace() workspace: WorkspaceEntity,
     @Args() { priceId }: BillingUpdateSubscriptionItemPriceInput,
   ) {
-    await this.billingSubscriptionUpdateService.changeResourceCreditPrice(
+    const isV2 = await this.featureFlagService.isFeatureEnabled(
+      FeatureFlagKey.IS_BILLING_V2_ENABLED,
       workspace.id,
-      priceId,
     );
+
+    if (isV2) {
+      await this.billingSubscriptionUpdateService.changeResourceCreditPrice(
+        workspace.id,
+        priceId,
+      );
+    } else {
+      await this.billingSubscriptionUpdateService.changeMeteredPrice(
+        workspace.id,
+        priceId,
+      );
+    }
 
     return {
       billingSubscriptions:
@@ -343,16 +310,23 @@ export class BillingResolver {
     };
   }
 
-  @Query(() => [BillingResourceCreditUsageDTO])
+  @Query(() => [BillingMeteredProductUsageDTO])
   @UseGuards(
     WorkspaceAuthGuard,
     SettingsPermissionGuard(PermissionFlagType.BILLING),
   )
-  async getResourceCreditUsage(
+  //TODO: To rename to getResourceCreditProductsUsage
+  async getMeteredProductsUsage(
     @AuthWorkspace() workspace: WorkspaceEntity,
-  ): Promise<BillingResourceCreditUsageDTO[]> {
-    const usageData =
-      await this.billingUsageService.getResourceCreditProductUsage(workspace);
+  ): Promise<BillingMeteredProductUsageDTO[]> {
+    const isV2 = await this.featureFlagService.isFeatureEnabled(
+      FeatureFlagKey.IS_BILLING_V2_ENABLED,
+      workspace.id,
+    );
+
+    const usageData = isV2
+      ? await this.billingUsageService.getResourceCreditProductUsage(workspace)
+      : await this.billingUsageService.getMeteredProductsUsage(workspace);
 
     return usageData.map((item) => ({
       ...item,
@@ -369,10 +343,8 @@ export class BillingResolver {
     WorkspaceAuthGuard,
     SettingsPermissionGuard(PermissionFlagType.BILLING),
   )
-  async cancelSwitchResourceCreditPrice(
-    @AuthWorkspace() workspace: WorkspaceEntity,
-  ) {
-    await this.billingSubscriptionUpdateService.cancelSwitchResourceCreditPrice(
+  async cancelSwitchMeteredPrice(@AuthWorkspace() workspace: WorkspaceEntity) {
+    await this.billingSubscriptionUpdateService.cancelSwitchMeteredPrice(
       workspace,
     );
 

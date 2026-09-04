@@ -11,7 +11,9 @@ import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runne
 import { type BlocklistItem } from 'src/modules/blocklist/blocklist-validation-manager/services/blocklist-validation.service';
 
 @WorkspaceQueryHook(`blocklist.updateMany`)
-export class BlocklistUpdateManyPreQueryHook implements WorkspacePreQueryHookInstance {
+export class BlocklistUpdateManyPreQueryHook
+  implements WorkspacePreQueryHookInstance
+{
   constructor() {}
 
   async execute(): Promise<UpdateManyResolverArgs<BlocklistItem>> {

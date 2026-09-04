@@ -11,8 +11,8 @@ import { WorkflowStepBody } from '@/workflow/workflow-steps/components/WorkflowS
 import { WorkflowStepFooter } from '@/workflow/workflow-steps/components/WorkflowStepFooter';
 import { WorkflowVariablePicker } from '@/workflow/workflow-variables/components/WorkflowVariablePicker';
 import { isDefined } from 'twenty-shared/utils';
-import { canObjectBeManagedByAutomation } from 'twenty-shared/workflow';
-import { HorizontalSeparator } from 'twenty-ui/layout';
+import { canObjectBeManagedByWorkflow } from 'twenty-shared/workflow';
+import { HorizontalSeparator } from 'twenty-ui/display';
 import { type SelectOption } from 'twenty-ui/input';
 import { type JsonValue } from 'type-fest';
 import { useDebouncedCallback } from 'use-debounce';
@@ -46,8 +46,9 @@ export const WorkflowEditActionDeleteRecord = ({
   const availableMetadata: Array<SelectOption<string>> =
     activeNonSystemObjectMetadataItems
       .filter((objectMetadataItem) =>
-        canObjectBeManagedByAutomation({
+        canObjectBeManagedByWorkflow({
           nameSingular: objectMetadataItem.nameSingular,
+          isSystem: objectMetadataItem.isSystem,
         }),
       )
       .map((item) => ({

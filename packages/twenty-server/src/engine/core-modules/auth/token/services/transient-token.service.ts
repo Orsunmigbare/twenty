@@ -10,8 +10,10 @@ import {
 } from 'src/engine/core-modules/auth/auth.exception';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
-import { type TransientTokenJwtPayload } from 'src/engine/core-modules/auth/types/transient-token-jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import {
+  type TransientTokenJwtPayload,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 
 @Injectable()
 export class TransientTokenService {
@@ -33,6 +35,10 @@ export class TransientTokenService {
       type: JwtTokenTypeEnum.LOGIN,
     };
 
+    const secret = this.jwtWrapperService.generateAppSecret(
+      jwtPayload.type,
+      workspaceId,
+    );
     const expiresIn = this.twentyConfigService.get(
       'SHORT_TERM_TOKEN_EXPIRES_IN',
     );
@@ -40,7 +46,8 @@ export class TransientTokenService {
     const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
 
     return {
-      token: await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
+      token: this.jwtWrapperService.sign(jwtPayload, {
+        secret,
         expiresIn,
       }),
       expiresAt,

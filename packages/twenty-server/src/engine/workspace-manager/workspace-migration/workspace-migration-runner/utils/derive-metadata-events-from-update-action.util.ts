@@ -134,14 +134,12 @@ const deriveAllMetadataEventsFromUpdateAction = ({
     case 'commandMenuItem':
     case 'frontComponent':
     case 'navigationMenuItem':
-    case 'rolePermissionFlag':
     case 'permissionFlag':
     case 'objectPermission':
     case 'fieldPermission':
     case 'viewSort':
     case 'webhook':
-    case 'connectionProvider':
-    case 'searchFieldMetadata': {
+    case 'connectionProvider': {
       const flatEntityMapsKey = getMetadataFlatEntityMapsKey(
         flatAction.metadataName,
       );

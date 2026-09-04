@@ -15,8 +15,8 @@ import { type RelationType } from '~/generated-metadata/graphql';
 type BaseFieldMetadata = {
   fieldName: string;
   objectMetadataNameSingular?: string;
-  applicationId?: string | null;
-  isUIEditable?: boolean;
+  isCustom?: boolean;
+  isUIReadOnly?: boolean;
 };
 
 export type FieldUuidMetadata = BaseFieldMetadata & {
@@ -256,7 +256,7 @@ export type FormFieldCurrencyValue = {
 };
 export type FieldFullNameValue = { firstName: string; lastName: string };
 export type FieldAddressValue = {
-  addressStreet1: string | null;
+  addressStreet1: string;
   addressStreet2: string | null;
   addressCity: string | null;
   addressState: string | null;

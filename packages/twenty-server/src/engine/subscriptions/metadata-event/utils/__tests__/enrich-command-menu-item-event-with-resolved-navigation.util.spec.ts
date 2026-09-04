@@ -11,7 +11,6 @@ import {
 } from 'src/engine/metadata-modules/flat-command-menu-item/utils/build-navigation-flat-command-menu-item.util';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { enrichCommandMenuItemEventWithResolvedNavigation } from 'src/engine/subscriptions/metadata-event/utils/enrich-command-menu-item-event-with-resolved-navigation.util';
-import { TWENTY_STANDARD_APPLICATION } from 'src/engine/workspace-manager/twenty-standard-application/constants/twenty-standard-applications';
 
 const mockI18nInstance = {
   _: (messageId: string) => messageId,
@@ -27,12 +26,11 @@ const makeFlatObjectMetadata = (
     universalIdentifier: 'obj-uid-1',
     workspaceId: 'ws-1',
     applicationId: 'app-1',
-    applicationUniversalIdentifier:
-      TWENTY_STANDARD_APPLICATION.universalIdentifier,
     labelPlural: 'People',
     labelSingular: 'Person',
     icon: 'IconUser',
-    overrides: null,
+    isCustom: false,
+    standardOverrides: null,
     ...overrides,
   }) as unknown as FlatObjectMetadata;
 
@@ -148,10 +146,10 @@ describe('enrichCommandMenuItemEventWithResolvedNavigation', () => {
     const flatObjectMetadata = makeFlatObjectMetadata({
       labelPlural: 'People',
       icon: 'IconUser',
-      overrides: {
+      standardOverrides: {
         labelPlural: 'Contacts',
         icon: 'IconContacts',
-      } as unknown as FlatObjectMetadata['overrides'],
+      } as unknown as FlatObjectMetadata['standardOverrides'],
     });
     const flatObjectMetadataMaps =
       makeFlatObjectMetadataMaps(flatObjectMetadata);
@@ -174,7 +172,7 @@ describe('enrichCommandMenuItemEventWithResolvedNavigation', () => {
     const flatObjectMetadata = makeFlatObjectMetadata({
       labelPlural: 'Companies',
       icon: 'IconBuilding',
-      overrides: null,
+      standardOverrides: null,
     });
     const flatObjectMetadataMaps =
       makeFlatObjectMetadataMaps(flatObjectMetadata);

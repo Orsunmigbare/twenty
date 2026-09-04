@@ -28,81 +28,57 @@ export const computeFlatIndexFieldColumnNames = ({
   flatIndexFieldMetadatas: FlatIndexFieldMetadata[];
   flatFieldMetadataMaps: MetadataFlatEntityMaps<'fieldMetadata'>;
 }): string[] => {
-  return flatIndexFieldMetadatas.flatMap(
-    ({ fieldMetadataId, subFieldName }) => {
-      const flatFieldMetadata = findFlatEntityByIdInFlatEntityMapsOrThrow({
-        flatEntityId: fieldMetadataId,
-        flatEntityMaps: flatFieldMetadataMaps,
-      });
+  return flatIndexFieldMetadatas.flatMap(({ fieldMetadataId }) => {
+    const flatFieldMetadata = findFlatEntityByIdInFlatEntityMapsOrThrow({
+      flatEntityId: fieldMetadataId,
+      flatEntityMaps: flatFieldMetadataMaps,
+    });
 
-      if (!isDefined(flatFieldMetadata)) {
+    if (!isDefined(flatFieldMetadata)) {
+      throw new FlatEntityMapsException(
+        'Index field related field metadata not found',
+        FlatEntityMapsExceptionCode.ENTITY_NOT_FOUND,
+      );
+    }
+
+    if (isMorphOrRelationFlatFieldMetadata(flatFieldMetadata)) {
+      if (
+        flatFieldMetadata.settings?.relationType !== RelationType.MANY_TO_ONE
+      ) {
         throw new FlatEntityMapsException(
-          'Index field related field metadata not found',
+          'Cannot index a relation field that has no join column',
           FlatEntityMapsExceptionCode.ENTITY_NOT_FOUND,
         );
       }
 
-      if (isMorphOrRelationFlatFieldMetadata(flatFieldMetadata)) {
-        if (
-          flatFieldMetadata.settings?.relationType !== RelationType.MANY_TO_ONE
-        ) {
-          throw new FlatEntityMapsException(
-            'Cannot index a relation field that has no join column',
-            FlatEntityMapsExceptionCode.ENTITY_NOT_FOUND,
-          );
-        }
+      return computeMorphOrRelationFieldJoinColumnName({
+        name: flatFieldMetadata.name,
+      });
+    }
 
-        return computeMorphOrRelationFieldJoinColumnName({
-          name: flatFieldMetadata.name,
-        });
-      }
+    if (isCompositeFieldMetadataType(flatFieldMetadata.type)) {
+      const compositeType = compositeTypeDefinitions.get(
+        flatFieldMetadata.type,
+      );
 
-      if (isCompositeFieldMetadataType(flatFieldMetadata.type)) {
-        const compositeType = compositeTypeDefinitions.get(
-          flatFieldMetadata.type,
-        );
-
-        if (!compositeType) {
-          throw new FlatEntityMapsException(
-            'Composite type not found',
-            FlatEntityMapsExceptionCode.INTERNAL_SERVER_ERROR,
-          );
-        }
-
-        if (isDefined(subFieldName)) {
-          const property = compositeType.properties.find(
-            (compositeProperty) => compositeProperty.name === subFieldName,
-          );
-
-          if (!isDefined(property)) {
-            throw new FlatEntityMapsException(
-              `Composite sub-field "${subFieldName}" not found on ${flatFieldMetadata.name}`,
-              FlatEntityMapsExceptionCode.ENTITY_NOT_FOUND,
-            );
-          }
-
-          return [
-            computeCompositeColumnName(
-              { name: flatFieldMetadata.name, type: flatFieldMetadata.type },
-              property,
-            ),
-          ];
-        }
-
-        // System indexes (no subFieldName) project the composite parent onto
-        // every property flagged isIncludedInUniqueConstraint.
-        const uniqueCompositeProperties = compositeType.properties.filter(
-          (property) => property.isIncludedInUniqueConstraint,
-        );
-
-        return uniqueCompositeProperties.map((subField) =>
-          computeCompositeColumnName(flatFieldMetadata.name, subField),
+      if (!compositeType) {
+        throw new FlatEntityMapsException(
+          'Composite type not found',
+          FlatEntityMapsExceptionCode.INTERNAL_SERVER_ERROR,
         );
       }
 
-      return flatFieldMetadata.name;
-    },
-  );
+      const uniqueCompositeProperties = compositeType.properties.filter(
+        (property) => property.isIncludedInUniqueConstraint,
+      );
+
+      return uniqueCompositeProperties.map((subField) =>
+        computeCompositeColumnName(flatFieldMetadata.name, subField),
+      );
+    }
+
+    return flatFieldMetadata.name;
+  });
 };
 
 export const deleteIndexMetadata = async ({
@@ -130,7 +106,6 @@ export const createIndexInWorkspaceSchema = async ({
   workspaceSchemaManagerService,
   queryRunner,
   workspaceId,
-  concurrently = false,
 }: {
   flatIndexMetadata: FlatIndexMetadata;
   flatObjectMetadata: FlatObjectMetadata;
@@ -138,7 +113,6 @@ export const createIndexInWorkspaceSchema = async ({
   workspaceSchemaManagerService: WorkspaceSchemaManagerService;
   queryRunner: QueryRunner;
   workspaceId: string;
-  concurrently?: boolean;
 }): Promise<void> => {
   const { schemaName, tableName } = getWorkspaceSchemaContextForMigration({
     workspaceId,
@@ -161,7 +135,6 @@ export const createIndexInWorkspaceSchema = async ({
     queryRunner,
     schemaName,
     tableName,
-    concurrently,
   });
 };
 

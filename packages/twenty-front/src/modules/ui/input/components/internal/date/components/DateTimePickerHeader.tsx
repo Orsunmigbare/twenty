@@ -23,7 +23,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconClock,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -59,9 +59,7 @@ const StyledTimeInputContainer = styled.div`
   align-items: center;
   background-color: ${themeCssVariables.background.transparent.lighter};
   border: 1px solid ${themeCssVariables.border.color.medium};
-  border-radius: calc(
-    ${themeCssVariables.border.radius.md} - ${themeCssVariables.spacing[1]}
-  );
+  border-radius: ${themeCssVariables.border.radius.sm};
   box-sizing: border-box;
   display: flex;
   gap: ${themeCssVariables.spacing[1]};

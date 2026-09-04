@@ -7,17 +7,16 @@ export enum AppPath {
   ResetPassword = '/reset-password/:passwordResetToken',
 
   // Onboarding
-  WorkspaceActivation = '/workspace-activation',
+  CreateWorkspace = '/create/workspace',
   CreateProfile = '/create/profile',
   SyncEmails = '/sync/emails',
-  InstallApps = '/install-apps',
   InviteTeam = '/invite-team',
   PlanRequired = '/plan-required',
   PlanRequiredSuccess = '/plan-required/payment-success',
+  BookCallDecision = '/book-call-decision',
   BookCall = '/book-call',
 
   // Onboarded
-  WorkspaceSetup = '/workspace-setup',
   Index = '/',
   TasksPage = '/objects/tasks',
   OpportunitiesPage = '/objects/opportunities',
@@ -32,9 +31,6 @@ export enum AppPath {
   DevelopersCatchAll = `/${Developers}/*`,
 
   Authorize = '/authorize',
-
-  // Deep link for twenty.com/dpa → in-app DPA generator (login-gated redirect).
-  Dpa = '/dpa',
 
   // 404 page not found
   NotFoundWildcard = '*',

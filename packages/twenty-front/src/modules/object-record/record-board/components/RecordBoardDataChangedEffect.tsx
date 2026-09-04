@@ -2,12 +2,10 @@ import { useStore } from 'jotai';
 
 import { useListenToObjectRecordOperationBrowserEvent } from '@/browser-event/hooks/useListenToObjectRecordOperationBrowserEvent';
 import { type ObjectRecordOperationBrowserEventDetail } from '@/browser-event/types/ObjectRecordOperationBrowserEventDetail';
-import { useGetRecordBoardEffectsForUpdateInputs } from '@/object-record/record-board/hooks/useGetRecordBoardEffectsForUpdateInputs';
+import { useGetShouldInitializeRecordBoardForUpdateInputs } from '@/object-record/record-board/hooks/useGetShouldInitializeRecordBoardForUpdateInputs';
 import { useRemoveRecordsFromBoard } from '@/object-record/record-board/hooks/useRemoveRecordsFromBoard';
-import { useRepositionRecordsOnBoard } from '@/object-record/record-board/hooks/useRepositionRecordsOnBoard';
 import { useTriggerRecordBoardInitialQuery } from '@/object-record/record-board/hooks/useTriggerRecordBoardInitialQuery';
 import { recordGroupFromGroupValueComponentFamilySelector } from '@/object-record/record-group/states/selectors/recordGroupFromGroupValueComponentFamilySelector';
-import { getFieldMetadataItemGqlFieldName } from '@/object-metadata/utils/getFieldMetadataItemGqlFieldName';
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
 import { recordIndexGroupFieldMetadataItemComponentState } from '@/object-record/record-index/states/recordIndexGroupFieldMetadataComponentState';
 import { recordIndexRecordIdsByGroupComponentFamilyState } from '@/object-record/record-index/states/recordIndexRecordIdsByGroupComponentFamilyState';
@@ -16,16 +14,15 @@ import { useAtomComponentFamilySelectorCallbackState } from '@/ui/utilities/stat
 import { useAtomComponentFamilyStateCallbackState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentFamilyStateCallbackState';
 import { useAtomComponentStateCallbackState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateCallbackState';
 import { useCallback } from 'react';
-import { assertUnreachable, isDefined } from 'twenty-shared/utils';
+import { isDefined } from 'twenty-shared/utils';
 
 export const RecordBoardDataChangedEffect = () => {
   const store = useStore();
   const { objectMetadataItem } = useRecordIndexContextOrThrow();
   const { triggerRecordBoardInitialQuery } =
     useTriggerRecordBoardInitialQuery();
-  const { getRecordBoardEffectsForUpdateInputs } =
-    useGetRecordBoardEffectsForUpdateInputs();
-  const { repositionRecordsOnBoard } = useRepositionRecordsOnBoard();
+  const { getShouldInitializeRecordBoardForUpdateInputs } =
+    useGetShouldInitializeRecordBoardForUpdateInputs();
 
   const recordGroupFromGroupValueCallbackState =
     useAtomComponentFamilySelectorCallbackState(
@@ -56,35 +53,17 @@ export const RecordBoardDataChangedEffect = () => {
                 ? [objectRecordOperation.result.updateInput]
                 : objectRecordOperation.result.updateInputs;
 
-            const recordBoardUpdateEffect =
-              getRecordBoardEffectsForUpdateInputs(updateInputs);
+            const shouldInitializeForUpdateOperation =
+              getShouldInitializeRecordBoardForUpdateInputs(updateInputs);
 
-            switch (recordBoardUpdateEffect) {
-              case 'trigger-initial-query': {
-                triggerRecordBoardInitialQuery({ shouldResetScroll: false });
-                break;
-              }
-              case 'reposition-records': {
-                const allRecordsRepositioned =
-                  repositionRecordsOnBoard(updateInputs);
-
-                if (!allRecordsRepositioned) {
-                  triggerRecordBoardInitialQuery({ shouldResetScroll: false });
-                }
-                break;
-              }
-              case 'none': {
-                break;
-              }
-              default: {
-                assertUnreachable(recordBoardUpdateEffect);
-              }
+            if (shouldInitializeForUpdateOperation) {
+              triggerRecordBoardInitialQuery();
             }
           }
           break;
         case 'create-one': {
           if (objectRecordOperation.createdRecord.position === 'first') {
-            triggerRecordBoardInitialQuery({ shouldResetScroll: false });
+            triggerRecordBoardInitialQuery();
           } else {
             const createdRecordPosition =
               objectRecordOperation.createdRecord.position;
@@ -103,9 +82,7 @@ export const RecordBoardDataChangedEffect = () => {
 
             const recordGroupValue =
               objectRecordOperation.createdRecord[
-                getFieldMetadataItemGqlFieldName(
-                  currentRecordIndexGroupFieldMetadataItem,
-                )
+                currentRecordIndexGroupFieldMetadataItem.name
               ];
 
             const recordGroupDefinitionFromGroupValue = store.get(
@@ -129,7 +106,7 @@ export const RecordBoardDataChangedEffect = () => {
             const groupIsEmpty = recordIdsWithoutCreatedRecord.length === 0;
 
             if (groupIsEmpty) {
-              triggerRecordBoardInitialQuery({ shouldResetScroll: false });
+              triggerRecordBoardInitialQuery();
               return;
             }
 
@@ -145,7 +122,7 @@ export const RecordBoardDataChangedEffect = () => {
             if (
               createdRecordPosition < (firstExistingRecordInGroup.position ?? 0)
             ) {
-              triggerRecordBoardInitialQuery({ shouldResetScroll: false });
+              triggerRecordBoardInitialQuery();
             }
           }
           break;
@@ -171,15 +148,14 @@ export const RecordBoardDataChangedEffect = () => {
           return;
         }
         default: {
-          triggerRecordBoardInitialQuery({ shouldResetScroll: false });
+          triggerRecordBoardInitialQuery();
         }
       }
     },
     [
       store,
       triggerRecordBoardInitialQuery,
-      getRecordBoardEffectsForUpdateInputs,
-      repositionRecordsOnBoard,
+      getShouldInitializeRecordBoardForUpdateInputs,
       recordIndexGroupFieldMetadataItem,
       recordGroupFromGroupValueCallbackState,
       recordIndexRecordIdsByGroupCallbackState,

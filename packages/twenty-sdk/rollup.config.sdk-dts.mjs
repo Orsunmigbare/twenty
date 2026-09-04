@@ -42,10 +42,4 @@ export default [
     external,
     plugins,
   },
-  {
-    input: 'src/sdk/utils/index.ts',
-    output: { file: 'dist/utils/index.d.ts', format: 'es' },
-    external,
-    plugins,
-  },
 ];

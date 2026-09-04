@@ -19,7 +19,7 @@ import { isDefined } from 'twenty-shared/utils';
 import { getOutputSchemaFromValue } from 'twenty-shared/logic-function';
 import { TRIGGER_STEP_ID } from 'twenty-shared/workflow';
 import { t } from '@lingui/core/macro';
-import { IconCopy } from 'twenty-ui/icon';
+import { IconCopy } from 'twenty-ui/display';
 
 import { useDebouncedCallback } from 'use-debounce';
 import { REACT_APP_SERVER_BASE_URL } from '~/config';
@@ -160,7 +160,6 @@ export const WorkflowEditTriggerWebhookForm = ({
                     ...trigger.settings,
                     httpMethod: 'POST',
                     expectedBody: parsingResult.data,
-                    expectedOutputSchema: parsingResult.data,
                     outputSchema,
                   } satisfies WorkflowWebhookTrigger['settings'],
                 },

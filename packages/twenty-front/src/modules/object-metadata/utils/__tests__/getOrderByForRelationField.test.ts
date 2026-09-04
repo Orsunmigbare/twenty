@@ -23,11 +23,11 @@ describe('getOrderByForRelationField', () => {
       ],
     };
 
-    const result = getOrderByForRelationField({
+    const result = getOrderByForRelationField(
       field,
       relatedObjectMetadataItem,
-      orderByDirection: 'AscNullsLast',
-    });
+      'AscNullsLast',
+    );
 
     // Should produce nested structure: { company: { name: 'AscNullsLast' } }
     expect(result).toEqual([{ company: { name: 'AscNullsLast' } }]);
@@ -52,15 +52,22 @@ describe('getOrderByForRelationField', () => {
       ],
     };
 
-    const result = getOrderByForRelationField({
+    const result = getOrderByForRelationField(
       field,
       relatedObjectMetadataItem,
-      orderByDirection: 'DescNullsLast',
-    });
+      'DescNullsLast',
+    );
 
+    // Should produce nested structure with composite field
     expect(result).toEqual([
-      { person: { name: { firstName: 'DescNullsLast' } } },
-      { person: { name: { lastName: 'DescNullsLast' } } },
+      {
+        person: {
+          name: {
+            firstName: 'DescNullsLast',
+            lastName: 'DescNullsLast',
+          },
+        },
+      },
     ]);
   });
 
@@ -77,11 +84,11 @@ describe('getOrderByForRelationField', () => {
       fields: [],
     };
 
-    const result = getOrderByForRelationField({
+    const result = getOrderByForRelationField(
       field,
       relatedObjectMetadataItem,
-      orderByDirection: 'AscNullsLast',
-    });
+      'AscNullsLast',
+    );
 
     expect(result).toEqual([{ companyId: 'AscNullsLast' }]);
   });
@@ -105,11 +112,11 @@ describe('getOrderByForRelationField', () => {
       ],
     };
 
-    const result = getOrderByForRelationField({
+    const result = getOrderByForRelationField(
       field,
       relatedObjectMetadataItem,
-      orderByDirection: 'AscNullsLast',
-    });
+      'AscNullsLast',
+    );
 
     // When labelIdentifierFieldMetadataId is not set, isLabelIdentifierField
     // falls back to checking for a field named 'name'
@@ -135,11 +142,11 @@ describe('getOrderByForRelationField', () => {
       ],
     };
 
-    const result = getOrderByForRelationField({
+    const result = getOrderByForRelationField(
       field,
       relatedObjectMetadataItem,
-      orderByDirection: 'DescNullsLast',
-    });
+      'DescNullsLast',
+    );
 
     expect(result).toEqual([{ company: { name: 'DescNullsLast' } }]);
   });

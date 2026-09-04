@@ -12,7 +12,6 @@ import { ViewFilterEntity } from 'src/engine/metadata-modules/view-filter/entiti
 import { ViewGroupEntity } from 'src/engine/metadata-modules/view-group/entities/view-group.entity';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
 import { ViewSortEntity } from 'src/engine/metadata-modules/view-sort/entities/view-sort.entity';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 
 @Module({
   imports: [
@@ -29,16 +28,7 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
       ViewFilterGroupEntity,
     ]),
   ],
-  providers: [
-    WorkspaceFlatViewMapCacheService,
-    provideWorkspaceScopedRepository(ViewEntity),
-    provideWorkspaceScopedRepository(ViewFieldEntity),
-    provideWorkspaceScopedRepository(ViewFieldGroupEntity),
-    provideWorkspaceScopedRepository(ViewFilterEntity),
-    provideWorkspaceScopedRepository(ViewFilterGroupEntity),
-    provideWorkspaceScopedRepository(ViewGroupEntity),
-    provideWorkspaceScopedRepository(ViewSortEntity),
-  ],
+  providers: [WorkspaceFlatViewMapCacheService],
   exports: [WorkspaceFlatViewMapCacheService],
 })
 export class FlatViewModule {}

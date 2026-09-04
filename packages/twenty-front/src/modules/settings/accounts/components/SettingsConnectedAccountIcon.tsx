@@ -10,7 +10,7 @@ import {
   IconMail,
   IconMicrosoft,
   IconSend,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { useContext } from 'react';
 import { ThemeContext } from 'twenty-ui/theme-constants';
 

@@ -12,7 +12,7 @@ import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useRef } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { Modal } from 'twenty-ui/surfaces';
+import { Modal } from 'twenty-ui/layout';
 
 export const ModalStatefulWrapper = ({
   modalInstanceId,
@@ -30,7 +30,6 @@ export const ModalStatefulWrapper = ({
   smallBorderRadius,
   narrowWidth,
   autoHeight,
-  width,
 }: ModalStatefulWrapperProps) => {
   const isMobile = useIsMobile();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -83,7 +82,6 @@ export const ModalStatefulWrapper = ({
           smallBorderRadius={smallBorderRadius}
           narrowWidth={narrowWidth}
           autoHeight={autoHeight}
-          width={width}
           modalZIndex={RootStackingContextZIndices.RootModal}
           backdropZIndex={RootStackingContextZIndices.RootModalBackDrop}
           backdropClickOutsideId={MODAL_BACKDROP_CLICK_OUTSIDE_ID}

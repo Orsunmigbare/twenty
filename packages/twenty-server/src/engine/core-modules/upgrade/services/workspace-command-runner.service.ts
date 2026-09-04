@@ -6,7 +6,6 @@ import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twent
 import { type RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/services/upgrade-command-registry.service';
 import { UpgradeMigrationService } from 'src/engine/core-modules/upgrade/services/upgrade-migration.service';
 import { UpgradeStatusService } from 'src/engine/core-modules/upgrade/services/upgrade-status.service';
-import { formatUpgradeLog } from 'src/engine/core-modules/upgrade/utils/format-upgrade-log.util';
 
 type WorkspaceCommandEntry = Pick<
   RegisteredWorkspaceCommand,
@@ -36,19 +35,8 @@ export class WorkspaceCommandRunnerService {
   }: RunWorkspaceCommandsArgs): Promise<void> {
     const { workspaceId, index, total } = iteratorContext;
 
-    const dryRunPrefix = options.dryRun ? '(dry run) ' : '';
-
     this.logger.log(
-      formatUpgradeLog({
-        humanMessage: `${dryRunPrefix}Upgrading workspace ${workspaceId} ${index + 1}/${total}`,
-        event: 'workspace.start',
-        logFields: {
-          workspaceId,
-          index: index + 1,
-          total,
-          dryRun: options.dryRun ?? false,
-        },
-      }),
+      `${options.dryRun ? '(dry run) ' : ''}Upgrading workspace ${workspaceId} ${index + 1}/${total}`,
     );
 
     const executedByVersion =
@@ -65,17 +53,7 @@ export class WorkspaceCommandRunnerService {
         });
       }
 
-      this.logger.log(
-        formatUpgradeLog({
-          humanMessage: `Upgrade for workspace ${workspaceId} completed.`,
-          event: 'workspace.success',
-          logFields: {
-            workspaceId,
-            executedByVersion,
-            dryRun: options.dryRun ?? false,
-          },
-        }),
-      );
+      this.logger.log(`Upgrade for workspace ${workspaceId} completed.`);
     } finally {
       if (!options.dryRun) {
         await this.safeInvalidateWorkspace(workspaceId);
@@ -87,18 +65,10 @@ export class WorkspaceCommandRunnerService {
     try {
       await this.upgradeStatusService.invalidateInstanceAndAllWorkspacesStatus();
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-
       this.logger.warn(
-        formatUpgradeLog({
-          humanMessage: `Failed to invalidate upgrade-status cache (triggered by workspace ${workspaceId}): ${errorMessage}`,
-          event: 'cache.invalidate.failed',
-          logFields: {
-            scope: 'instance-and-all-workspaces',
-            triggeredByWorkspaceId: workspaceId,
-          },
-        }),
+        `Failed to invalidate upgrade-status cache for workspace ${workspaceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       );
     }
   }

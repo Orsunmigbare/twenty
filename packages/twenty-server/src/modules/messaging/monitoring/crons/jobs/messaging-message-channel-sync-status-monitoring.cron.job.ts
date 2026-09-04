@@ -74,7 +74,6 @@ export class MessagingMessageChannelSyncStatusMonitoringCronJob {
             }
           },
           authContext,
-          { lite: true },
         );
       } catch (error) {
         this.exceptionHandlerService.captureExceptions([error], {

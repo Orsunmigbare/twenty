@@ -53,7 +53,7 @@ describe('Query Complexity - Failing Scenarios', () => {
     const groupByOperation = groupByOperationFactory({
       objectMetadataSingularName: 'person',
       objectMetadataPluralName: 'people',
-      groupBy: [{ jobTitle: true }],
+      groupBy: [{ city: true }],
       gqlFields: `edges { node { id company { id } } }`,
       limit: 11,
     });

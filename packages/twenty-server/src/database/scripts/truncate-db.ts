@@ -41,4 +41,4 @@ async function dropSchemasSequentially() {
   }
 }
 
-void dropSchemasSequentially();
+dropSchemasSequentially();

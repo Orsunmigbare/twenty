@@ -6,6 +6,5 @@ export type ViewSort = {
   createdAt?: string;
   updatedAt?: string;
   direction: ViewSortDirection;
-  subFieldName?: string | null;
   viewId?: string;
 };

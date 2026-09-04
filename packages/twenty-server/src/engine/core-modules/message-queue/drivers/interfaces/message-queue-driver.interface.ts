@@ -14,17 +14,13 @@ export interface MessageQueueDriver {
     data: T,
     options?: QueueJobOptions,
   ): Promise<void>;
-  bulkAdd<T extends MessageQueueJobData>(
-    queueName: MessageQueue,
-    jobName: string,
-    dataItems: T[],
-    options?: QueueJobOptions,
-  ): Promise<void>;
+  // @ts-expect-error legacy noImplicitAny
   work<T extends MessageQueueJobData>(
     queueName: MessageQueue,
     handler: ({ data, id }: { data: T; id: string }) => Promise<void> | void,
     options?: MessageQueueWorkerOptions,
-  ): void;
+  );
+  // @ts-expect-error legacy noImplicitAny
   addCron<T extends MessageQueueJobData | undefined>({
     queueName,
     jobName,
@@ -37,7 +33,8 @@ export interface MessageQueueDriver {
     data: T;
     options: QueueCronJobOptions;
     jobId?: string;
-  }): Promise<void>;
+  });
+  // @ts-expect-error legacy noImplicitAny
   removeCron({
     queueName,
     jobName,
@@ -46,14 +43,6 @@ export interface MessageQueueDriver {
     queueName: MessageQueue;
     jobName: string;
     jobId?: string;
-  }): Promise<void>;
+  });
   register?(queueName: MessageQueue): void;
-  getInFlightJobs?<T extends MessageQueueJobData>(
-    queueName: MessageQueue,
-  ): Promise<InFlightQueueJob<T>[]>;
-}
-
-export interface InFlightQueueJob<T extends MessageQueueJobData> {
-  id?: string;
-  data: T;
 }

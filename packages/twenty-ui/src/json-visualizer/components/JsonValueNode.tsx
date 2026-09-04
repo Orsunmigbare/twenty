@@ -1,9 +1,17 @@
-import { type IconComponent } from '@ui/icon';
+import { styled } from '@linaria/react';
+import { type IconComponent } from '@ui/display';
 import { JsonNodeLabel } from '@ui/json-visualizer/components/internal/JsonNodeLabel';
 import { JsonNodeValue } from '@ui/json-visualizer/components/internal/JsonNodeValue';
 import { type JsonNodeHighlighting } from '@ui/json-visualizer/types/JsonNodeHighlighting';
+import { themeCssVariables } from '@ui/theme-constants';
 
-import styles from './JsonValueNode.module.scss';
+const StyledListItem = styled.li`
+  align-items: center;
+  column-gap: ${themeCssVariables.spacing[2]};
+  display: flex;
+  list-style-type: none;
+  white-space: nowrap;
+`;
 
 type JsonValueNodeProps = {
   valueAsString: string;
@@ -21,7 +29,7 @@ type JsonValueNodeProps = {
 
 export const JsonValueNode = (props: JsonValueNodeProps) => {
   return (
-    <li className={styles.listItem}>
+    <StyledListItem>
       {props.label && (
         <JsonNodeLabel
           label={props.label}
@@ -34,6 +42,6 @@ export const JsonValueNode = (props: JsonValueNodeProps) => {
         valueAsString={props.valueAsString}
         highlighting={props.highlighting}
       />
-    </li>
+    </StyledListItem>
   );
 };

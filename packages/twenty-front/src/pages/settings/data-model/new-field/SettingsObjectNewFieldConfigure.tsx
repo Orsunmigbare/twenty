@@ -1,15 +1,15 @@
 import { isDDLLockedState } from '@/client-config/states/isDDLLockedState';
 import { useFieldMetadataItem } from '@/object-metadata/hooks/useFieldMetadataItem';
 import { useFilteredObjectMetadataItems } from '@/object-metadata/hooks/useFilteredObjectMetadataItems';
+import { SaveAndCancelButtons } from '@/settings/components/SaveAndCancelButtons/SaveAndCancelButtons';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
-import { SettingsWizardStepBar } from '@/settings/components/layout/SettingsWizardStepBar';
+import { SettingsDataModelNewFieldBreadcrumbDropDown } from '@/settings/data-model/components/SettingsDataModelNewFieldBreadcrumbDropDown';
 import { FIELD_NAME_MAXIMUM_LENGTH } from '@/settings/data-model/constants/FieldNameMaximumLength';
-import { SettingsObjectNewFieldHeaderIcon } from '@/settings/data-model/fields/components/SettingsObjectNewFieldHeaderIcon';
 import { SettingsDataModelFieldIconLabelForm } from '@/settings/data-model/fields/forms/components/SettingsDataModelFieldIconLabelForm';
 import { SettingsDataModelFieldSettingsFormCard } from '@/settings/data-model/fields/forms/components/SettingsDataModelFieldSettingsFormCard';
 import { settingsFieldFormSchema } from '@/settings/data-model/fields/forms/validation-schemas/settingsFieldFormSchema';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLingui } from '@lingui/react/macro';
@@ -22,10 +22,8 @@ import {
   SettingsPath,
 } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { H2Title } from 'twenty-ui/typography';
-import { Button } from 'twenty-ui/input';
+import { H2Title } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { type z } from 'zod';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { useNavigateApp } from '~/hooks/useNavigateApp';
@@ -182,18 +180,12 @@ export const SettingsObjectNewFieldConfigure = () => {
     <FormProvider // oxlint-disable-next-line react/jsx-props-no-spreading
       {...formConfig}
     >
-      <SettingsPageLayout
-        title={activeObjectMetadataItem.labelPlural}
-        icon={
-          <SettingsObjectNewFieldHeaderIcon
-            objectMetadataItem={activeObjectMetadataItem}
-          />
-        }
-        titleColor={themeCssVariables.font.color.tertiary}
+      <SubMenuTopBarContainer
+        title={t`2. Configure field`}
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
             children: t`Objects`,
@@ -205,28 +197,26 @@ export const SettingsObjectNewFieldConfigure = () => {
               objectNamePlural,
             }),
           },
-          { children: t`New field` },
+
+          { children: <SettingsDataModelNewFieldBreadcrumbDropDown /> },
         ]}
-        secondaryBar={
-          <SettingsWizardStepBar
-            label={t`2. Configure field`}
-            onBack={() =>
+        actionButton={
+          <SaveAndCancelButtons
+            isLoading={isSaving}
+            isSaveDisabled={!canSave}
+            isCancelDisabled={isSubmitting}
+            onCancel={() =>
               navigate(
                 SettingsPath.ObjectNewFieldSelect,
-                { objectNamePlural },
-                { fieldType },
+                {
+                  objectNamePlural,
+                },
+                {
+                  fieldType,
+                },
               )
             }
-            trailing={
-              <Button
-                title={t`Save`}
-                variant="primary"
-                size="small"
-                accent="blue"
-                onClick={formConfig.handleSubmit(handleSave)}
-                disabled={!canSave || isSaving}
-              />
-            }
+            onSave={formConfig.handleSubmit(handleSave)}
           />
         }
       >
@@ -253,7 +243,7 @@ export const SettingsObjectNewFieldConfigure = () => {
             />
           </Section>
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     </FormProvider>
   );
 };

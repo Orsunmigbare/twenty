@@ -15,6 +15,9 @@ import {
   createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
+import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
+import { SEARCH_FIELDS_FOR_MESSAGE_PARTICIPANT } from 'src/modules/messaging/common/standard-objects/message-participant.workspace-entity';
+
 export const buildMessageParticipantStandardFlatFieldMetadatas = ({
   now,
   objectName,
@@ -40,7 +43,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'uuid',
     },
     standardObjectMetadataRelatedEntityIds,
@@ -59,7 +62,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
@@ -79,7 +82,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
@@ -99,7 +102,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
     standardObjectMetadataRelatedEntityIds,
@@ -117,7 +120,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`The creator of the record`),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -142,7 +145,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       ),
       icon: 'IconUserCircle',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -184,6 +187,12 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
+      settings: {
+        generatedType: 'STORED',
+        asExpression: getTsVectorColumnExpressionFromFields(
+          SEARCH_FIELDS_FOR_MESSAGE_PARTICIPANT,
+        ),
+      },
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -200,7 +209,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Role`),
       icon: 'IconAt',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: `'${MessageParticipantRole.FROM}'`,
       options: [
         {
@@ -231,13 +240,6 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
           position: 3,
           color: 'red',
         },
-        {
-          id: '20202020-3b1a-4e2c-9d7f-8a6b5c4d3e2f',
-          value: MessageParticipantRole.REPLY_TO,
-          label: i18nLabel(msg`Reply To`),
-          position: 4,
-          color: 'purple',
-        },
       ],
     },
     standardObjectMetadataRelatedEntityIds,
@@ -255,7 +257,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Handle`),
       icon: 'IconAt',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -272,7 +274,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Display Name`),
       icon: 'IconUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -290,7 +292,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Message`),
       icon: 'IconMessage',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'message',
       targetFieldName: 'messageParticipants',
       settings: {
@@ -315,7 +317,7 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Person`),
       icon: 'IconUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'person',
       targetFieldName: 'messageParticipants',
       settings: {
@@ -340,40 +342,13 @@ export const buildMessageParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Workspace member`),
       icon: 'IconCircleUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'workspaceMember',
       targetFieldName: 'messageParticipants',
       settings: {
         relationType: RelationType.MANY_TO_ONE,
         onDelete: RelationOnDeleteAction.SET_NULL,
         joinColumnName: 'workspaceMemberId',
-      },
-    },
-    standardObjectMetadataRelatedEntityIds,
-    dependencyFlatEntityMaps,
-    twentyStandardApplicationId,
-    now,
-  }),
-  messageCampaign: createStandardRelationFieldFlatMetadata({
-    objectName,
-    workspaceId,
-    context: {
-      type: FieldMetadataType.RELATION,
-      morphId: null,
-      fieldName: 'messageCampaign',
-      label: i18nLabel(msg`Campaign`),
-      description: i18nLabel(
-        msg`The campaign this participant was a recipient of`,
-      ),
-      icon: 'IconSend',
-      isNullable: true,
-      isUIEditable: false,
-      targetObjectName: 'messageCampaign',
-      targetFieldName: 'recipients',
-      settings: {
-        relationType: RelationType.MANY_TO_ONE,
-        onDelete: RelationOnDeleteAction.SET_NULL,
-        joinColumnName: 'messageCampaignId',
       },
     },
     standardObjectMetadataRelatedEntityIds,

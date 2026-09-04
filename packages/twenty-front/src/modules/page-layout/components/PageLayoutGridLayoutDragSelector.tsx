@@ -7,7 +7,7 @@ import { type RefObject } from 'react';
 export const PageLayoutGridLayoutDragSelector = ({
   gridContainerRef,
 }: {
-  gridContainerRef: RefObject<HTMLDivElement | null>;
+  gridContainerRef: RefObject<HTMLDivElement>;
 }) => {
   const { startPageLayoutDragSelection } = useStartPageLayoutDragSelection();
   const { changePageLayoutDragSelection } = useChangePageLayoutDragSelection();

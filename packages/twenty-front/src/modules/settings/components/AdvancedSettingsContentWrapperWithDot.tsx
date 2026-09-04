@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import { useContext } from 'react';
-import { IconPoint } from 'twenty-ui/icon';
+import { IconPoint } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledWrapper = styled.div`

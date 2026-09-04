@@ -1,11 +1,6 @@
+import { defineLogicFunction, type DatabaseEventPayload, type ObjectRecordCreateEvent, type ObjectRecordUpdateEvent } from 'twenty-sdk/define';
 import { SELF_HOSTING_USER_NAME_SINGULAR } from 'src/objects/selfHostingUser.object';
 import { CoreApiClient } from 'twenty-client-sdk/core';
-import {
-  defineLogicFunction,
-  type DatabaseEventPayload,
-  type ObjectRecordCreateEvent,
-  type ObjectRecordUpdateEvent,
-} from 'twenty-sdk/define';
 
 type SelfHostingUser = {
   id: string;
@@ -33,17 +28,6 @@ const handler = async (
   const email = params.properties.after.email?.primaryEmail;
 
   if (!email) {
-    return;
-  }
-
-  const existingPersonId = params.properties.after.personId;
-  const previousEmail =
-    'before' in params.properties
-      ? params.properties.before?.email?.primaryEmail
-      : undefined;
-  const emailChanged = previousEmail !== email;
-
-  if (existingPersonId && !emailChanged) {
     return;
   }
 

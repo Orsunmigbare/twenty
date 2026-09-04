@@ -12,11 +12,11 @@ import { type WorkspaceEntityDuplicateCriteria } from 'src/engine/api/graphql/wo
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 import { FieldMetadataDTO } from 'src/engine/metadata-modules/field-metadata/dtos/field-metadata.dto';
 import { IndexMetadataDTO } from 'src/engine/metadata-modules/index-metadata/dtos/index-metadata.dto';
-import { type ObjectMetadataOverrides } from 'src/engine/metadata-modules/object-metadata/types/object-metadata-overrides.type';
+import { ObjectStandardOverridesDTO } from 'src/engine/metadata-modules/object-metadata/dtos/object-standard-overrides.dto';
 
 @ObjectType('Object')
 @Authorize({
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   authorize: (context: any) => ({
     workspaceId: { eq: context?.req?.workspace?.id },
   }),
@@ -53,14 +53,17 @@ export class ObjectMetadataDTO {
   @Field({ nullable: true })
   icon?: string;
 
-  @HideField()
-  overrides?: ObjectMetadataOverrides | null;
+  @Field(() => ObjectStandardOverridesDTO, { nullable: true })
+  standardOverrides?: ObjectStandardOverridesDTO;
 
   @Field({ nullable: true })
   shortcut?: string;
 
   @Field({ nullable: true })
   color?: string;
+
+  @FilterableField()
+  isCustom: boolean;
 
   @FilterableField()
   isRemote: boolean;
@@ -72,16 +75,6 @@ export class ObjectMetadataDTO {
   isSystem: boolean;
 
   @FilterableField()
-  isUIEditable: boolean;
-
-  @FilterableField()
-  isUICreatable: boolean;
-
-  // Deprecated alias kept for one release: stays filterable so ObjectFilter
-  // keeps its isUIReadOnly member and external API consumers are not broken.
-  @FilterableField({
-    deprecationReason: 'Use isUIEditable',
-  })
   isUIReadOnly: boolean;
 
   @FilterableField()

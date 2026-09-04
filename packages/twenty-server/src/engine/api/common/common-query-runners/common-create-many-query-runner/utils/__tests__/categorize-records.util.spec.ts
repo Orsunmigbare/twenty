@@ -1,27 +1,20 @@
 import { type ObjectRecord } from 'twenty-shared/types';
 
-import { type ConflictingFieldGroup } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/types/conflicting-field-group.type';
 import { type PartialObjectRecordWithId } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/types/partial-object-record-with-id.type';
 import { categorizeRecords } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/utils/categorize-records.util';
 
 describe('categorizeRecords', () => {
-  const conflictingFieldGroups: ConflictingFieldGroup[] = [
+  const conflictingFields = [
+    { baseField: 'id', fullPath: 'id', column: 'id' },
     {
-      baseFields: ['id'],
-      conflictingProperties: [{ fullPath: 'id', column: 'id' }],
+      baseField: 'uniqueText',
+      fullPath: 'uniqueText',
+      column: 'uniqueText',
     },
     {
-      baseFields: ['uniqueText'],
-      conflictingProperties: [{ fullPath: 'uniqueText', column: 'uniqueText' }],
-    },
-    {
-      baseFields: ['emailsField'],
-      conflictingProperties: [
-        {
-          fullPath: 'emailsField.primaryEmail',
-          column: 'emailsFieldPrimaryEmail',
-        },
-      ],
+      baseField: 'emailsField',
+      fullPath: 'emailsField.primaryEmail',
+      column: 'emailsFieldPrimaryEmail',
     },
   ];
 
@@ -46,7 +39,7 @@ describe('categorizeRecords', () => {
 
     const { recordsToInsert, recordsToUpdate } = categorizeRecords(
       records,
-      conflictingFieldGroups,
+      conflictingFields,
       existingRecords,
     );
 
@@ -63,7 +56,7 @@ describe('categorizeRecords', () => {
 
     const { recordsToInsert, recordsToUpdate } = categorizeRecords(
       records,
-      conflictingFieldGroups,
+      conflictingFields,
       existingRecords,
     );
 
@@ -95,7 +88,7 @@ describe('categorizeRecords', () => {
 
     const { recordsToInsert, recordsToUpdate } = categorizeRecords(
       records,
-      conflictingFieldGroups,
+      conflictingFields,
       existingRecords,
     );
 

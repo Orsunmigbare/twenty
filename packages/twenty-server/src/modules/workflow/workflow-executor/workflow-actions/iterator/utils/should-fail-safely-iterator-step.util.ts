@@ -2,7 +2,6 @@ import { isDefined } from 'twenty-shared/utils';
 import { StepStatus, type WorkflowRunStepInfos } from 'twenty-shared/workflow';
 
 import { TERMINAL_STEP_STATUSES } from 'src/modules/workflow/workflow-executor/constants/terminal-step-statuses.constant';
-import { findParentSteps } from 'src/modules/workflow/workflow-executor/utils/find-parent-steps.util';
 import { stepHasBeenStarted } from 'src/modules/workflow/workflow-executor/utils/step-has-been-started.util';
 import { getAllStepIdsInLoop } from 'src/modules/workflow/workflow-executor/workflow-actions/iterator/utils/get-all-step-ids-in-loop.util';
 import {
@@ -19,7 +18,10 @@ export const shouldFailSafelyIteratorStep = ({
   steps: WorkflowAction[];
   stepInfos: WorkflowRunStepInfos;
 }): boolean => {
-  const allParentSteps = findParentSteps({ step, steps });
+  const stepsTargetingIterator = steps.filter(
+    (parentStep) =>
+      isDefined(parentStep) && parentStep.nextStepIds?.includes(step.id),
+  );
 
   const initialLoopStepIds = step.settings.input.initialLoopStepIds;
 
@@ -31,7 +33,7 @@ export const shouldFailSafelyIteratorStep = ({
       })
     : [];
 
-  const externalParentSteps = allParentSteps.filter(
+  const externalParentSteps = stepsTargetingIterator.filter(
     (parentStep) => !stepIdsInLoop.includes(parentStep.id),
   );
 
@@ -53,7 +55,7 @@ export const shouldFailSafelyIteratorStep = ({
     return areAllExternalParentsTerminal && hasFailedSafelyExternalParent;
   }
 
-  const areAllParentsTerminal = allParentSteps.every((parentStep) =>
+  const areAllParentsTerminal = stepsTargetingIterator.every((parentStep) =>
     TERMINAL_STEP_STATUSES.includes(stepInfos[parentStep.id]?.status),
   );
 
@@ -61,7 +63,7 @@ export const shouldFailSafelyIteratorStep = ({
     return false;
   }
 
-  const hasFailedSafelyParent = allParentSteps.some(
+  const hasFailedSafelyParent = stepsTargetingIterator.some(
     (parentStep) =>
       stepInfos[parentStep.id]?.status === StepStatus.FAILED_SAFELY,
   );

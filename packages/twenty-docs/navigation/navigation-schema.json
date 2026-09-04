@@ -209,7 +209,9 @@
             {
               "key": "aiHowTos",
               "label": "How-Tos",
-              "pages": ["user-guide/ai/how-tos/ai-faq"]
+              "pages": [
+                "user-guide/ai/how-tos/ai-faq"
+              ]
             }
           ]
         },
@@ -288,7 +290,9 @@
             {
               "key": "permissionsAccessHowTos",
               "label": "How-Tos",
-              "pages": ["user-guide/permissions-access/how-tos/permissions-faq"]
+              "pages": [
+                "user-guide/permissions-access/how-tos/permissions-faq"
+              ]
             }
           ]
         },
@@ -309,7 +313,9 @@
             {
               "key": "billingHowTos",
               "label": "How-Tos",
-              "pages": ["user-guide/billing/how-tos/billing-faq"]
+              "pages": [
+                "user-guide/billing/how-tos/billing-faq"
+              ]
             }
           ]
         },
@@ -334,7 +340,9 @@
             {
               "key": "settingsHowTos",
               "label": "How-Tos",
-              "pages": ["user-guide/settings/how-tos/settings-faq"]
+              "pages": [
+                "user-guide/settings/how-tos/settings-faq"
+              ]
             }
           ]
         }
@@ -347,7 +355,9 @@
         {
           "key": "developersGroup",
           "label": "Developers",
-          "pages": ["developers/introduction"]
+          "pages": [
+            "developers/introduction"
+          ]
         },
         {
           "key": "extend",
@@ -380,6 +390,7 @@
                 "developers/self-host/capabilities/docker-compose",
                 "developers/self-host/capabilities/setup",
                 "developers/self-host/capabilities/upgrade-guide",
+                "developers/self-host/capabilities/cloud-providers",
                 "developers/self-host/capabilities/troubleshooting"
               ]
             }
@@ -422,7 +433,9 @@
                         {
                           "key": "feedback",
                           "label": "Feedback",
-                          "pages": ["twenty-ui/progress-bar"]
+                          "pages": [
+                            "twenty-ui/progress-bar"
+                          ]
                         },
                         {
                           "key": "input",

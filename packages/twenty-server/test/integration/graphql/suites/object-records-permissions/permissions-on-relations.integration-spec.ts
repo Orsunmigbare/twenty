@@ -67,7 +67,7 @@ describe('permissionsOnRelations', () => {
         name: {
           firstName: 'Marie',
         },
-        jobTitle: 'Paris',
+        city: 'Paris',
         companyId,
       },
     });
@@ -121,6 +121,7 @@ describe('permissionsOnRelations', () => {
       objectMetadataPluralName: 'people',
       gqlFields: `
           id
+          city
           jobTitle
           company {
             id
@@ -160,6 +161,7 @@ describe('permissionsOnRelations', () => {
       objectMetadataPluralName: 'people',
       gqlFields: `
           id
+          city
           jobTitle
           company {
             id
@@ -202,6 +204,7 @@ describe('permissionsOnRelations', () => {
       objectMetadataSingularName: 'person',
       gqlFields: `
           id
+          city
           jobTitle
           company {
             id

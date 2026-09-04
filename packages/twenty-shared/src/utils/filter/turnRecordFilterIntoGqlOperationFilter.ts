@@ -19,7 +19,6 @@ import {
   type RawJsonFilter,
   type RecordFilterValueDependencies,
   type RecordGqlOperationFilter,
-  type RelationType,
   type RelationFilter,
   type SelectFilter,
   type StringFilter,
@@ -55,45 +54,32 @@ import {
 import { arrayOfStringsOrVariablesSchema } from '@/utils/filter/utils/validation-schemas/arrayOfStringsOrVariablesSchema';
 import { arrayOfUuidOrVariableSchema } from '@/utils/filter/utils/validation-schemas/arrayOfUuidsOrVariablesSchema';
 import { jsonRelationFilterValueSchema } from '@/utils/filter/utils/validation-schemas/jsonRelationFilterValueSchema';
-import {
-  computeMorphRelationGqlFieldJoinColumnName,
-  computeRelationGqlFieldJoinColumnName,
-} from '@/utils/fieldMetadata/compute-relation-gql-field-join-column-name';
 
-type FieldSharedMorphRelation = {
-  type: RelationType;
-  targetObjectMetadata: {
-    nameSingular: string;
-    namePlural: string;
-  };
-};
-
-export type FieldShared = {
+type FieldShared = {
   id: string;
   name: string;
   type: FieldMetadataType;
   label: string;
-  morphRelations?: FieldSharedMorphRelation[] | null;
 };
 
 type TurnRecordFilterIntoRecordGqlOperationFilterParams = {
   filterValueDependencies: RecordFilterValueDependencies;
   recordFilter: Omit<RecordFilter, 'id'>;
-  fieldMetadataItemById: Map<string, FieldShared>;
+  fieldMetadataItems: FieldShared[];
 };
 
 export const turnRecordFilterIntoRecordGqlOperationFilter = ({
   recordFilter,
-  fieldMetadataItemById,
+  fieldMetadataItems,
   filterValueDependencies,
 }: TurnRecordFilterIntoRecordGqlOperationFilterParams):
   | RecordGqlOperationFilter
   | undefined => {
-  const sourceFieldMetadataItem = fieldMetadataItemById.get(
-    recordFilter.fieldMetadataId,
+  const correspondingFieldMetadataItem = fieldMetadataItems.find(
+    (field) => field.id === recordFilter.fieldMetadataId,
   );
 
-  if (!isDefined(sourceFieldMetadataItem)) {
+  if (!isDefined(correspondingFieldMetadataItem)) {
     return;
   }
 
@@ -101,99 +87,15 @@ export const turnRecordFilterIntoRecordGqlOperationFilter = ({
     return;
   }
 
-  if (
-    sourceFieldMetadataItem.type === FieldMetadataType.RELATION &&
-    isDefined(recordFilter.relationTargetFieldMetadataId)
-  ) {
-    const targetFieldMetadataItem = fieldMetadataItemById.get(
-      recordFilter.relationTargetFieldMetadataId,
-    );
-
-    if (!isDefined(targetFieldMetadataItem)) {
-      return;
-    }
-
-    const innerFilter = buildDirectFieldGqlOperationFilter({
-      recordFilter: {
-        ...recordFilter,
-        fieldMetadataId: targetFieldMetadataItem.id,
-        relationTargetFieldMetadataId: null,
-      },
-      fieldMetadataItem: targetFieldMetadataItem,
-      filterValueDependencies,
-    });
-
-    if (!isDefined(innerFilter)) {
-      return;
-    }
-
-    return {
-      [sourceFieldMetadataItem.name]: innerFilter,
-    } as RecordGqlOperationFilter;
-  }
-
-  return buildDirectFieldGqlOperationFilter({
-    recordFilter,
-    fieldMetadataItem: sourceFieldMetadataItem,
-    filterValueDependencies,
-  });
-};
-
-type BuildDirectFieldGqlOperationFilterParams = {
-  filterValueDependencies: RecordFilterValueDependencies;
-  recordFilter: Omit<RecordFilter, 'id'>;
-  fieldMetadataItem: FieldShared;
-};
-
-const getRelationFilterJoinColumnName = ({
-  fieldMetadataItem,
-  filterValueDependencies,
-}: {
-  fieldMetadataItem: FieldShared;
-  filterValueDependencies: RecordFilterValueDependencies;
-}): string | undefined => {
-  if (fieldMetadataItem.type !== FieldMetadataType.MORPH_RELATION) {
-    return computeRelationGqlFieldJoinColumnName({
-      name: fieldMetadataItem.name,
-    });
-  }
-
-  const matchingMorphRelation = fieldMetadataItem.morphRelations?.find(
-    (morphRelation) =>
-      morphRelation.targetObjectMetadata.nameSingular ===
-      filterValueDependencies.currentRecord?.objectMetadataNameSingular,
-  );
-
-  if (!isDefined(matchingMorphRelation)) {
-    return;
-  }
-
-  return computeMorphRelationGqlFieldJoinColumnName({
-    fieldName: fieldMetadataItem.name,
-    relationType: matchingMorphRelation.type,
-    targetObjectMetadataNameSingular:
-      matchingMorphRelation.targetObjectMetadata.nameSingular,
-    targetObjectMetadataNamePlural:
-      matchingMorphRelation.targetObjectMetadata.namePlural,
-  });
-};
-
-const buildDirectFieldGqlOperationFilter = ({
-  recordFilter,
-  fieldMetadataItem,
-  filterValueDependencies,
-}: BuildDirectFieldGqlOperationFilterParams):
-  | RecordGqlOperationFilter
-  | undefined => {
   const shouldComputeEmptinessFilter = checkIfShouldComputeEmptinessFilter({
     recordFilterOperand: recordFilter.operand,
-    correspondingFieldMetadataItem: fieldMetadataItem,
+    correspondingFieldMetadataItem,
   });
 
   if (shouldComputeEmptinessFilter) {
     const emptinessFilter = getEmptyRecordGqlOperationFilter({
       operand: recordFilter.operand,
-      correspondingField: fieldMetadataItem,
+      correspondingField: correspondingFieldMetadataItem,
       recordFilter: recordFilter,
     });
 
@@ -204,21 +106,23 @@ const buildDirectFieldGqlOperationFilter = ({
 
   const isSubFieldFilter = isNonEmptyString(subFieldName);
 
-  const filterType = getFilterTypeFromFieldType(fieldMetadataItem.type);
+  const filterType = getFilterTypeFromFieldType(
+    correspondingFieldMetadataItem.type,
+  );
 
   switch (filterType) {
     case 'TEXT':
       switch (recordFilter.operand) {
         case RecordFilterOperand.CONTAINS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               ilike: `%${recordFilter.value}%`,
             } as StringFilter,
           };
         case RecordFilterOperand.DOES_NOT_CONTAIN:
           return {
             not: {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 ilike: `%${recordFilter.value}%`,
               } as StringFilter,
             },
@@ -233,7 +137,7 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.VECTOR_SEARCH:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               search: recordFilter.value,
             } as TSVectorFilter,
           };
@@ -246,14 +150,14 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.CONTAINS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               like: `%${recordFilter.value}%`,
             } as RawJsonFilter,
           };
         case RecordFilterOperand.DOES_NOT_CONTAIN:
           return {
             not: {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 like: `%${recordFilter.value}%`,
               } as RawJsonFilter,
             },
@@ -267,14 +171,14 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.CONTAINS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               like: `%${recordFilter.value}%`,
             } as FilesFilter,
           };
         case RecordFilterOperand.DOES_NOT_CONTAIN:
           return {
             not: {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 like: `%${recordFilter.value}%`,
               } as FilesFilter,
             },
@@ -311,12 +215,12 @@ const buildDirectFieldGqlOperationFilter = ({
         return {
           and: [
             {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gte: start,
               } as DateFilter,
             },
             {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: end,
               } as DateFilter,
             },
@@ -337,19 +241,19 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.IS_IN_PAST:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: nowAsPlainDate,
               } as DateFilter,
             };
           case RecordFilterOperand.IS_IN_FUTURE:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gte: nowAsPlainDate,
               } as DateFilter,
             };
           case RecordFilterOperand.IS_TODAY: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 eq: nowAsPlainDate,
               } as DateFilter,
             };
@@ -361,14 +265,14 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.IS_AFTER: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gte: plainDateFilter,
               } as DateFilter,
             };
           }
           case RecordFilterOperand.IS_BEFORE: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: plainDateFilter,
               } as DateFilter,
             };
@@ -376,7 +280,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
           case RecordFilterOperand.IS: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 eq: plainDateFilter,
               } as DateFilter,
             };
@@ -427,12 +331,12 @@ const buildDirectFieldGqlOperationFilter = ({
         return {
           and: [
             {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gte: start.toInstant().toString(),
               } as DateTimeFilter,
             },
             {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: end.toInstant().toString(),
               } as DateTimeFilter,
             },
@@ -453,13 +357,13 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.IS_IN_PAST:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: now.toInstant().round('minute').toString(),
               } as DateTimeFilter,
             };
           case RecordFilterOperand.IS_IN_FUTURE:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gt: now.toInstant().round('minute').toString(),
               } as DateTimeFilter,
             };
@@ -467,12 +371,12 @@ const buildDirectFieldGqlOperationFilter = ({
             return {
               and: [
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     gte: getPeriodStart(now, 'DAY').toInstant().toString(),
                   } as DateTimeFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     lt: getNextPeriodStart(now, 'DAY').toInstant().toString(),
                   } as DateTimeFilter,
                 },
@@ -509,12 +413,12 @@ const buildDirectFieldGqlOperationFilter = ({
           return {
             and: [
               {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   gte: start.toString(),
                 } as DateTimeFilter,
               },
               {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   lt: end.toString(),
                 } as DateTimeFilter,
               },
@@ -527,14 +431,14 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.IS_AFTER: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 gte: resolvedDateTime.toString(),
               } as DateTimeFilter,
             };
           }
           case RecordFilterOperand.IS_BEFORE: {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 lt: resolvedDateTime.toString(),
               } as DateTimeFilter,
             };
@@ -550,21 +454,13 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.IS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               eq: convertRatingToRatingValue(parseFloat(recordFilter.value)),
             } as RatingFilter,
           };
-        case RecordFilterOperand.IS_NOT:
-          return {
-            not: {
-              [fieldMetadataItem.name]: {
-                eq: convertRatingToRatingValue(parseFloat(recordFilter.value)),
-              } as RatingFilter,
-            },
-          };
         case RecordFilterOperand.GREATER_THAN_OR_EQUAL:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               in: convertGreaterThanOrEqualRatingToArrayOfRatingValues(
                 parseFloat(recordFilter.value),
               ),
@@ -572,7 +468,7 @@ const buildDirectFieldGqlOperationFilter = ({
           };
         case RecordFilterOperand.LESS_THAN_OR_EQUAL:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               in: convertLessThanOrEqualRatingToArrayOfRatingValues(
                 parseFloat(recordFilter.value),
               ),
@@ -587,26 +483,26 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.GREATER_THAN_OR_EQUAL:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               gte: parseFloat(recordFilter.value),
             } as FloatFilter,
           };
         case RecordFilterOperand.LESS_THAN_OR_EQUAL:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               lte: parseFloat(recordFilter.value),
             } as FloatFilter,
           };
         case RecordFilterOperand.IS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               eq: parseFloat(recordFilter.value),
             } as FloatFilter,
           };
         case RecordFilterOperand.IS_NOT:
           return {
             not: {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 eq: parseFloat(recordFilter.value),
               } as FloatFilter,
             },
@@ -617,45 +513,29 @@ const buildDirectFieldGqlOperationFilter = ({
           );
       }
     case 'RELATION': {
-      const {
-        isCurrentWorkspaceMemberSelected,
-        isCurrentRecordSelected,
-        selectedRecordIds,
-      } = jsonRelationFilterValueSchema
-        .catch({
-          isCurrentWorkspaceMemberSelected: false,
-          isCurrentRecordSelected: false,
-          selectedRecordIds: arrayOfUuidOrVariableSchema.parse(
-            recordFilter.value,
-          ),
-        })
-        .parse(recordFilter.value);
+      const { isCurrentWorkspaceMemberSelected, selectedRecordIds } =
+        jsonRelationFilterValueSchema
+          .catch({
+            isCurrentWorkspaceMemberSelected: false,
+            selectedRecordIds: arrayOfUuidOrVariableSchema.parse(
+              recordFilter.value,
+            ),
+          })
+          .parse(recordFilter.value);
 
-      const recordIds = [
-        ...selectedRecordIds,
-        ...(isCurrentWorkspaceMemberSelected
-          ? [filterValueDependencies?.currentWorkspaceMemberId]
-          : []),
-        ...(isCurrentRecordSelected
-          ? [filterValueDependencies.currentRecord?.id]
-          : []),
-      ].filter(isDefined);
+      const recordIds = isCurrentWorkspaceMemberSelected
+        ? [
+            ...selectedRecordIds,
+            filterValueDependencies?.currentWorkspaceMemberId,
+          ]
+        : selectedRecordIds;
 
-      if (recordIds.length === 0) return;
-
-      const relationFilterJoinColumnName = getRelationFilterJoinColumnName({
-        fieldMetadataItem,
-        filterValueDependencies,
-      });
-
-      if (!isDefined(relationFilterJoinColumnName)) {
-        return;
-      }
+      if (!isDefined(recordIds) || recordIds.length === 0) return;
 
       switch (recordFilter.operand) {
         case RecordFilterOperand.IS:
           return {
-            [relationFilterJoinColumnName]: {
+            [correspondingFieldMetadataItem.name + 'Id']: {
               in: recordIds,
             } as RelationFilter,
           };
@@ -665,13 +545,13 @@ const buildDirectFieldGqlOperationFilter = ({
             or: [
               {
                 not: {
-                  [relationFilterJoinColumnName]: {
+                  [correspondingFieldMetadataItem.name + 'Id']: {
                     in: recordIds,
                   } as RelationFilter,
                 },
               },
               {
-                [relationFilterJoinColumnName]: {
+                [correspondingFieldMetadataItem.name + 'Id']: {
                   is: 'NULL',
                 } as RelationFilter,
               },
@@ -699,7 +579,7 @@ const buildDirectFieldGqlOperationFilter = ({
         if (parsedCurrencyCodes.length === 0) return undefined;
 
         const gqlFilter: RecordGqlOperationFilter = {
-          [fieldMetadataItem.name]: {
+          [correspondingFieldMetadataItem.name]: {
             currencyCode: { in: parsedCurrencyCodes },
           } as CurrencyFilter,
         };
@@ -727,26 +607,26 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.GREATER_THAN_OR_EQUAL:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 amountMicros: { gte: parseFloat(recordFilter.value) * 1000000 },
               } as CurrencyFilter,
             };
           case RecordFilterOperand.LESS_THAN_OR_EQUAL:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 amountMicros: { lte: parseFloat(recordFilter.value) * 1000000 },
               } as CurrencyFilter,
             };
           case RecordFilterOperand.IS:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 amountMicros: { eq: parseFloat(recordFilter.value) * 1000000 },
               } as CurrencyFilter,
             };
           case RecordFilterOperand.IS_NOT:
             return {
               not: {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   amountMicros: {
                     eq: parseFloat(recordFilter.value) * 1000000,
                   },
@@ -766,7 +646,7 @@ const buildDirectFieldGqlOperationFilter = ({
     }
     case 'LINKS': {
       return computeGqlOperationFilterForLinks({
-        correspondingFieldMetadataItem: fieldMetadataItem,
+        correspondingFieldMetadataItem,
         recordFilter,
         subFieldName,
       });
@@ -774,7 +654,7 @@ const buildDirectFieldGqlOperationFilter = ({
     case 'FULL_NAME': {
       const fullNameFilters = generateILikeFiltersForCompositeFields(
         recordFilter.value,
-        fieldMetadataItem.name,
+        correspondingFieldMetadataItem.name,
         ['firstName', 'lastName'],
       );
       switch (recordFilter.operand) {
@@ -785,7 +665,7 @@ const buildDirectFieldGqlOperationFilter = ({
             };
           } else {
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 [subFieldName]: {
                   ilike: `%${recordFilter.value}%`,
                 },
@@ -804,7 +684,7 @@ const buildDirectFieldGqlOperationFilter = ({
           } else {
             return {
               not: {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   [subFieldName]: {
                     ilike: `%${recordFilter.value}%`,
                   },
@@ -825,42 +705,42 @@ const buildDirectFieldGqlOperationFilter = ({
             return {
               or: [
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressStreet1: {
                       ilike: `%${recordFilter.value}%`,
                     },
                   } as AddressFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressStreet2: {
                       ilike: `%${recordFilter.value}%`,
                     },
                   } as AddressFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressCity: {
                       ilike: `%${recordFilter.value}%`,
                     },
                   } as AddressFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressState: {
                       ilike: `%${recordFilter.value}%`,
                     },
                   } as AddressFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressCountry: {
                       ilike: `%${recordFilter.value}%`,
                     },
                   } as AddressFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     addressPostcode: {
                       ilike: `%${recordFilter.value}%`,
                     },
@@ -879,7 +759,7 @@ const buildDirectFieldGqlOperationFilter = ({
               }
 
               return {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   [subFieldName]: {
                     in: parsedCountryCodes,
                   } as AddressFilter,
@@ -888,7 +768,7 @@ const buildDirectFieldGqlOperationFilter = ({
             }
 
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 [subFieldName]: {
                   ilike: `%${recordFilter.value}%`,
                 } as AddressFilter,
@@ -903,7 +783,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressStreet1: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -911,7 +791,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressStreet1: {
                           is: 'NULL',
                         },
@@ -923,7 +803,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressStreet2: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -931,7 +811,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressStreet2: {
                           is: 'NULL',
                         },
@@ -943,7 +823,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressCity: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -951,7 +831,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressCity: {
                           is: 'NULL',
                         },
@@ -963,7 +843,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressState: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -971,7 +851,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressState: {
                           is: 'NULL',
                         },
@@ -983,7 +863,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressPostcode: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -991,7 +871,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressPostcode: {
                           is: 'NULL',
                         },
@@ -1003,7 +883,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           addressCountry: {
                             ilike: `%${recordFilter.value}%`,
                           },
@@ -1011,7 +891,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressCountry: {
                           is: 'NULL',
                         },
@@ -1038,7 +918,7 @@ const buildDirectFieldGqlOperationFilter = ({
                 or: [
                   {
                     not: {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         addressCountry: {
                           in: JSON.parse(recordFilter.value),
                         } as AddressFilter,
@@ -1046,7 +926,7 @@ const buildDirectFieldGqlOperationFilter = ({
                     },
                   },
                   {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       addressCountry: {
                         is: 'NULL',
                       } as AddressFilter,
@@ -1060,7 +940,7 @@ const buildDirectFieldGqlOperationFilter = ({
               or: [
                 {
                   not: {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       [subFieldName]: {
                         ilike: `%${recordFilter.value}%`,
                       } as AddressFilter,
@@ -1068,7 +948,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   },
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     [subFieldName]: {
                       is: 'NULL',
                     } as AddressFilter,
@@ -1096,7 +976,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
           if (nonEmptyOptions.length > 0) {
             conditions.push({
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 containsAny: nonEmptyOptions,
               } as MultiSelectFilter,
             });
@@ -1104,7 +984,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
           if (emptyOptions.length > 0) {
             conditions.push({
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 isEmptyArray: true,
               } as MultiSelectFilter,
             });
@@ -1117,18 +997,18 @@ const buildDirectFieldGqlOperationFilter = ({
             or: [
               {
                 not: {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     containsAny: nonEmptyOptions,
                   } as MultiSelectFilter,
                 },
               },
               {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   isEmptyArray: true,
                 } as MultiSelectFilter,
               },
               {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   is: 'NULL',
                 } as MultiSelectFilter,
               },
@@ -1154,7 +1034,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
           if (nonEmptyOptions.length > 0) {
             conditions.push({
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 in: nonEmptyOptions,
               } as SelectFilter,
             });
@@ -1162,7 +1042,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
           if (emptyOptions.length > 0) {
             conditions.push({
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 is: 'NULL',
               } as SelectFilter,
             });
@@ -1176,7 +1056,7 @@ const buildDirectFieldGqlOperationFilter = ({
           if (nonEmptyOptions.length > 0) {
             conditions.push({
               not: {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   in: nonEmptyOptions,
                 } as SelectFilter,
               },
@@ -1186,7 +1066,7 @@ const buildDirectFieldGqlOperationFilter = ({
           if (emptyOptions.length > 0) {
             conditions.push({
               not: {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   is: 'NULL',
                 } as SelectFilter,
               },
@@ -1205,14 +1085,14 @@ const buildDirectFieldGqlOperationFilter = ({
       switch (recordFilter.operand) {
         case RecordFilterOperand.CONTAINS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               containsIlike: `%${recordFilter.value}%`,
             } as ArrayFilter,
           };
         case RecordFilterOperand.DOES_NOT_CONTAIN:
           return {
             not: {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 containsIlike: `%${recordFilter.value}%`,
               } as ArrayFilter,
             },
@@ -1234,7 +1114,7 @@ const buildDirectFieldGqlOperationFilter = ({
             const parsedSources = JSON.parse(recordFilter.value) as string[];
 
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 source: {
                   in: parsedSources,
                 } satisfies RelationFilter,
@@ -1252,7 +1132,7 @@ const buildDirectFieldGqlOperationFilter = ({
 
             return {
               not: {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   source: {
                     in: parsedSources,
                   } satisfies RelationFilter,
@@ -1261,8 +1141,12 @@ const buildDirectFieldGqlOperationFilter = ({
             };
           }
           default: {
+            const fieldForRecordFilter = fieldMetadataItems.find(
+              (field) => field.id === recordFilter.fieldMetadataId,
+            );
+
             throw new Error(
-              `Unknown operand ${recordFilter.operand} for ${fieldMetadataItem.label} filter`,
+              `Unknown operand ${recordFilter.operand} for ${fieldForRecordFilter?.label ?? ''} filter`,
             );
           }
         }
@@ -1293,7 +1177,7 @@ const buildDirectFieldGqlOperationFilter = ({
         switch (recordFilter.operand) {
           case RecordFilterOperand.IS:
             return {
-              [fieldMetadataItem.name]: {
+              [correspondingFieldMetadataItem.name]: {
                 workspaceMemberId: {
                   in: workspaceMemberIds,
                 } satisfies UUIDFilter,
@@ -1304,7 +1188,7 @@ const buildDirectFieldGqlOperationFilter = ({
               or: [
                 {
                   not: {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       workspaceMemberId: {
                         in: workspaceMemberIds,
                       } satisfies UUIDFilter,
@@ -1312,7 +1196,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   },
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     workspaceMemberId: {
                       is: 'NULL',
                     } satisfies UUIDFilter,
@@ -1322,8 +1206,12 @@ const buildDirectFieldGqlOperationFilter = ({
             };
           }
           default: {
+            const fieldForRecordFilter = fieldMetadataItems.find(
+              (field) => field.id === recordFilter.fieldMetadataId,
+            );
+
             throw new Error(
-              `Unknown operand ${recordFilter.operand} for ${fieldMetadataItem.label} filter`,
+              `Unknown operand ${recordFilter.operand} for ${fieldForRecordFilter?.label ?? ''} filter`,
             );
           }
         }
@@ -1339,7 +1227,7 @@ const buildDirectFieldGqlOperationFilter = ({
           return {
             or: [
               {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   name: {
                     ilike: `%${recordFilter.value}%`,
                   },
@@ -1348,7 +1236,7 @@ const buildDirectFieldGqlOperationFilter = ({
               ...(matchingSourceValues.length > 0
                 ? [
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         source: {
                           in: matchingSourceValues,
                         },
@@ -1364,7 +1252,7 @@ const buildDirectFieldGqlOperationFilter = ({
             and: [
               {
                 not: {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     name: {
                       ilike: `%${recordFilter.value}%`,
                     },
@@ -1375,7 +1263,7 @@ const buildDirectFieldGqlOperationFilter = ({
                 ? [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           source: {
                             in: matchingSourceValues,
                           },
@@ -1388,15 +1276,19 @@ const buildDirectFieldGqlOperationFilter = ({
           };
         }
         default: {
+          const fieldForRecordFilter = fieldMetadataItems.find(
+            (field) => field.id === recordFilter.fieldMetadataId,
+          );
+
           throw new Error(
-            `Unknown operand ${recordFilter.operand} for ${fieldMetadataItem.label} filter`,
+            `Unknown operand ${recordFilter.operand} for ${fieldForRecordFilter?.label ?? ''} filter`,
           );
         }
       }
     }
     case 'EMAILS': {
       return computeGqlOperationFilterForEmails({
-        correspondingFieldMetadataItem: fieldMetadataItem,
+        correspondingFieldMetadataItem,
         recordFilter,
         subFieldName,
       });
@@ -1414,21 +1306,21 @@ const buildDirectFieldGqlOperationFilter = ({
             return {
               or: [
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     primaryPhoneNumber: {
                       ilike: `%${filterValue}%`,
                     },
                   } as PhonesFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     primaryPhoneCallingCode: {
                       ilike: `%${filterValue}%`,
                     },
                   } as PhonesFilter,
                 },
                 {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     additionalPhones: {
                       like: `%${filterValue}%`,
                     },
@@ -1441,7 +1333,7 @@ const buildDirectFieldGqlOperationFilter = ({
               and: [
                 {
                   not: {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       primaryPhoneNumber: {
                         ilike: `%${filterValue}%`,
                       },
@@ -1450,7 +1342,7 @@ const buildDirectFieldGqlOperationFilter = ({
                 },
                 {
                   not: {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       primaryPhoneCallingCode: {
                         ilike: `%${filterValue}%`,
                       },
@@ -1461,7 +1353,7 @@ const buildDirectFieldGqlOperationFilter = ({
                   or: [
                     {
                       not: {
-                        [fieldMetadataItem.name]: {
+                        [correspondingFieldMetadataItem.name]: {
                           additionalPhones: {
                             like: `%${filterValue}%`,
                           },
@@ -1469,7 +1361,7 @@ const buildDirectFieldGqlOperationFilter = ({
                       },
                     },
                     {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         additionalPhones: {
                           is: 'NULL',
                         } as PhonesFilter,
@@ -1495,7 +1387,7 @@ const buildDirectFieldGqlOperationFilter = ({
               return {
                 or: [
                   {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       additionalPhones: {
                         like: `%${filterValue}%`,
                       },
@@ -1508,7 +1400,7 @@ const buildDirectFieldGqlOperationFilter = ({
                 or: [
                   {
                     not: {
-                      [fieldMetadataItem.name]: {
+                      [correspondingFieldMetadataItem.name]: {
                         additionalPhones: {
                           like: `%${filterValue}%`,
                         },
@@ -1516,7 +1408,7 @@ const buildDirectFieldGqlOperationFilter = ({
                     },
                   },
                   {
-                    [fieldMetadataItem.name]: {
+                    [correspondingFieldMetadataItem.name]: {
                       additionalPhones: {
                         is: 'NULL',
                       } as PhonesFilter,
@@ -1534,7 +1426,7 @@ const buildDirectFieldGqlOperationFilter = ({
           switch (recordFilter.operand) {
             case RecordFilterOperand.CONTAINS:
               return {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   primaryPhoneNumber: {
                     ilike: `%${filterValue}%`,
                   },
@@ -1543,7 +1435,7 @@ const buildDirectFieldGqlOperationFilter = ({
             case RecordFilterOperand.DOES_NOT_CONTAIN:
               return {
                 not: {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     primaryPhoneNumber: {
                       ilike: `%${filterValue}%`,
                     },
@@ -1560,7 +1452,7 @@ const buildDirectFieldGqlOperationFilter = ({
           switch (recordFilter.operand) {
             case RecordFilterOperand.CONTAINS:
               return {
-                [fieldMetadataItem.name]: {
+                [correspondingFieldMetadataItem.name]: {
                   primaryPhoneCallingCode: {
                     ilike: `%${filterValue}%`,
                   },
@@ -1569,7 +1461,7 @@ const buildDirectFieldGqlOperationFilter = ({
             case RecordFilterOperand.DOES_NOT_CONTAIN:
               return {
                 not: {
-                  [fieldMetadataItem.name]: {
+                  [correspondingFieldMetadataItem.name]: {
                     primaryPhoneCallingCode: {
                       ilike: `%${filterValue}%`,
                     },
@@ -1590,37 +1482,22 @@ const buildDirectFieldGqlOperationFilter = ({
     }
     case 'BOOLEAN': {
       return {
-        [fieldMetadataItem.name]: {
+        [correspondingFieldMetadataItem.name]: {
           eq: recordFilter.value === 'true',
         } as BooleanFilter,
       };
     }
     case 'UUID': {
-      const parsedRecordIds = arrayOfUuidOrVariableSchema.parse(
-        recordFilter.value,
-      );
+      const recordIds = arrayOfUuidOrVariableSchema.parse(recordFilter.value);
 
-      // Fall back to a sentinel v4 UUID when the input isn't a valid UUID so the
-      // filter compiles to a guaranteed no-match instead of being silently dropped.
-      const recordIds =
-        isDefined(parsedRecordIds) && parsedRecordIds.length > 0
-          ? parsedRecordIds
-          : ['00000000-0000-4000-8000-000000000000'];
+      if (!isDefined(recordIds) || recordIds.length === 0) return;
 
       switch (recordFilter.operand) {
         case RecordFilterOperand.IS:
           return {
-            [fieldMetadataItem.name]: {
+            [correspondingFieldMetadataItem.name]: {
               in: recordIds,
             } as UUIDFilter,
-          };
-        case RecordFilterOperand.IS_NOT:
-          return {
-            not: {
-              [fieldMetadataItem.name]: {
-                in: recordIds,
-              } as UUIDFilter,
-            },
           };
         default:
           throw new Error(

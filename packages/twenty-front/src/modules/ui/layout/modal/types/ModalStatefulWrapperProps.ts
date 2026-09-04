@@ -1,5 +1,5 @@
 import type React from 'react';
-import { type ModalProps } from 'twenty-ui/surfaces';
+import { type ModalProps } from 'twenty-ui/layout';
 
 export type ModalStatefulWrapperProps = Pick<
   ModalProps,
@@ -10,7 +10,6 @@ export type ModalStatefulWrapperProps = Pick<
   | 'smallBorderRadius'
   | 'narrowWidth'
   | 'autoHeight'
-  | 'width'
 > &
   React.PropsWithChildren & {
     modalInstanceId: string;

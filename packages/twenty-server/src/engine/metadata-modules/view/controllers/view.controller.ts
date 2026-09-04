@@ -24,8 +24,7 @@ import { NoPermissionGuard } from 'src/engine/guards/no-permission.guard';
 import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
 import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
-import { resolveEffectiveEntityProperty } from 'src/engine/metadata-modules/utils/resolve-effective-entity-property.util';
-import { belongsToTwentyStandardApp } from 'src/engine/metadata-modules/utils/belongs-to-twenty-standard-app.util';
+import { resolveObjectMetadataStandardOverride } from 'src/engine/metadata-modules/object-metadata/utils/resolve-object-metadata-standard-override.util';
 import { CreateViewPermissionGuard } from 'src/engine/metadata-modules/view-permissions/guards/create-view-permission.guard';
 import { DeleteViewPermissionGuard } from 'src/engine/metadata-modules/view-permissions/guards/delete-view-permission.guard';
 import { UpdateViewPermissionGuard } from 'src/engine/metadata-modules/view-permissions/guards/update-view-permission.guard';
@@ -41,18 +40,10 @@ import {
 } from 'src/engine/metadata-modules/view/exceptions/view.exception';
 import { ViewRestApiExceptionFilter } from 'src/engine/metadata-modules/view/filters/view-rest-api-exception.filter';
 import { ViewService } from 'src/engine/metadata-modules/view/services/view.service';
-import { FlatEntityMapsRestApiExceptionFilter } from 'src/engine/metadata-modules/flat-entity/filters/flat-entity-maps-rest-api-exception.filter';
-import { PermissionsRestApiExceptionFilter } from 'src/engine/metadata-modules/permissions/utils/permissions-rest-api-exception.filter';
-import { WorkspaceMigrationRunnerRestApiExceptionFilter } from 'src/engine/workspace-manager/workspace-migration/filters/workspace-migration-runner-rest-api-exception.filter';
 
 @Controller('rest/metadata/views')
 @UseGuards(WorkspaceAuthGuard)
-@UseFilters(
-  PermissionsRestApiExceptionFilter,
-  ViewRestApiExceptionFilter,
-  FlatEntityMapsRestApiExceptionFilter,
-  WorkspaceMigrationRunnerRestApiExceptionFilter,
-)
+@UseFilters(ViewRestApiExceptionFilter)
 export class ViewController {
   constructor(
     private readonly viewService: ViewService,
@@ -211,17 +202,19 @@ export class ViewController {
 
         if (objectMetadata) {
           const i18n = this.i18nService.getI18nInstance(locale ?? 'en');
-          const translatedObjectLabel = resolveEffectiveEntityProperty({
-            metadataName: 'objectMetadata',
-            baseValue: objectMetadata.labelPlural,
-            overrides: objectMetadata.overrides ?? undefined,
-            property: 'labelPlural',
-            i18nContext: {
-              locale,
-              i18nInstance: i18n,
-              isStandardApp: belongsToTwentyStandardApp(objectMetadata),
+          const translatedObjectLabel = resolveObjectMetadataStandardOverride(
+            {
+              labelPlural: objectMetadata.labelPlural,
+              labelSingular: objectMetadata.labelSingular,
+              description: objectMetadata.description ?? undefined,
+              icon: objectMetadata.icon ?? undefined,
+              isCustom: objectMetadata.isCustom,
+              standardOverrides: objectMetadata.standardOverrides ?? undefined,
             },
-          });
+            'labelPlural',
+            locale,
+            i18n,
+          );
 
           processedName = this.viewService.processViewNameWithTemplate(
             view.name,

@@ -12,8 +12,6 @@ import { fromViewFieldGroupEntityToFlatViewFieldGroup } from 'src/engine/metadat
 import { ViewFieldGroupEntity } from 'src/engine/metadata-modules/view-field-group/entities/view-field-group.entity';
 import { ViewFieldEntity } from 'src/engine/metadata-modules/view-field/entities/view-field.entity';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { regroupEntitiesByRelatedEntityId } from 'src/engine/workspace-cache/utils/regroup-entities-by-related-entity-id';
@@ -23,14 +21,14 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatViewFieldGroupMaps')
 export class WorkspaceFlatViewFieldGroupMapCacheService extends WorkspaceCacheProvider<FlatViewFieldGroupMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(ViewFieldGroupEntity)
-    private readonly viewFieldGroupRepository: WorkspaceScopedRepository<ViewFieldGroupEntity>,
+    @InjectRepository(ViewFieldGroupEntity)
+    private readonly viewFieldGroupRepository: Repository<ViewFieldGroupEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
-    @InjectWorkspaceScopedRepository(ViewEntity)
-    private readonly viewRepository: WorkspaceScopedRepository<ViewEntity>,
-    @InjectWorkspaceScopedRepository(ViewFieldEntity)
-    private readonly viewFieldRepository: WorkspaceScopedRepository<ViewFieldEntity>,
+    @InjectRepository(ViewEntity)
+    private readonly viewRepository: Repository<ViewEntity>,
+    @InjectRepository(ViewFieldEntity)
+    private readonly viewFieldRepository: Repository<ViewFieldEntity>,
   ) {
     super();
   }
@@ -38,7 +36,8 @@ export class WorkspaceFlatViewFieldGroupMapCacheService extends WorkspaceCachePr
   async computeForCache(workspaceId: string): Promise<FlatViewFieldGroupMaps> {
     const [viewFieldGroups, applications, views, viewFields] =
       await Promise.all([
-        this.viewFieldGroupRepository.find(workspaceId, {
+        this.viewFieldGroupRepository.find({
+          where: { workspaceId },
           withDeleted: true,
         }),
         this.applicationRepository.find({
@@ -46,11 +45,13 @@ export class WorkspaceFlatViewFieldGroupMapCacheService extends WorkspaceCachePr
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),
-        this.viewRepository.find(workspaceId, {
+        this.viewRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),
-        this.viewFieldRepository.find(workspaceId, {
+        this.viewFieldRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier', 'viewFieldGroupId'],
           withDeleted: true,
         }),

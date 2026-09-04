@@ -3,7 +3,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { google } from 'googleapis';
 import { ConnectedAccountProvider } from 'twenty-shared/types';
 
-import { GoogleOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { GmailMessageOutboundService } from 'src/modules/messaging/message-outbound-manager/drivers/gmail/services/gmail-message-outbound.service';
 
 jest.mock('nodemailer/lib/mail-composer', () => {
@@ -18,17 +18,11 @@ describe('GmailMessageOutboundService', () => {
   let service: GmailMessageOutboundService;
 
   const mockSend = jest.fn().mockResolvedValue({ data: { id: 'message-id' } });
-  const mockCreateDraft = jest
-    .fn()
-    .mockResolvedValue({ data: { id: 'draft-id' } });
 
   const mockGmailClient = {
     users: {
       messages: {
         send: mockSend,
-      },
-      drafts: {
-        create: mockCreateDraft,
       },
       getProfile: jest
         .fn()
@@ -60,9 +54,11 @@ describe('GmailMessageOutboundService', () => {
       providers: [
         GmailMessageOutboundService,
         {
-          provide: GoogleOAuth2ClientProvider,
+          provide: OAuth2ClientManagerService,
           useValue: {
-            getClient: jest.fn().mockResolvedValue(mockOAuth2Client),
+            getGoogleOAuth2Client: jest
+              .fn()
+              .mockResolvedValue(mockOAuth2Client),
           },
         },
       ],
@@ -75,7 +71,6 @@ describe('GmailMessageOutboundService', () => {
 
   afterEach(() => {
     mockSend.mockClear();
-    mockCreateDraft.mockClear();
     jest.restoreAllMocks();
   });
 
@@ -89,8 +84,9 @@ describe('GmailMessageOutboundService', () => {
     };
 
     const connectedAccount = {
-      id: 'connected-account-id',
       provider: ConnectedAccountProvider.GOOGLE,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
     } as any;
 
     await service.sendMessage(sendMessageInput, connectedAccount);
@@ -120,8 +116,9 @@ describe('GmailMessageOutboundService', () => {
     };
 
     const connectedAccount = {
-      id: 'connected-account-id',
       provider: ConnectedAccountProvider.GOOGLE,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
     } as any;
 
     await service.sendMessage(sendMessageInput, connectedAccount);
@@ -131,36 +128,6 @@ describe('GmailMessageOutboundService', () => {
       userId: 'me',
       requestBody: {
         raw: Buffer.from('mocked-email-content').toString('base64url'),
-      },
-    });
-  });
-
-  it('should create Gmail drafts in the existing thread when a thread id is provided', async () => {
-    const sendMessageInput = {
-      to: 'recipient@example.com',
-      subject: 'Re: Existing thread',
-      body: 'Plain text',
-      html: '<p>HTML content</p>',
-      attachments: [],
-      inReplyTo: '<parent@example.com>',
-      threadExternalId: 'gmail-thread-id',
-    };
-
-    const connectedAccount = {
-      id: 'connected-account-id',
-      provider: ConnectedAccountProvider.GOOGLE,
-    } as any;
-
-    await service.createDraft(sendMessageInput, connectedAccount);
-
-    expect(mockCreateDraft).toHaveBeenCalledTimes(1);
-    expect(mockCreateDraft).toHaveBeenCalledWith({
-      userId: 'me',
-      requestBody: {
-        message: {
-          raw: Buffer.from('mocked-email-content').toString('base64url'),
-          threadId: 'gmail-thread-id',
-        },
       },
     });
   });

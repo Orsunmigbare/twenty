@@ -1,16 +1,17 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { promisify } from 'util';
 
-import { isAxiosError } from 'axios';
 import { type Manifest } from 'twenty-shared/application';
 import { FileFolder } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { type PackageJson } from 'type-fest';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { v4 } from 'uuid';
 
 import { ApplicationRegistrationEntity } from 'src/engine/core-modules/application/application-registration/application-registration.entity';
@@ -20,16 +21,18 @@ import {
   ApplicationExceptionCode,
 } from 'src/engine/core-modules/application/application.exception';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
+import { YARN_ENGINE_DIRNAME } from 'src/engine/core-modules/application/application-package/constants/yarn-engine-dirname';
 import { assertValidNpmPackageName } from 'src/engine/core-modules/application/application-package/utils/assert-valid-npm-package-name.util';
 import { extractTarballSecurely } from 'src/engine/core-modules/application/application-package/utils/extract-tarball-securely.util';
 import { readJsonFileOrThrow } from 'src/engine/core-modules/application/application-package/utils/read-json-file.util';
 import { resolvePackageContentDir } from 'src/engine/core-modules/application/application-package/utils/tarball-utils';
-import { FileStorageService } from 'src/engine/core-modules/file-storage/services/file-storage.service';
+import { FileStorageService } from 'src/engine/core-modules/file-storage/file-storage.service';
 import { FileEntity } from 'src/engine/core-modules/file/entities/file.entity';
 import { removeFileFolderFromFileEntityPath } from 'src/engine/core-modules/file/utils/remove-file-folder-from-file-entity-path.utils';
-import { SecureHttpClientService } from 'src/engine/core-modules/secure-http-client/secure-http-client.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { streamToBuffer } from 'src/utils/stream-to-buffer';
+
+const execFilePromise = promisify(execFile);
 
 const APP_FETCHER_TMPDIR = join(tmpdir(), 'twenty-app-fetcher');
 const RESOLUTION_TIMEOUT_MS = 30_000;
@@ -48,9 +51,6 @@ export class ApplicationPackageFetcherService implements OnModuleInit {
   constructor(
     private readonly twentyConfigService: TwentyConfigService,
     private readonly fileStorageService: FileStorageService,
-    private readonly secureHttpClientService: SecureHttpClientService,
-    // Tarball lookup keyed by ApplicationRegistration id (catalog rows have null ownerWorkspaceId).
-    // eslint-disable-next-line twenty/prefer-workspace-scoped-repository
     @InjectRepository(FileEntity)
     private readonly fileRepository: Repository<FileEntity>,
     @InjectRepository(ApplicationEntity)
@@ -63,6 +63,13 @@ export class ApplicationPackageFetcherService implements OnModuleInit {
     } catch {
       // best-effort cleanup of stale temp files from previous runs
     }
+  }
+
+  async resolveNpmPackage(
+    packageName: string,
+    targetVersion?: string,
+  ): Promise<ResolvedPackage> {
+    return this.resolveFromNpm(packageName, targetVersion);
   }
 
   async resolvePackage(
@@ -108,53 +115,41 @@ export class ApplicationPackageFetcherService implements OnModuleInit {
 
     try {
       const registryUrl = this.twentyConfigService.get('APP_REGISTRY_URL');
+
       const authToken = this.twentyConfigService.get('APP_REGISTRY_TOKEN');
 
       assertValidNpmPackageName(packageName);
 
       const versionSpec = targetVersion ?? 'latest';
 
-      const tarballUrl = await this.fetchTarballUrl(
-        registryUrl,
+      await this.writeNpmrc({
+        workDir,
         packageName,
-        versionSpec,
-        authToken,
-      );
-
-      const tarballBuffer = await this.downloadTarball(
-        tarballUrl,
         registryUrl,
         authToken,
-      );
-      const tarballPath = join(workDir, 'package.tgz');
+      });
+      await this.setupYarnEngine(workDir);
+      await this.writeMinimalPackageJson(workDir, packageName, versionSpec);
+      await this.runYarnInstall(workDir);
 
-      await fs.writeFile(tarballPath, tarballBuffer);
-      await extractTarballSecurely(tarballPath, workDir);
-      await fs.rm(tarballPath);
-
-      const contentDir = await resolvePackageContentDir(workDir);
+      const packageDir = join(workDir, 'node_modules', packageName);
       const manifest = await readJsonFileOrThrow<Manifest>(
-        contentDir,
+        packageDir,
         'manifest.json',
       );
       const packageJson = await readJsonFileOrThrow<PackageJson>(
-        contentDir,
+        packageDir,
         'package.json',
       );
 
       return {
-        extractedDir: contentDir,
+        extractedDir: packageDir,
         cleanupDir: workDir,
         manifest,
         packageJson,
       };
     } catch (error) {
       await this.cleanupExtractedDir(workDir);
-
-      if (error instanceof ApplicationException) {
-        throw error;
-      }
-
       throw new ApplicationException(
         `Failed to resolve npm package ${packageName}: ${error}`,
         ApplicationExceptionCode.PACKAGE_RESOLUTION_FAILED,
@@ -178,22 +173,12 @@ export class ApplicationPackageFetcherService implements OnModuleInit {
 
     try {
       const file = await this.fileRepository.findOneOrFail({
-        where: {
-          id: appRegistration.tarballFileId,
-          workspaceId: Not(IsNull()),
-        },
+        where: { id: appRegistration.tarballFileId },
       });
 
       const application = await this.applicationRepository.findOneOrFail({
         where: { id: file.applicationId },
       });
-
-      if (!isDefined(file.workspaceId)) {
-        throw new ApplicationException(
-          `Tarball file ${file.id} for app registration ${appRegistration.id} has no workspaceId`,
-          ApplicationExceptionCode.TARBALL_EXTRACTION_FAILED,
-        );
-      }
 
       const tarballStream = await this.fileStorageService.readFile({
         workspaceId: file.workspaceId,
@@ -239,83 +224,105 @@ export class ApplicationPackageFetcherService implements OnModuleInit {
     }
   }
 
-  private async fetchTarballUrl(
-    registryUrl: string,
-    packageName: string,
-    versionSpec: string,
-    authToken?: string,
-  ): Promise<string> {
-    const encodedName = encodeURIComponent(packageName);
-    const baseUrl = registryUrl.replace(/\/$/, '');
-    const metadataUrl = `${baseUrl}/${encodedName}/${versionSpec}`;
+  // Note: .npmrc settings take precedence over publishConfig.registry in
+  // individual packages. This is correct for our use case since we want
+  // to control the registry at the resolver level.
+  private async writeNpmrc(config: {
+    workDir: string;
+    packageName: string;
+    registryUrl: string;
+    authToken?: string;
+  }): Promise<void> {
+    const lines: string[] = [];
+    const registryHost = new URL(config.registryUrl).host;
 
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-    };
+    if (config.packageName.startsWith('@')) {
+      const scope = config.packageName.split('/')[0];
 
-    const httpClient = this.secureHttpClientService.getHttpClient({
-      timeout: RESOLUTION_TIMEOUT_MS,
-      ...(isDefined(authToken)
-        ? {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        : {}),
-    });
-
-    let response;
-
-    try {
-      response = await httpClient.get<{
-        dist?: { tarball?: string };
-      }>(metadataUrl, { headers });
-    } catch (error) {
-      throw new ApplicationException(
-        `Registry returned ${isAxiosError(error) ? error.response?.status : 'unknown error'} for ${packageName}@${versionSpec}`,
-        ApplicationExceptionCode.PACKAGE_RESOLUTION_FAILED,
-      );
+      lines.push(`${scope}:registry=${config.registryUrl}`);
+    } else if (config.registryUrl !== 'https://registry.npmjs.org') {
+      lines.push(`registry=${config.registryUrl}`);
     }
 
-    const tarballUrl = response.data?.dist?.tarball;
-
-    if (!tarballUrl) {
-      throw new ApplicationException(
-        `No tarball URL in registry metadata for ${packageName}@${versionSpec}`,
-        ApplicationExceptionCode.PACKAGE_RESOLUTION_FAILED,
-      );
+    if (config.authToken) {
+      lines.push(`//${registryHost}/:_authToken=${config.authToken}`);
     }
 
-    return tarballUrl;
+    if (lines.length > 0) {
+      await fs.writeFile(
+        join(config.workDir, '.npmrc'),
+        lines.join('\n') + '\n',
+      );
+    }
   }
 
-  private async downloadTarball(
-    tarballUrl: string,
-    registryUrl: string,
-    authToken?: string,
-  ): Promise<Buffer> {
-    const headers: Record<string, string> = {};
+  private async setupYarnEngine(workDir: string): Promise<void> {
+    await fs.cp(YARN_ENGINE_DIRNAME, workDir, { recursive: true });
+  }
 
-    const isSameHost = new URL(tarballUrl).host === new URL(registryUrl).host;
+  private async writeMinimalPackageJson(
+    workDir: string,
+    packageName: string,
+    versionSpec: string,
+  ): Promise<void> {
+    const packageJson = {
+      name: 'twenty-app-resolver-workspace',
+      private: true,
+      dependencies: {
+        [packageName]: versionSpec,
+      },
+    };
 
-    if (authToken && isSameHost) {
-      headers['Authorization'] = `Bearer ${authToken}`;
+    await fs.writeFile(
+      join(workDir, 'package.json'),
+      JSON.stringify(packageJson, null, 2),
+    );
+  }
+
+  private async resolveLocalYarnPath(workDir: string): Promise<string> {
+    const yarnrcPath = join(workDir, '.yarnrc.yml');
+    const yarnrcContent = await fs.readFile(yarnrcPath, 'utf-8');
+    const match = yarnrcContent.match(/^yarnPath:\s*(.+)$/m);
+
+    if (!match) {
+      throw new ApplicationException(
+        'yarnPath not found in .yarnrc.yml',
+        ApplicationExceptionCode.PACKAGE_RESOLUTION_FAILED,
+      );
     }
 
-    const httpClient = this.secureHttpClientService.getHttpClient({
-      timeout: RESOLUTION_TIMEOUT_MS,
-    });
+    return join(workDir, match[1].trim());
+  }
+
+  private async runYarnInstall(workDir: string): Promise<void> {
+    const localYarnPath = await this.resolveLocalYarnPath(workDir);
+
+    const { NODE_OPTIONS: _nodeOptions, ...cleanEnv } = process.env;
 
     try {
-      const response = await httpClient.get(tarballUrl, {
-        headers,
-        responseType: 'arraybuffer',
-      });
+      await execFilePromise(
+        process.execPath,
+        [localYarnPath, 'install', '--no-immutable'],
+        {
+          cwd: workDir,
+          env: cleanEnv,
+          timeout: RESOLUTION_TIMEOUT_MS,
+        },
+      );
+    } catch (error: unknown) {
+      const stderr =
+        isDefined(error) &&
+        typeof error === 'object' &&
+        'stderr' in error &&
+        typeof (error as { stderr: unknown }).stderr === 'string'
+          ? (error as { stderr: string }).stderr
+          : undefined;
 
-      return Buffer.from(response.data);
-    } catch (error) {
+      const message =
+        stderr ?? (error instanceof Error ? error.message : String(error));
+
       throw new ApplicationException(
-        `Failed to download tarball: ${isAxiosError(error) ? error.response?.status : error}`,
+        `yarn install failed: ${message}`,
         ApplicationExceptionCode.PACKAGE_RESOLUTION_FAILED,
       );
     }

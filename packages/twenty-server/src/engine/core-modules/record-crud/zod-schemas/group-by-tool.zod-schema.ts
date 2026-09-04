@@ -6,10 +6,7 @@ import {
   RelationType,
   type RestrictedFieldsPermissions,
 } from 'twenty-shared/types';
-import {
-  isFieldMetadataDateKind,
-  isFieldMetadataSupportedInGroupBy,
-} from 'twenty-shared/utils';
+import { isFieldMetadataDateKind } from 'twenty-shared/utils';
 import { z } from 'zod';
 
 import { getAvailableAggregationsFromObjectFields } from 'src/engine/api/graphql/workspace-schema-builder/utils/get-available-aggregations-from-object-fields.util';
@@ -18,6 +15,7 @@ import { resolveAggregateFieldKey } from 'src/engine/core-modules/record-crud/ut
 import { generateRecordFilterSchema } from 'src/engine/core-modules/record-crud/zod-schemas/record-filter.zod-schema';
 import { isCompositeFieldMetadataType } from 'src/engine/metadata-modules/field-metadata/utils/is-composite-field-metadata-type.util';
 import { getGroupableSubFieldsForCompositeType } from 'src/engine/metadata-modules/field-metadata/utils/get-groupable-sub-fields-for-composite-type.util';
+import { isFlatFieldMetadataSupportedInGroupBy } from 'src/engine/metadata-modules/field-metadata/utils/is-supported-in-group-by.util';
 import { isFieldMetadataEntityOfType } from 'src/engine/utils/is-field-metadata-of-type.util';
 
 const dateGranularityValues = Object.values(
@@ -64,15 +62,11 @@ const buildGroupByEntriesAndDescriptions = (
       continue;
     }
 
-    if (!isFieldMetadataSupportedInGroupBy(field)) {
+    if (!isFlatFieldMetadataSupportedInGroupBy(field)) {
       continue;
     }
 
-    const isRelationOrMorphRelation =
-      isFieldMetadataEntityOfType(field, FieldMetadataType.RELATION) ||
-      isFieldMetadataEntityOfType(field, FieldMetadataType.MORPH_RELATION);
-
-    if (isRelationOrMorphRelation) {
+    if (isFieldMetadataEntityOfType(field, FieldMetadataType.RELATION)) {
       if (field.settings?.relationType === RelationType.MANY_TO_ONE) {
         const relationFieldName = `${field.name}Id`;
 
@@ -82,6 +76,10 @@ const buildGroupByEntriesAndDescriptions = (
         fieldNameDescriptions.push(relationFieldName);
       }
 
+      continue;
+    }
+
+    if (isFieldMetadataEntityOfType(field, FieldMetadataType.MORPH_RELATION)) {
       continue;
     }
 
@@ -149,10 +147,10 @@ export const generateGroupByToolInputSchema = (
           groupByEntries as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]],
         );
 
-  const { filterShape, filterSchema } = generateRecordFilterSchema({
+  const { filterShape, filterSchema } = generateRecordFilterSchema(
     objectMetadata,
     restrictedFields,
-  });
+  );
 
   const availableAggregations = getAvailableAggregationsFromObjectFields(
     objectMetadata.fields.filter(

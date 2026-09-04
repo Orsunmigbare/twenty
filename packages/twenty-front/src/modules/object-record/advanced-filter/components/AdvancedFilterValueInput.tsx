@@ -6,7 +6,6 @@ import { shouldShowFilterTextInput } from '@/object-record/advanced-filter/utils
 import { fieldMetadataItemIdUsedInDropdownComponentState } from '@/object-record/object-filter-dropdown/states/fieldMetadataItemIdUsedInDropdownComponentState';
 import { objectFilterDropdownCurrentRecordFilterComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownCurrentRecordFilterComponentState';
 import { objectFilterDropdownSearchInputComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownSearchInputComponentState';
-import { relationTargetFieldMetadataIdUsedInDropdownComponentState } from '@/object-record/object-filter-dropdown/states/relationTargetFieldMetadataIdUsedInDropdownComponentState';
 import { subFieldNameUsedInDropdownComponentState } from '@/object-record/object-filter-dropdown/states/subFieldNameUsedInDropdownComponentState';
 import { configurableViewFilterOperands } from '@/object-record/object-filter-dropdown/utils/configurableViewFilterOperands';
 import { currentRecordFiltersComponentState } from '@/object-record/record-filter/states/currentRecordFiltersComponentState';
@@ -56,12 +55,6 @@ export const AdvancedFilterValueInput = ({
     dropdownId,
   );
 
-  const setRelationTargetFieldMetadataIdUsedInDropdown =
-    useSetAtomComponentState(
-      relationTargetFieldMetadataIdUsedInDropdownComponentState,
-      dropdownId,
-    );
-
   const setObjectFilterDropdownCurrentRecordFilter = useSetAtomComponentState(
     objectFilterDropdownCurrentRecordFilterComponentState,
     dropdownId,
@@ -81,9 +74,6 @@ export const AdvancedFilterValueInput = ({
   const handleFilterValueDropdownOpen = () => {
     setObjectFilterDropdownCurrentRecordFilter(recordFilter);
     setFieldMetadataItemIdUsedInDropdown(recordFilter.fieldMetadataId);
-    setRelationTargetFieldMetadataIdUsedInDropdown(
-      recordFilter.relationTargetFieldMetadataId ?? null,
-    );
   };
 
   const filterType = recordFilter.type;

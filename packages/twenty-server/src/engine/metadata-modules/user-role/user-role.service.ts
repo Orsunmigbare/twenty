@@ -15,16 +15,14 @@ import { RoleTargetService } from 'src/engine/metadata-modules/role-target/servi
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { STANDARD_ROLE } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-role.constant';
 import { WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/standard-objects/workspace-member.workspace-entity';
 
 export class UserRoleService {
   constructor(
-    @InjectWorkspaceScopedRepository(RoleTargetEntity)
-    private readonly roleTargetRepository: WorkspaceScopedRepository<RoleTargetEntity>,
+    @InjectRepository(RoleTargetEntity)
+    private readonly roleTargetRepository: Repository<RoleTargetEntity>,
     @InjectRepository(UserWorkspaceEntity)
     private readonly userWorkspaceRepository: Repository<UserWorkspaceEntity>,
     private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
@@ -103,15 +101,14 @@ export class UserRoleService {
       return new Map();
     }
 
-    const allRoleTargets = await this.roleTargetRepository.find(workspaceId, {
+    const allRoleTargets = await this.roleTargetRepository.find({
       where: {
         userWorkspaceId: In(userWorkspaceIds),
+        workspaceId,
       },
       relations: {
         role: {
-          rolePermissionFlags: {
-            permissionFlag: true,
-          },
+          permissionFlags: true,
         },
       },
     });

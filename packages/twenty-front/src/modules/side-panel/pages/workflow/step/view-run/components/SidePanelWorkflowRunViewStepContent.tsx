@@ -13,7 +13,6 @@ import { useWorkflowRun } from '@/workflow/hooks/useWorkflowRun';
 import { useWorkflowRunIdOrThrow } from '@/workflow/hooks/useWorkflowRunIdOrThrow';
 import { getStepDefinitionOrThrow } from '@/workflow/utils/getStepDefinitionOrThrow';
 import { workflowSelectedNodeComponentState } from '@/workflow/workflow-diagram/states/workflowSelectedNodeComponentState';
-import { WorkflowRunStepLogsDetail } from '@/workflow/workflow-run/observability/WorkflowRunStepLogsDetail';
 import { WorkflowRunStepInputDetail } from '@/workflow/workflow-steps/components/WorkflowRunStepInputDetail';
 import { WorkflowRunStepNodeDetail } from '@/workflow/workflow-steps/components/WorkflowRunStepNodeDetail';
 import { WorkflowRunStepOutputDetail } from '@/workflow/workflow-steps/components/WorkflowRunStepOutputDetail';
@@ -24,15 +23,10 @@ import {
 import { getWorkflowRunStepExecutionStatus } from '@/workflow/workflow-steps/utils/getWorkflowRunStepExecutionStatus';
 import { WorkflowIteratorSubStepSwitcher } from '@/workflow/workflow-steps/workflow-actions/iterator-action/components/WorkflowIteratorSubStepSwitcher';
 import { styled } from '@linaria/react';
-import { t } from '@lingui/core/macro';
 import { isNull } from '@sniptt/guards';
+import { t } from '@lingui/core/macro';
 import { isDefined } from 'twenty-shared/utils';
-import {
-  IconLogin2,
-  IconLogout,
-  IconStepInto,
-  IconTerminal,
-} from 'twenty-ui/icon';
+import { IconLogin2, IconLogout, IconStepInto } from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledContainer = styled.div`
@@ -119,11 +113,6 @@ export const SidePanelWorkflowRunViewStepContent = () => {
       Icon: IconLogin2,
       disabled: isInputTabDisabled,
     },
-    {
-      id: WorkflowRunTabId.LOGS,
-      title: t`Logs`,
-      Icon: IconTerminal,
-    },
   ];
 
   return (
@@ -168,13 +157,6 @@ export const SidePanelWorkflowRunViewStepContent = () => {
 
             {activeTabId === WorkflowRunTabId.INPUT ? (
               <WorkflowRunStepInputDetail
-                key={workflowSelectedNode}
-                stepId={workflowSelectedNode}
-              />
-            ) : null}
-
-            {activeTabId === WorkflowRunTabId.LOGS ? (
-              <WorkflowRunStepLogsDetail
                 key={workflowSelectedNode}
                 stepId={workflowSelectedNode}
               />

@@ -1,22 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { authenticator } from 'otplib';
 import { TwoFactorAuthenticationStrategy } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
+import { Repository } from 'typeorm';
 
 import {
   AuthException,
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
-import { type EncryptedString } from 'src/engine/core-modules/secret-encryption/branded-strings/encrypted-string.type';
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
-import { SecretEncryptionService } from 'src/engine/core-modules/secret-encryption/secret-encryption.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
 import { TwoFactorAuthenticationMethodEntity } from 'src/engine/core-modules/two-factor-authentication/entities/two-factor-authentication-method.entity';
 import { TOTP_DEFAULT_CONFIGURATION } from 'src/engine/core-modules/two-factor-authentication/strategies/otp/totp/constants/totp.strategy.constants';
 import { TotpStrategy } from 'src/engine/core-modules/two-factor-authentication/strategies/otp/totp/totp.strategy';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
+import { SimpleSecretEncryptionUtil } from 'src/engine/core-modules/two-factor-authentication/utils/simple-secret-encryption.util';
 import { UserWorkspaceService } from 'src/engine/core-modules/user-workspace/user-workspace.service';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 
@@ -34,22 +32,20 @@ const PENDING_METHOD_REUSE_WINDOW_MS = 60 * 60 * 1000;
 // oxlint-disable-next-line twenty/inject-workspace-repository
 export class TwoFactorAuthenticationService {
   constructor(
-    @InjectWorkspaceScopedRepository(TwoFactorAuthenticationMethodEntity)
-    private readonly twoFactorAuthenticationMethodRepository: WorkspaceScopedRepository<TwoFactorAuthenticationMethodEntity>,
+    @InjectRepository(TwoFactorAuthenticationMethodEntity)
+    private readonly twoFactorAuthenticationMethodRepository: Repository<TwoFactorAuthenticationMethodEntity>,
     private readonly userWorkspaceService: UserWorkspaceService,
-    private readonly secretEncryptionService: SecretEncryptionService,
+    private readonly simpleSecretEncryptionUtil: SimpleSecretEncryptionUtil,
   ) {}
 
-  private async decryptStoredSecret({
-    storedSecret,
-    workspaceId,
-  }: {
-    storedSecret: EncryptedString;
-    workspaceId: string;
-  }): Promise<PlaintextString> {
-    return this.secretEncryptionService.decryptVersionedOrThrow(storedSecret, {
-      workspaceId,
-    });
+  /**
+   * Generates encryption key for OTP secret based on user and workspace identifiers.
+   */
+  private generateOtpSecretEncryptionKey(
+    userId: string,
+    workspaceId: string,
+  ): string {
+    return userId + workspaceId + 'otp-secret';
   }
 
   /**
@@ -97,7 +93,7 @@ export class TwoFactorAuthenticationService {
       });
 
     const existing2FAMethod =
-      await this.twoFactorAuthenticationMethodRepository.findOne(workspaceId, {
+      await this.twoFactorAuthenticationMethodRepository.findOne({
         where: {
           userWorkspace: { id: userWorkspace.id },
           strategy: TwoFactorAuthenticationStrategy.TOTP,
@@ -118,10 +114,11 @@ export class TwoFactorAuthenticationService {
       Date.now() - existing2FAMethod.createdAt.getTime() <
         PENDING_METHOD_REUSE_WINDOW_MS
     ) {
-      const existingSecret = await this.decryptStoredSecret({
-        storedSecret: existing2FAMethod.secret,
-        workspaceId,
-      });
+      const existingSecret =
+        await this.simpleSecretEncryptionUtil.decryptSecret(
+          existing2FAMethod.secret,
+          this.generateOtpSecretEncryptionKey(userId, workspaceId),
+        );
 
       const issuer = `Twenty${workspaceDisplayName ? ` - ${workspaceDisplayName}` : ''}`;
       const reuseUri = authenticator.keyuri(userEmail, issuer, existingSecret);
@@ -136,13 +133,14 @@ export class TwoFactorAuthenticationService {
       `Twenty${workspaceDisplayName ? ` - ${workspaceDisplayName}` : ''}`,
     );
 
-    const encryptedSecret = this.secretEncryptionService.encryptVersioned(
+    const encryptedSecret = await this.simpleSecretEncryptionUtil.encryptSecret(
       context.secret,
-      { workspaceId },
+      this.generateOtpSecretEncryptionKey(userId, workspaceId),
     );
 
-    await this.twoFactorAuthenticationMethodRepository.save(workspaceId, {
+    await this.twoFactorAuthenticationMethodRepository.save({
       id: existing2FAMethod?.id,
+      workspaceId,
       userWorkspace: userWorkspace,
       secret: encryptedSecret,
       status: context.status,
@@ -159,7 +157,7 @@ export class TwoFactorAuthenticationService {
     twoFactorAuthenticationStrategy: TwoFactorAuthenticationStrategy,
   ) {
     const userTwoFactorAuthenticationMethod =
-      await this.twoFactorAuthenticationMethodRepository.findOne(workspaceId, {
+      await this.twoFactorAuthenticationMethodRepository.findOne({
         where: {
           strategy: twoFactorAuthenticationStrategy,
           userWorkspace: {
@@ -183,10 +181,10 @@ export class TwoFactorAuthenticationService {
       );
     }
 
-    const originalSecret = await this.decryptStoredSecret({
-      storedSecret: userTwoFactorAuthenticationMethod.secret,
-      workspaceId,
-    });
+    const originalSecret = await this.simpleSecretEncryptionUtil.decryptSecret(
+      userTwoFactorAuthenticationMethod.secret,
+      this.generateOtpSecretEncryptionKey(userId, workspaceId),
+    );
 
     const otpContext = {
       status: userTwoFactorAuthenticationMethod.status,
@@ -204,7 +202,7 @@ export class TwoFactorAuthenticationService {
       );
     }
 
-    await this.twoFactorAuthenticationMethodRepository.save(workspaceId, {
+    await this.twoFactorAuthenticationMethodRepository.save({
       ...userTwoFactorAuthenticationMethod,
       status: OTPStatus.VERIFIED,
     });

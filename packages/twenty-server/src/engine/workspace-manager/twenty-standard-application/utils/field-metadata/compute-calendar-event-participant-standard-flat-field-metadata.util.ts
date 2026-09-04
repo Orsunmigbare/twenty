@@ -14,6 +14,9 @@ import {
   createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
+import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
+import { SEARCH_FIELDS_FOR_CALENDAR_EVENT_PARTICIPANT } from 'src/modules/calendar/common/standard-objects/calendar-event-participant.workspace-entity';
+
 export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
   now,
   objectName,
@@ -39,7 +42,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'uuid',
     },
     standardObjectMetadataRelatedEntityIds,
@@ -58,7 +61,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
@@ -78,7 +81,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
@@ -98,7 +101,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       settings: { displayFormat: DateDisplayFormat.RELATIVE },
     },
     standardObjectMetadataRelatedEntityIds,
@@ -116,7 +119,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`The creator of the record`),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -141,7 +144,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       ),
       icon: 'IconUserCircle',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -183,6 +186,12 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
+      settings: {
+        generatedType: 'STORED',
+        asExpression: getTsVectorColumnExpressionFromFields(
+          SEARCH_FIELDS_FOR_CALENDAR_EVENT_PARTICIPANT,
+        ),
+      },
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -199,7 +208,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Handle`),
       icon: 'IconMail',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -216,7 +225,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Display Name`),
       icon: 'IconUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -233,7 +242,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Is Organizer`),
       icon: 'IconUser',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: false,
     },
     standardObjectMetadataRelatedEntityIds,
@@ -251,7 +260,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Response Status`),
       icon: 'IconUser',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: "'NEEDS_ACTION'",
       options: [
         {
@@ -300,7 +309,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Event ID`),
       icon: 'IconCalendar',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'calendarEvent',
       targetFieldName: 'calendarEventParticipants',
       settings: {
@@ -325,7 +334,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Person`),
       icon: 'IconUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'person',
       targetFieldName: 'calendarEventParticipants',
       settings: {
@@ -350,7 +359,7 @@ export const buildCalendarEventParticipantStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Workspace Member`),
       icon: 'IconUser',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'workspaceMember',
       targetFieldName: 'calendarEventParticipants',
       settings: {

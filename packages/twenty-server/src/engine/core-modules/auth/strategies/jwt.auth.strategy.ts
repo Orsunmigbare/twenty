@@ -3,60 +3,77 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { msg } from '@lingui/core/macro';
-import { type SecretOrKeyProvider, Strategy } from 'passport-jwt';
-import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
+import { Strategy } from 'passport-jwt';
+import { PermissionFlagType } from 'twenty-shared/constants';
+import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
+import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
+import { Repository } from 'typeorm';
+
+import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import {
   AuthException,
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
-import { type AccessTokenJwtPayload } from 'src/engine/core-modules/auth/types/access-token-jwt-payload.type';
-import { type ApiKeyTokenJwtPayload } from 'src/engine/core-modules/auth/types/api-key-token-jwt-payload.type';
-import { ApplicationAccessTokenJwtPayload } from 'src/engine/core-modules/auth/types/application-access-token-jwt-payload.type';
 import {
+  type AccessTokenJwtPayload,
+  type ApiKeyTokenJwtPayload,
+  ApplicationAccessTokenJwtPayload,
   type AuthContext,
   type AuthContextUser,
+  FileTokenJwtPayloadLegacy,
+  type JwtPayload,
+  JwtTokenTypeEnum,
+  type WorkspaceAgnosticTokenJwtPayload,
 } from 'src/engine/core-modules/auth/types/auth-context.type';
-import { type JwtPayload } from 'src/engine/core-modules/auth/types/jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
-import { type PlaygroundTokenJwtPayload } from 'src/engine/core-modules/auth/types/playground-token-jwt-payload.type';
-import { type WorkspaceAgnosticTokenJwtPayload } from 'src/engine/core-modules/auth/types/workspace-agnostic-token-jwt-payload.type';
-import { IMPERSONATION_DENIAL_BY_REASON } from 'src/engine/core-modules/impersonation/constants/impersonation-denial-by-reason.constant';
-import { ImpersonationAuthorizationService } from 'src/engine/core-modules/impersonation/services/impersonation-authorization.service';
-import { JWT_SUPPORTED_VERIFY_ALGORITHMS } from 'src/engine/core-modules/jwt/constants/jwt-algorithm.constant';
-import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { type FlatUserWorkspace } from 'src/engine/core-modules/user-workspace/types/flat-user-workspace.type';
+import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
+import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
+import { PermissionsService } from 'src/engine/metadata-modules/permissions/permissions.service';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
-import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
-import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly jwtWrapperService: JwtWrapperService,
+    @InjectRepository(ApplicationEntity)
+    private readonly applicationRepository: Repository<ApplicationEntity>,
     @InjectRepository(UserWorkspaceEntity)
     private readonly userWorkspaceRepository: Repository<UserWorkspaceEntity>,
+    private readonly permissionsService: PermissionsService,
     private readonly workspaceCacheService: WorkspaceCacheService,
     private readonly coreEntityCacheService: CoreEntityCacheService,
-    private readonly impersonationAuthorizationService: ImpersonationAuthorizationService,
   ) {
-    const secretOrKeyProvider: SecretOrKeyProvider = (
-      _request,
-      rawJwtToken,
-      done,
-    ) => {
-      jwtWrapperService.resolveVerificationKey(rawJwtToken).then(
-        ({ key }) => done(null, key),
-        (error) => done(error, undefined),
-      );
+    const jwtFromRequestFunction = jwtWrapperService.extractJwtFromRequest();
+    // @ts-expect-error legacy noImplicitAny
+    const secretOrKeyProviderFunction = async (_request, rawJwtToken, done) => {
+      try {
+        const decodedToken = jwtWrapperService.decode<
+          | FileTokenJwtPayloadLegacy
+          | AccessTokenJwtPayload
+          | WorkspaceAgnosticTokenJwtPayload
+        >(rawJwtToken);
+
+        const appSecretBody =
+          decodedToken.type === JwtTokenTypeEnum.WORKSPACE_AGNOSTIC
+            ? decodedToken.userId
+            : decodedToken.workspaceId;
+
+        const secret = jwtWrapperService.generateAppSecret(
+          decodedToken.type,
+          appSecretBody,
+        );
+
+        done(null, secret);
+      } catch (error) {
+        done(error, null);
+      }
     };
 
     super({
-      jwtFromRequest: jwtWrapperService.extractJwtFromRequest(),
+      jwtFromRequest: jwtFromRequestFunction,
       ignoreExpiration: false,
-      algorithms: [...JWT_SUPPORTED_VERIFY_ALGORITHMS],
-      secretOrKeyProvider,
+      secretOrKeyProvider: secretOrKeyProviderFunction,
     });
   }
 
@@ -101,7 +118,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   private async validateAccessToken(
-    payload: AccessTokenJwtPayload | PlaygroundTokenJwtPayload,
+    payload: AccessTokenJwtPayload,
   ): Promise<AuthContext> {
     let user: AuthContextUser | null = null;
     let context: AuthContext = {};
@@ -118,11 +135,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       );
     }
 
-    // Only ACCESS tokens can carry impersonation; PLAYGROUND is always first-person.
-    if (
-      payload.type === JwtTokenTypeEnum.ACCESS &&
-      payload.isImpersonating === true
-    ) {
+    if (payload.isImpersonating === true) {
       context.impersonationContext = await this.validateImpersonation(payload);
     }
 
@@ -145,7 +158,6 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     const userContext = await this.resolveUserContext({
       userId,
       userWorkspaceId: payload.userWorkspaceId,
-      expectedWorkspaceId: workspace.id,
     });
 
     assertIsDefinedOrThrow(
@@ -272,7 +284,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
     const impersonatorUserWorkspace =
       await this.userWorkspaceRepository.findOne({
         where: { id: payload.impersonatorUserWorkspaceId },
-        relations: ['user', 'workspace', 'twoFactorAuthenticationMethods'],
+        relations: ['user', 'workspace'],
       });
 
     const impersonatedUserWorkspace =
@@ -291,17 +303,54 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       );
     }
 
-    const authorizationResult =
-      await this.impersonationAuthorizationService.checkImpersonationAuthorization(
-        impersonatorUserWorkspace,
-        impersonatedUserWorkspace,
+    const isServerLevelImpersonation =
+      impersonatorUserWorkspace.workspace.id !==
+      impersonatedUserWorkspace.workspace.id;
+
+    const hasServerLevelImpersonatePermission =
+      impersonatorUserWorkspace.user.canImpersonate === true &&
+      impersonatedUserWorkspace.workspace.allowImpersonation === true;
+
+    if (isServerLevelImpersonation) {
+      if (!hasServerLevelImpersonatePermission)
+        throw new AuthException(
+          'Server level impersonation not allowed',
+          AuthExceptionCode.FORBIDDEN_EXCEPTION,
+        );
+
+      return {
+        impersonatorUserWorkspaceId: payload.impersonatorUserWorkspaceId,
+        impersonatedUserWorkspaceId: payload.impersonatedUserWorkspaceId,
+      };
+    }
+
+    const hasWorkspaceLevelImpersonatePermission =
+      await this.permissionsService.userHasWorkspaceSettingPermission({
+        userWorkspaceId: impersonatorUserWorkspace.id,
+        setting: PermissionFlagType.IMPERSONATE,
+        workspaceId: impersonatedUserWorkspace.workspace.id,
+      });
+
+    if (!hasWorkspaceLevelImpersonatePermission) {
+      throw new AuthException(
+        'Impersonation not allowed',
+        AuthExceptionCode.FORBIDDEN_EXCEPTION,
       );
+    }
 
-    if (!authorizationResult.allowed) {
-      const { message, exceptionCode, userFriendlyMessage } =
-        IMPERSONATION_DENIAL_BY_REASON[authorizationResult.reason];
+    const targetHasAdminPrivileges =
+      impersonatedUserWorkspace.user.canImpersonate === true ||
+      impersonatedUserWorkspace.user.canAccessFullAdminPanel === true;
 
-      throw new AuthException(message, exceptionCode, { userFriendlyMessage });
+    const impersonatorHasAdminPrivileges =
+      impersonatorUserWorkspace.user.canImpersonate === true ||
+      impersonatorUserWorkspace.user.canAccessFullAdminPanel === true;
+
+    if (targetHasAdminPrivileges && !impersonatorHasAdminPrivileges) {
+      throw new AuthException(
+        'Cannot impersonate a user with admin privileges',
+        AuthExceptionCode.FORBIDDEN_EXCEPTION,
+      );
     }
 
     return {
@@ -340,12 +389,9 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     const applicationId = payload.sub ?? payload.applicationId;
 
-    const { flatApplicationMaps } =
-      await this.workspaceCacheService.getOrRecompute(workspace.id, [
-        'flatApplicationMaps',
-      ]);
-
-    const application = flatApplicationMaps.byId[applicationId];
+    const application = await this.applicationRepository.findOne({
+      where: { id: applicationId },
+    });
 
     if (!isDefined(application)) {
       throw new AuthException(
@@ -394,17 +440,6 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayload): Promise<AuthContext> {
-    const context = await this.dispatch(payload);
-
-    return {
-      ...context,
-      tokenType: this.isLegacyApiKeyPayload(payload)
-        ? JwtTokenTypeEnum.API_KEY
-        : payload.type,
-    };
-  }
-
-  private async dispatch(payload: JwtPayload): Promise<AuthContext> {
     // Support legacy api keys
     if (
       payload.type === JwtTokenTypeEnum.API_KEY ||
@@ -417,10 +452,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
       return await this.validateWorkspaceAgnosticToken(payload);
     }
 
-    if (
-      payload.type === JwtTokenTypeEnum.ACCESS ||
-      payload.type === JwtTokenTypeEnum.PLAYGROUND
-    ) {
+    if (payload.type === JwtTokenTypeEnum.ACCESS) {
       return await this.validateAccessToken(payload);
     }
 

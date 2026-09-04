@@ -2,11 +2,6 @@ import { UseFilters, UseGuards, UsePipes } from '@nestjs/common';
 import { Args, Mutation } from '@nestjs/graphql';
 
 import { PermissionFlagType } from 'twenty-shared/constants';
-import {
-  WORKFLOW_TRIGGER_METADATA_KEY,
-  WORKFLOW_TRIGGER_METADATA_WORKSPACE_MEMBER_ID_KEY,
-  WORKFLOW_TRIGGER_PAYLOAD_KEY,
-} from 'twenty-shared/workflow';
 
 import { CoreResolver } from 'src/engine/api/graphql/graphql-config/decorators/core-resolver.decorator';
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
@@ -33,6 +28,7 @@ import { WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/sta
 @CoreResolver()
 @UseGuards(
   WorkspaceAuthGuard,
+  UserAuthGuard,
   SettingsPermissionGuard(PermissionFlagType.WORKFLOWS),
 )
 @UsePipes(ResolverValidationPipe)
@@ -72,7 +68,6 @@ export class WorkflowTriggerResolver {
   }
 
   @Mutation(() => RunWorkflowVersionDTO)
-  @UseGuards(UserAuthGuard)
   async runWorkflowVersion(
     @AuthUser() user: AuthContextUser,
     @AuthWorkspace() workspace: WorkspaceEntity,
@@ -103,14 +98,7 @@ export class WorkflowTriggerResolver {
     return this.workflowTriggerWorkspaceService.runWorkflowVersion({
       workflowVersionId,
       workflowRunId: workflowRunId ?? undefined,
-      payload: {
-        ...(payload ?? {}),
-        [WORKFLOW_TRIGGER_PAYLOAD_KEY]: { ...(payload ?? {}) },
-        [WORKFLOW_TRIGGER_METADATA_KEY]: {
-          [WORKFLOW_TRIGGER_METADATA_WORKSPACE_MEMBER_ID_KEY]:
-            workspaceMember.id,
-        },
-      },
+      payload: payload ?? {},
       createdBy: buildCreatedByFromFullNameMetadata({
         fullNameMetadata: {
           firstName: workspaceMember.name.firstName,
@@ -129,18 +117,6 @@ export class WorkflowTriggerResolver {
     workflowRunId: string,
   ) {
     return this.workflowTriggerWorkspaceService.stopWorkflowRun(
-      workflowRunId,
-      workspace.id,
-    );
-  }
-
-  @Mutation(() => WorkflowRunDTO)
-  async retryWorkflowRun(
-    @AuthWorkspace() workspace: WorkspaceEntity,
-    @Args('workflowRunId', { type: () => UUIDScalarType })
-    workflowRunId: string,
-  ) {
-    return this.workflowTriggerWorkspaceService.retryWorkflowRun(
       workflowRunId,
       workspace.id,
     );

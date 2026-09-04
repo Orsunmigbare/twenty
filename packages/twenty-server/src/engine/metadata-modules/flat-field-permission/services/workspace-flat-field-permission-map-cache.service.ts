@@ -11,8 +11,6 @@ import { fromFieldPermissionEntityToFlatFieldPermission } from 'src/engine/metad
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { FieldPermissionEntity } from 'src/engine/metadata-modules/object-permission/field-permission/field-permission.entity';
 import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { WorkspaceCacheProvider } from 'src/engine/workspace-cache/interfaces/workspace-cache-provider.service';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
@@ -22,12 +20,12 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatFieldPermissionMaps')
 export class WorkspaceFlatFieldPermissionMapCacheService extends WorkspaceCacheProvider<FlatFieldPermissionMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(FieldPermissionEntity)
-    private readonly fieldPermissionRepository: WorkspaceScopedRepository<FieldPermissionEntity>,
+    @InjectRepository(FieldPermissionEntity)
+    private readonly fieldPermissionRepository: Repository<FieldPermissionEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
     @InjectRepository(ObjectMetadataEntity)
     private readonly objectMetadataRepository: Repository<ObjectMetadataEntity>,
     @InjectRepository(FieldMetadataEntity)
@@ -44,7 +42,8 @@ export class WorkspaceFlatFieldPermissionMapCacheService extends WorkspaceCacheP
       objectMetadatas,
       fieldMetadatas,
     ] = await Promise.all([
-      this.fieldPermissionRepository.find(workspaceId, {
+      this.fieldPermissionRepository.find({
+        where: { workspaceId },
         withDeleted: true,
       }),
       this.applicationRepository.find({
@@ -52,7 +51,8 @@ export class WorkspaceFlatFieldPermissionMapCacheService extends WorkspaceCacheP
         select: ['id', 'universalIdentifier'],
         withDeleted: true,
       }),
-      this.roleRepository.find(workspaceId, {
+      this.roleRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier'],
         withDeleted: true,
       }),

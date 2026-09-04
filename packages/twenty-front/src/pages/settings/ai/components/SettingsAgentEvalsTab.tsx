@@ -23,7 +23,7 @@ import {
   IconPlayerPlay,
   IconPlus,
   IconTrash,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { Button, LightIconButton } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { MenuItem } from 'twenty-ui/navigation';

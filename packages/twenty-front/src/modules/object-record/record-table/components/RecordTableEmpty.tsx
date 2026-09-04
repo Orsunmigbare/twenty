@@ -31,7 +31,7 @@ const StyledEmptyStateContainer = styled.div<{ width: number }>`
 `;
 
 export interface RecordTableEmptyProps {
-  tableBodyRef: React.RefObject<HTMLDivElement | null>;
+  tableBodyRef: React.RefObject<HTMLDivElement>;
 }
 
 export const RecordTableEmpty = ({ tableBodyRef }: RecordTableEmptyProps) => {

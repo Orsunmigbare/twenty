@@ -138,7 +138,6 @@ const createPageLayoutWithWidget = (
   name: 'Mock Page Layout',
   type: PageLayoutType.RECORD_PAGE,
   objectMetadataId,
-  universalIdentifier: '20202020-0000-0000-0000-000000000001',
   tabs: [
     {
       __typename: 'PageLayoutTab' as const,
@@ -204,7 +203,6 @@ const createView = (
   viewSorts: [],
   visibility: ViewVisibility.WORKSPACE,
   createdByUserWorkspaceId: null,
-  isActive: true,
   ...overrides,
 });
 
@@ -345,7 +343,6 @@ export const WithViewFieldGroups: Story = {
                 <PageLayoutContentProvider
                   value={{
                     layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-                    presentation: 'stack',
                     tabId: TAB_ID_OVERVIEW,
                   }}
                 >
@@ -426,7 +423,6 @@ export const WithDefaultGroups: Story = {
                 <PageLayoutContentProvider
                   value={{
                     layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-                    presentation: 'stack',
                     tabId: TAB_ID_OVERVIEW,
                   }}
                 >
@@ -509,7 +505,6 @@ export const Empty: Story = {
                 <PageLayoutContentProvider
                   value={{
                     layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-                    presentation: 'stack',
                     tabId: TAB_ID_OVERVIEW,
                   }}
                 >

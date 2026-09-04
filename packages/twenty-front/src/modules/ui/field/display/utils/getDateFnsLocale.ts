@@ -1,5 +1,3 @@
-import { isObject } from '@sniptt/guards';
-import { type Locale } from 'date-fns';
 import { type APP_LOCALES } from 'twenty-shared/translations';
 
 type AppLocale = keyof typeof APP_LOCALES;
@@ -71,13 +69,8 @@ export const getDateFnsLocaleImport = (locale: AppLocale) => {
   }
 };
 
-const isDateFnsLocale = (value: unknown): value is Locale =>
-  isObject(value) && 'code' in value && 'formatLong' in value;
-
-export const getDateFnsLocale = async (
-  localeString?: string | null,
-): Promise<Locale | undefined> => {
+export const getDateFnsLocale = async (localeString?: string | null) => {
   return getDateFnsLocaleImport(localeString as AppLocale)
-    .then((localeModule) => Object.values(localeModule).find(isDateFnsLocale))
-    .catch(() => undefined);
+    .then((m) => m.default as unknown as Locale)
+    .catch((_e) => undefined);
 };

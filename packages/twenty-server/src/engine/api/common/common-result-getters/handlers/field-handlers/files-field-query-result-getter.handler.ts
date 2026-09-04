@@ -11,7 +11,9 @@ import type { SignedFileOutput } from 'src/engine/api/common/common-args-process
 import { type FileUrlService } from 'src/engine/core-modules/file/file-url/file-url.service';
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 
-export class FilesFieldQueryResultGetterHandler implements QueryResultGetterHandlerInterface {
+export class FilesFieldQueryResultGetterHandler
+  implements QueryResultGetterHandlerInterface
+{
   constructor(private readonly fileUrlService: FileUrlService) {}
 
   async handle(
@@ -37,7 +39,7 @@ export class FilesFieldQueryResultGetterHandler implements QueryResultGetterHand
       const signedFilesFieldValue: SignedFileOutput[] = [];
 
       for (const file of filesFieldValue) {
-        const url = await this.fileUrlService.signFileByIdUrl({
+        const url = this.fileUrlService.signFileByIdUrl({
           fileId: file.fileId,
           workspaceId,
           fileFolder: FileFolder.FilesField,

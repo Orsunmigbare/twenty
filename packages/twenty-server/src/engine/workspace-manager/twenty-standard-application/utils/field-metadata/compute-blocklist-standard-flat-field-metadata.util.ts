@@ -14,6 +14,9 @@ import {
   createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
+import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
+import { SEARCH_FIELDS_FOR_BLOCKLIST } from 'src/modules/blocklist/standard-objects/blocklist.workspace-entity';
+
 export const buildBlocklistStandardFlatFieldMetadatas = ({
   now,
   objectName,
@@ -37,7 +40,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       icon: 'Icon123',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'uuid',
     },
     standardObjectMetadataRelatedEntityIds,
@@ -56,7 +59,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       icon: 'IconCalendar',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
@@ -78,7 +81,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarClock',
       isSystem: true,
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       defaultValue: 'now',
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
@@ -100,7 +103,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       icon: 'IconCalendarMinus',
       isSystem: true,
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       settings: {
         displayFormat: DateDisplayFormat.RELATIVE,
       },
@@ -120,7 +123,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`The creator of the record`),
       icon: 'IconCreativeCommonsSa',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -145,7 +148,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       ),
       icon: 'IconUserCircle',
       isSystem: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
       isNullable: false,
       defaultValue: {
         source: "'MANUAL'",
@@ -187,6 +190,12 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       icon: 'IconUser',
       isSystem: true,
       isNullable: true,
+      settings: {
+        generatedType: 'STORED',
+        asExpression: getTsVectorColumnExpressionFromFields(
+          SEARCH_FIELDS_FOR_BLOCKLIST,
+        ),
+      },
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -205,7 +214,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`Handle`),
       icon: 'IconAt',
       isNullable: true,
-      isUIEditable: false,
+      isUIReadOnly: true,
     },
     standardObjectMetadataRelatedEntityIds,
     dependencyFlatEntityMaps,
@@ -225,7 +234,7 @@ export const buildBlocklistStandardFlatFieldMetadatas = ({
       description: i18nLabel(msg`WorkspaceMember`),
       icon: 'IconCircleUser',
       isNullable: false,
-      isUIEditable: false,
+      isUIReadOnly: true,
       targetObjectName: 'workspaceMember',
       targetFieldName: 'blocklist',
       settings: {

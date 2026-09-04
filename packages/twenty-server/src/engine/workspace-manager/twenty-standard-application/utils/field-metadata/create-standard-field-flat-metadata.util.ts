@@ -6,10 +6,8 @@ import {
   type FieldMetadataType,
 } from 'twenty-shared/types';
 import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
-import { TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER } from 'twenty-shared/application';
 
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { PARTIAL_SYSTEM_FLAT_FIELD_METADATAS } from 'src/engine/metadata-modules/object-metadata/constants/partial-system-flat-field-metadatas.constant';
 import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
 import { type AllStandardObjectName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-name.type';
 import { type StandardBuilderArgs } from 'src/engine/workspace-manager/twenty-standard-application/types/metadata-standard-buillder-args.type';
@@ -30,7 +28,7 @@ export type CreateStandardFieldArgs<
     isSystem?: boolean;
     isNullable?: boolean;
     isUnique?: boolean;
-    isUIEditable?: boolean;
+    isUIReadOnly?: boolean;
     defaultValue?: FieldMetadataDefaultValue<T>;
     settings?: FieldMetadataSettings<T>;
     options?:
@@ -55,7 +53,7 @@ export const createStandardFieldFlatMetadata = <
     isSystem = false,
     isNullable = true,
     isUnique = false,
-    isUIEditable = true,
+    isUIReadOnly = false,
     defaultValue,
     settings,
     options: fieldOptions = null,
@@ -81,14 +79,14 @@ export const createStandardFieldFlatMetadata = <
     label,
     description,
     icon,
+    isCustom: false,
     isActive: true,
     isSystem,
-    isSystemSideEffect: name in PARTIAL_SYSTEM_FLAT_FIELD_METADATAS,
     isNullable,
     isUnique,
-    isUIEditable,
+    isUIReadOnly,
     isLabelSyncedWithName: false,
-    overrides: null,
+    standardOverrides: null,
     defaultValue: defaultValue ?? null,
     settings: settings ?? null,
     options: fieldOptions ?? null,
@@ -100,12 +98,10 @@ export const createStandardFieldFlatMetadata = <
     fieldPermissionIds: [],
     kanbanAggregateOperationViewIds: [],
     calendarViewIds: [],
-    calendarEndViewIds: [],
     mainGroupByFieldMetadataViewIds: [],
     createdAt: now,
     updatedAt: now,
-    applicationUniversalIdentifier:
-      TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+    applicationUniversalIdentifier: twentyStandardApplicationId,
     objectMetadataUniversalIdentifier:
       STANDARD_OBJECTS[objectName].universalIdentifier,
     relationTargetObjectMetadataUniversalIdentifier: null,
@@ -115,12 +111,9 @@ export const createStandardFieldFlatMetadata = <
     fieldPermissionUniversalIdentifiers: [],
     kanbanAggregateOperationViewUniversalIdentifiers: [],
     calendarViewUniversalIdentifiers: [],
-    calendarEndViewUniversalIdentifiers: [],
     mainGroupByFieldMetadataViewUniversalIdentifiers: [],
     viewSortIds: [],
     viewSortUniversalIdentifiers: [],
-    searchFieldMetadataIds: [],
-    searchFieldMetadataUniversalIdentifiers: [],
     universalSettings: settings ?? null,
   };
 };

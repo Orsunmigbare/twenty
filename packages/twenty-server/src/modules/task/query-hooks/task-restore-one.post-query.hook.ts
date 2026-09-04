@@ -13,7 +13,9 @@ import { TaskWorkspaceEntity } from 'src/modules/task/standard-objects/task.work
   key: `task.restoreOne`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class TaskRestoreOnePostQueryHook implements WorkspacePostQueryHookInstance {
+export class TaskRestoreOnePostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly taskPostQueryHookService: TaskPostQueryHookService,
   ) {}

@@ -1,4 +1,4 @@
-import { type IconComponent, type IconComponentProps } from 'twenty-ui/icon';
+import { type IconComponent, type IconComponentProps } from 'twenty-ui/display';
 
 import { ModelsDevProviderLogo } from '@/settings/admin-panel/ai/components/ModelsDevProviderLogo';
 

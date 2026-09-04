@@ -15,6 +15,8 @@ export const getConfigurationTypeFromGraphType = (
       return WidgetConfigurationType.PIE_CHART;
     case GraphType.AGGREGATE:
       return WidgetConfigurationType.AGGREGATE_CHART;
+    case GraphType.GAUGE:
+      return WidgetConfigurationType.GAUGE_CHART;
     default:
       assertUnreachable(graphType);
   }

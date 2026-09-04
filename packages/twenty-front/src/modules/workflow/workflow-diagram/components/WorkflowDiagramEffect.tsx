@@ -12,7 +12,7 @@ import { useStepsOutputSchema } from '@/workflow/workflow-variables/hooks/useSte
 import { getWorkflowVersionDiagram } from '@/workflow/workflow-diagram/utils/getWorkflowVersionDiagram';
 import { mergeWorkflowDiagrams } from '@/workflow/workflow-diagram/utils/mergeWorkflowDiagrams';
 import { useStore } from 'jotai';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 
 export const WorkflowDiagramEffect = () => {
@@ -37,10 +37,8 @@ export const WorkflowDiagramEffect = () => {
   const store = useStore();
   const currentVersion = workflowWithCurrentVersion?.currentVersion;
 
-  const [previousVersionId, setPreviousVersionId] = useState<string>();
-
   const computeAndMergeNewWorkflowDiagram = useCallback(
-    (version: WorkflowVersion, preservePositions: boolean) => {
+    (version: WorkflowVersion) => {
       const previousWorkflowDiagram = store.get(workflowDiagram);
 
       const nextWorkflowDiagram = getWorkflowVersionDiagram({
@@ -54,7 +52,6 @@ export const WorkflowDiagramEffect = () => {
         mergedWorkflowDiagram = mergeWorkflowDiagrams(
           previousWorkflowDiagram,
           nextWorkflowDiagram,
-          { preservePositions },
         );
       }
 
@@ -83,20 +80,13 @@ export const WorkflowDiagramEffect = () => {
       return;
     }
 
-    const isSameVersion = previousVersionId === currentVersion.id;
-    const isTransitionToDraft = currentVersion.status === 'DRAFT';
-    const shouldPreservePositions = isSameVersion || isTransitionToDraft;
-
-    setPreviousVersionId(currentVersion.id);
-
     setFlow({
       workflowVersionId: currentVersion.id,
       trigger: currentVersion.trigger,
       steps: currentVersion.steps,
     });
 
-    computeAndMergeNewWorkflowDiagram(currentVersion, shouldPreservePositions);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    computeAndMergeNewWorkflowDiagram(currentVersion);
   }, [computeAndMergeNewWorkflowDiagram, setFlow, currentVersion]);
 
   useEffect(() => {

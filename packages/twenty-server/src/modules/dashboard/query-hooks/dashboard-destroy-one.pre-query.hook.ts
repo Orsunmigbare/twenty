@@ -12,7 +12,9 @@ import { DashboardToPageLayoutSyncService } from 'src/modules/dashboard/services
 
 @Injectable()
 @WorkspaceQueryHook(`dashboard.destroyOne`)
-export class DashboardDestroyOnePreQueryHook implements WorkspacePreQueryHookInstance {
+export class DashboardDestroyOnePreQueryHook
+  implements WorkspacePreQueryHookInstance
+{
   constructor(
     private readonly dashboardToPageLayoutSyncService: DashboardToPageLayoutSyncService,
   ) {}

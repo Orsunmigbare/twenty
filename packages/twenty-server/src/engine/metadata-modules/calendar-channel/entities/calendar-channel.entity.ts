@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,7 +16,6 @@ import {
   CalendarChannelSyncStage,
   CalendarChannelSyncStatus,
   CalendarChannelVisibility,
-  WebhookSubscriptionStatus,
 } from 'twenty-shared/types';
 
 import { ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
@@ -37,11 +35,6 @@ registerEnumType(CalendarChannelContactAutoCreationPolicy, {
 });
 
 @Entity({ name: 'calendarChannel', schema: 'core' })
-@Index('IDX_CALENDAR_CHANNEL_WORKSPACE_ID_SYNC_ENABLED_SYNC_STAGE', [
-  'workspaceId',
-  'isSyncEnabled',
-  'syncStage',
-])
 export class CalendarChannelEntity extends WorkspaceRelatedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -97,25 +90,6 @@ export class CalendarChannelEntity extends WorkspaceRelatedEntity {
 
   @Column({ type: 'integer', nullable: false, default: 0 })
   throttleFailureCount: number;
-
-  @Column({ type: 'varchar', nullable: true })
-  webhookSubscriptionExternalId: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  webhookSubscriptionExternalResourceId: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  webhookSubscriptionClientState: string | null;
-
-  @Column({
-    type: 'enum',
-    enum: WebhookSubscriptionStatus,
-    nullable: true,
-  })
-  webhookSubscriptionStatus: WebhookSubscriptionStatus | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  webhookSubscriptionExpiresAt: Date | null;
 
   @Column({ type: 'uuid', nullable: false })
   connectedAccountId: string;

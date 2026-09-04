@@ -12,7 +12,7 @@ const createMockFieldMetadataItem = (
     type: FieldMetadataType.TEXT,
     isActive: true,
     isSystem: false,
-    isUIEditable: true,
+    isUIReadOnly: false,
     isUnique: false,
     isNullable: true,
     ...overrides,

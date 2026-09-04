@@ -103,7 +103,7 @@ export class MicrosoftAPIsAuthController {
         );
       }
 
-      const handle = emails[0].value.toLowerCase();
+      const handle = emails[0].value;
 
       const connectedAccountId =
         await this.microsoftAPIsService.refreshMicrosoftRefreshToken({
@@ -119,9 +119,10 @@ export class MicrosoftAPIsAuthController {
         });
 
       if (userId) {
-        await this.onboardingService.completeOnboardingConnectAccountStep({
+        await this.onboardingService.setOnboardingConnectAccountPending({
           userId,
           workspaceId,
+          value: false,
         });
       }
 

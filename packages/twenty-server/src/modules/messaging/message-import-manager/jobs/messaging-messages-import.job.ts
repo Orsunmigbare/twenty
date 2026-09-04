@@ -43,45 +43,41 @@ export class MessagingMessagesImportJob {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const messageChannel = await this.messageChannelRepository.findOne({
-          where: {
-            id: messageChannelId,
-            workspaceId,
-          },
-          relations: { connectedAccount: true, messageFolders: true },
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      const messageChannel = await this.messageChannelRepository.findOne({
+        where: {
+          id: messageChannelId,
+          workspaceId,
+        },
+        relations: { connectedAccount: true, messageFolders: true },
+      });
+
+      if (!messageChannel) {
+        await this.messagingMonitoringService.track({
+          eventName: 'messages_import.error.message_channel_not_found',
+          messageChannelId,
+          workspaceId,
         });
 
-        if (!messageChannel) {
-          await this.messagingMonitoringService.track({
-            eventName: 'messages_import.error.message_channel_not_found',
-            messageChannelId,
-            workspaceId,
-          });
+        return;
+      }
 
-          return;
-        }
+      if (!messageChannel?.isSyncEnabled) {
+        return;
+      }
 
-        if (!messageChannel?.isSyncEnabled) {
-          return;
-        }
+      if (
+        messageChannel.syncStage !==
+        MessageChannelSyncStage.MESSAGES_IMPORT_SCHEDULED
+      ) {
+        return;
+      }
 
-        if (
-          messageChannel.syncStage !==
-          MessageChannelSyncStage.MESSAGES_IMPORT_SCHEDULED
-        ) {
-          return;
-        }
-
-        await this.messagingMessagesImportService.processMessageBatchImport(
-          messageChannel,
-          messageChannel.connectedAccount,
-          workspaceId,
-        );
-      },
-      authContext,
-      { lite: true },
-    );
+      await this.messagingMessagesImportService.processMessageBatchImport(
+        messageChannel,
+        messageChannel.connectedAccount,
+        workspaceId,
+      );
+    }, authContext);
   }
 }

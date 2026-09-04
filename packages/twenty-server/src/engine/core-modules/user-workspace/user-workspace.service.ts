@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { TypeOrmQueryService } from '@ptc-org/nestjs-query-typeorm';
 import { type APP_LOCALES, SOURCE_LOCALE } from 'twenty-shared/translations';
 import { FileFolder } from 'twenty-shared/types';
 import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
@@ -25,7 +26,6 @@ import { OnboardingService } from 'src/engine/core-modules/onboarding/onboarding
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
 import { WorkspaceInvitationService } from 'src/engine/core-modules/workspace-invitation/services/workspace-invitation.service';
-import { WorkspaceDiscoverability } from 'src/engine/core-modules/workspace/types/workspace-discoverability.type';
 import { AuthProviderEnum } from 'src/engine/core-modules/workspace/types/workspace.type';
 import { type WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { workspaceValidator } from 'src/engine/core-modules/workspace/workspace.validate';
@@ -41,9 +41,9 @@ import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspac
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
 import { type WorkspaceMemberWorkspaceEntity } from 'src/modules/workspace-member/standard-objects/workspace-member.workspace-entity';
 import { assert } from 'src/utils/assert';
-import { getDomainFromEmailOrThrow } from 'src/utils/get-domain-from-email-or-throw';
+import { getDomainNameByEmail } from 'src/utils/get-domain-name-by-email';
 
-export class UserWorkspaceService {
+export class UserWorkspaceService extends TypeOrmQueryService<UserWorkspaceEntity> {
   private readonly logger = new Logger(UserWorkspaceService.name);
 
   constructor(
@@ -51,8 +51,6 @@ export class UserWorkspaceService {
     private readonly userWorkspaceRepository: Repository<UserWorkspaceEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    // softRemove is not supported by WorkspaceScopedRepository.
-    // eslint-disable-next-line twenty/prefer-workspace-scoped-repository
     @InjectRepository(RoleTargetEntity)
     private readonly roleTargetRepository: Repository<RoleTargetEntity>,
     private readonly roleValidationService: RoleValidationService,
@@ -66,10 +64,8 @@ export class UserWorkspaceService {
     private readonly fileUrlService: FileUrlService,
     private readonly onboardingService: OnboardingService,
     private readonly coreEntityCacheService: CoreEntityCacheService,
-  ) {}
-
-  async findById(id: string): Promise<UserWorkspaceEntity | null> {
-    return this.userWorkspaceRepository.findOne({ where: { id } });
+  ) {
+    super(userWorkspaceRepository);
   }
 
   async updateUserWorkspaceLocaleForUserWorkspace({
@@ -150,14 +146,6 @@ export class UserWorkspaceService {
           'workspaceMember',
           { shouldBypassPermissionChecks: true },
         );
-
-      const existingWorkspaceMembers = await workspaceMemberRepository.find({
-        where: { userId: user.id },
-      });
-
-      if (existingWorkspaceMembers.length > 0) {
-        return;
-      }
 
       const userWorkspace = await this.userWorkspaceRepository.findOneOrFail({
         where: {
@@ -323,9 +311,6 @@ export class UserWorkspaceService {
     return await this.userWorkspaceRepository.count({ where: { userId } });
   }
 
-  // TODO migrate roleTargetRepository to WorkspaceScopedRepository once workspaceId
-  // is threaded through all deleteUserWorkspace callers (user.service.ts does not
-  // currently have it at the call site).
   async deleteUserWorkspace({
     userWorkspaceId,
     softDelete = false,
@@ -357,41 +342,27 @@ export class UserWorkspaceService {
       },
     });
 
-    // HIDDEN workspaces are never advertised in the root-domain picker, even to
-    // their own members — they must sign in from the workspace URL directly.
     const alreadyMemberWorkspaces = user
-      ? user.userWorkspaces
-          .map(({ workspace }) => ({ workspace }))
-          .filter(
-            ({ workspace }) =>
-              workspace.workspaceDiscoverability !==
-              WorkspaceDiscoverability.HIDDEN,
-          )
+      ? user.userWorkspaces.map(({ workspace }) => ({ workspace }))
       : [];
 
     const alreadyMemberWorkspacesIds = alreadyMemberWorkspaces.map(
       ({ workspace }) => workspace.id,
     );
 
-    // Email-domain discovery is the only "listing" source: PUBLIC only.
     const workspacesFromApprovedAccessDomain = (
       await this.approvedAccessDomainService.findValidatedApprovedAccessDomainWithWorkspacesAndSSOIdentityProvidersDomain(
-        getDomainFromEmailOrThrow(email),
+        getDomainNameByEmail(email),
       )
     )
       .filter(
-        ({ workspace }) =>
-          !alreadyMemberWorkspacesIds.includes(workspace.id) &&
-          workspace.workspaceDiscoverability ===
-            WorkspaceDiscoverability.PUBLIC,
+        ({ workspace }) => !alreadyMemberWorkspacesIds.includes(workspace.id),
       )
       .map(({ workspace }) => ({ workspace }));
 
     const workspacesFromApprovedAccessDomainIds =
       workspacesFromApprovedAccessDomain.map(({ workspace }) => workspace.id);
 
-    // HIDDEN removes the picker convenience only; invited users can still join
-    // through the direct invitation link, which carries its own token.
     const workspacesFromInvitations = (
       await this.workspaceInvitationService.findInvitationsByEmail(email)
     )
@@ -400,9 +371,7 @@ export class UserWorkspaceService {
           ![
             ...alreadyMemberWorkspacesIds,
             ...workspacesFromApprovedAccessDomainIds,
-          ].includes(workspace.id) &&
-          workspace.workspaceDiscoverability !==
-            WorkspaceDiscoverability.HIDDEN,
+          ].includes(workspace.id),
       )
       .map((appToken) => ({
         workspace: appToken.workspace,
@@ -567,13 +536,13 @@ export class UserWorkspaceService {
     });
   }
 
-  async castWorkspaceToAvailableWorkspace(workspace: WorkspaceEntity) {
+  castWorkspaceToAvailableWorkspace(workspace: WorkspaceEntity) {
     return {
       id: workspace.id,
       displayName: workspace.displayName,
       workspaceUrls: this.workspaceDomainsService.getWorkspaceUrls(workspace),
       logo: isDefined(workspace.logoFileId)
-        ? await this.fileUrlService.signFileByIdUrl({
+        ? this.fileUrlService.signFileByIdUrl({
             fileId: workspace.logoFileId,
             workspaceId: workspace.id,
             fileFolder: FileFolder.CorePicture,
@@ -614,44 +583,37 @@ export class UserWorkspaceService {
     user: Pick<UserEntity, 'email'>,
     authProvider: AuthProviderEnum,
   ) {
-    const [availableWorkspacesForSignUp, availableWorkspacesForSignIn] =
-      await Promise.all([
-        Promise.all(
-          availableWorkspaces.availableWorkspacesForSignUp.map(
-            async ({ workspace, appToken }) => {
-              return {
-                ...(await this.castWorkspaceToAvailableWorkspace(workspace)),
-                ...(appToken ? { personalInviteToken: appToken.value } : {}),
-              };
-            },
-          ),
-        ),
-        Promise.all(
-          availableWorkspaces.availableWorkspacesForSignIn.map(
-            async ({ workspace }) => {
-              return {
-                ...(await this.castWorkspaceToAvailableWorkspace(workspace)),
-                loginToken: workspaceValidator.isAuthEnabled(
-                  authProvider,
-                  workspace,
-                )
-                  ? (
-                      await this.loginTokenService.generateLoginToken(
-                        user.email,
-                        workspace.id,
-                        AuthProviderEnum.Password,
-                      )
-                    ).token
-                  : undefined,
-              };
-            },
-          ),
-        ),
-      ]);
-
     return {
-      availableWorkspacesForSignUp,
-      availableWorkspacesForSignIn,
+      availableWorkspacesForSignUp:
+        availableWorkspaces.availableWorkspacesForSignUp.map(
+          ({ workspace, appToken }) => {
+            return {
+              ...this.castWorkspaceToAvailableWorkspace(workspace),
+              ...(appToken ? { personalInviteToken: appToken.value } : {}),
+            };
+          },
+        ),
+      availableWorkspacesForSignIn: await Promise.all(
+        availableWorkspaces.availableWorkspacesForSignIn.map(
+          async ({ workspace }) => {
+            return {
+              ...this.castWorkspaceToAvailableWorkspace(workspace),
+              loginToken: workspaceValidator.isAuthEnabled(
+                authProvider,
+                workspace,
+              )
+                ? (
+                    await this.loginTokenService.generateLoginToken(
+                      user.email,
+                      workspace.id,
+                      AuthProviderEnum.Password,
+                    )
+                  ).token
+                : undefined,
+            };
+          },
+        ),
+      ),
     };
   }
 

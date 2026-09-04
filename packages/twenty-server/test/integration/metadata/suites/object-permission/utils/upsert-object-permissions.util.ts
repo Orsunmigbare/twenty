@@ -28,7 +28,8 @@ export const upsertObjectPermissions = async ({
   if (expectToFail === true) {
     warnIfNoErrorButExpectedToFail({
       response,
-      errorMessage: 'Object permissions upsert should have failed but did not',
+      errorMessage:
+        'Object permissions upsert should have failed but did not',
     });
   }
 

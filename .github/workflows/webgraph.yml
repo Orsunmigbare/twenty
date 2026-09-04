@@ -1,85 +1,19 @@
-# webgraph PR graph validation.
+# The caller for webgraph's reusable graph gate. The gate itself — every step,
+# flag and failure mode — lives in the webgraph repository beside the code that
+# implements it: Orsunmigbare/frontend-mcp-2/.github/workflows/pr-gate.yml and
+# its docs/pr-gate.md. This file only says which deployment's graph to check
+# and where the webgraph install lives on the self-hosted runner.
 #
-# Runs on a SELF-HOSTED runner on the operator's machine — the only place that
-# can reach the deployment graph (unified.db) and the locally running app.
-# Because this repo is public and the runner is a real workstation:
-#
-#   - fork PRs never run here: the job-level `if` requires the head repo to BE
-#     this repo, so outside code cannot execute on the runner;
-#   - `/graph recheck` comments only count on PRs, and the resolve step
-#     re-verifies the head repo before checking anything out.
-#
-# The check posts two commit statuses — graph/verified (machine lane) and
-# graph/validated (human lane). Branch protection requires both, so a PR whose
-# surface awaits QA approval in the dashboard cannot merge. QAs approve in
-# their team inbox, then anyone comments `/graph recheck` to re-run this and
-# flip the statuses.
+# The deployment id is a repository VARIABLE (Settings → Secrets and variables →
+# Actions → Variables → WEBGRAPH_DEPLOYMENT_ID) so that re-onboarding never
+# needs a commit here.
 name: webgraph
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  issue_comment:
-    types: [created]
-
-permissions:
-  contents: read
-  statuses: write
-  pull-requests: write
-
-concurrency:
-  group: webgraph-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
-
+on: pull_request
 jobs:
-  validate:
-    if: >
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.head.repo.full_name == github.repository) ||
-      (github.event_name == 'issue_comment' &&
-       github.event.issue.pull_request &&
-       contains(github.event.comment.body, '/graph recheck'))
-    runs-on: [self-hosted, webgraph]
-    env:
-      WEBGRAPH_HOME: ${{ vars.WEBGRAPH_HOME || '/Users/gbare/Desktop/frontend-mcp' }}
-      WEBGRAPH_DEPLOYMENT_ID: ${{ vars.WEBGRAPH_DEPLOYMENT_ID || '22222222-3333-4444-8555-666666666666' }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Resolve PR
-        id: pr
-        run: |
-          NUM="${{ github.event.pull_request.number || github.event.issue.number }}"
-          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/${NUM}")
-          HEAD_REPO=$(echo "$PR_JSON" | jq -r .head.repo.full_name)
-          # The comment path has no head-repo guard in `if:` — enforce it here.
-          if [ "$HEAD_REPO" != "${{ github.repository }}" ]; then
-            echo "fork PR ($HEAD_REPO) — refusing to run on the self-hosted runner"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          {
-            echo "skip=false"
-            echo "number=$NUM"
-            echo "head_sha=$(echo "$PR_JSON" | jq -r .head.sha)"
-            echo "base_sha=$(echo "$PR_JSON" | jq -r .base.sha)"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Checkout PR head
-        if: steps.pr.outputs.skip != 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.pr.outputs.head_sha }}
-          fetch-depth: 0
-
-      - name: Graph validation
-        if: steps.pr.outputs.skip != 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node "$WEBGRAPH_HOME/scripts/pr-check.mjs" \
-            --deployment "$WEBGRAPH_DEPLOYMENT_ID" \
-            --checkout "$GITHUB_WORKSPACE" \
-            --pr "${{ steps.pr.outputs.number }}" \
-            --sha "${{ steps.pr.outputs.head_sha }}" \
-            --base-sha "${{ steps.pr.outputs.base_sha }}" \
-            --repo "${{ github.repository }}"
+  graph:
+    uses: Orsunmigbare/frontend-mcp-2/.github/workflows/pr-gate.yml@main
+    secrets: inherit
+    with:
+      deployment: ${{ vars.WEBGRAPH_DEPLOYMENT_ID }}
+      webgraph-path: /Users/gbare/Desktop/frontend-mcp
+      package: packages/twenty-front

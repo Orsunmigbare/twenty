@@ -1,29 +1,30 @@
 import { useState } from 'react';
-import { NavigationMenuItemType } from 'twenty-shared/types';
 
-import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
-import { useNavigationMenuObjectMetadataForSection } from '@/navigation-menu-item/edit/hooks/useNavigationMenuObjectMetadataForSection';
+import { getObjectColorWithFallback } from '@/object-metadata/utils/getObjectColorWithFallback';
+import { useDraftNavigationMenuItems } from '@/navigation-menu-item/edit/hooks/useDraftNavigationMenuItems';
+import { useNavigationMenuObjectMetadataFromDraft } from '@/navigation-menu-item/edit/hooks/useNavigationMenuObjectMetadataFromDraft';
 import { useOpenNavigationMenuItemInSidePanel } from '@/navigation-menu-item/edit/hooks/useOpenNavigationMenuItemInSidePanel';
+import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
+import { useAddObjectToNavigationMenuDraft } from '@/navigation-menu-item/edit/object/hooks/useAddObjectToNavigationMenuDraft';
 import { SidePanelObjectPickerSubView } from '@/navigation-menu-item/edit/side-panel/components/SidePanelObjectPickerSubView';
 import { getAvailableObjectMetadataForNewSidebarItem } from '@/navigation-menu-item/edit/side-panel/utils/getAvailableObjectMetadataForNewSidebarItem';
 import { useFilteredObjectMetadataItems } from '@/object-metadata/hooks/useFilteredObjectMetadataItems';
 import { useObjectMetadataItems } from '@/object-metadata/hooks/useObjectMetadataItems';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
-import { getObjectColorWithFallback } from '@/object-metadata/utils/getObjectColorWithFallback';
 import { useSidePanelSubPageHistory } from '@/side-panel/hooks/useSidePanelSubPageHistory';
 import { SidePanelSubPages } from '@/side-panel/types/SidePanelSubPages';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
 import { ViewKey } from '@/views/types/ViewKey';
-import { useIcons } from 'twenty-ui/icon';
+import { useIcons } from 'twenty-ui/display';
 
 export const SidePanelNewSidebarItemObjectSubPage = () => {
   const { navigateToSidePanelSubPage } = useSidePanelSubPageHistory();
   const { getIcon } = useIcons();
   const [objectSearchInput, setObjectSearchInput] = useState('');
 
-  const { currentItems, createItem } = useNavigationMenuItemEditController();
+  const { currentDraft } = useDraftNavigationMenuItems();
   const { objectMetadataItems } = useObjectMetadataItems();
+  const { addObjectToDraft } = useAddObjectToNavigationMenuDraft();
   const { openNavigationMenuItemInSidePanel } =
     useOpenNavigationMenuItemInSidePanel();
   const { activeNonSystemObjectMetadataItems } =
@@ -35,8 +36,8 @@ export const SidePanelNewSidebarItemObjectSubPage = () => {
   const {
     views,
     objectMetadataIdsWithIndexView,
-    objectMetadataIdsAlreadyAdded,
-  } = useNavigationMenuObjectMetadataForSection(currentItems);
+    objectMetadataIdsInWorkspace,
+  } = useNavigationMenuObjectMetadataFromDraft(currentDraft);
 
   const objectMetadataIdsWithDisplayableViews = new Set(
     views
@@ -55,20 +56,16 @@ export const SidePanelNewSidebarItemObjectSubPage = () => {
   const handleSelectObject = (
     objectMetadataItem: EnrichedObjectMetadataItem,
   ) => {
-    if (objectMetadataIdsAlreadyAdded.has(objectMetadataItem.id)) {
+    if (objectMetadataIdsInWorkspace.has(objectMetadataItem.id)) {
       return;
     }
-    const itemId = createItem(
-      {
-        type: NavigationMenuItemType.OBJECT,
-        targetObjectMetadataId: objectMetadataItem.id,
-        color: getObjectColorWithFallback(objectMetadataItem),
-      },
-      {
-        targetFolderId: pendingInsertionNavigationMenuItem?.folderId,
-        targetIndex: pendingInsertionNavigationMenuItem?.position,
-      },
-    );
+    const itemId = addObjectToDraft({
+      objectMetadataId: objectMetadataItem.id,
+      currentDraft,
+      targetFolderId: pendingInsertionNavigationMenuItem?.folderId,
+      targetIndex: pendingInsertionNavigationMenuItem?.position,
+      color: getObjectColorWithFallback(objectMetadataItem),
+    });
     setPendingInsertionNavigationMenuItem(null);
     openNavigationMenuItemInSidePanel({
       itemId,

@@ -2,13 +2,9 @@
 
 import { z } from 'zod';
 
-const HTTP_REDIRECT_BINDING =
-  'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect';
-const HTTP_POST_BINDING = 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST';
-
 const validator = z.object({
-  entityID: z.url('entityID is not a valid URL'),
-  ssoUrl: z.url('SingleSignOnService Location is not a valid URL'),
+  entityID: z.url(),
+  ssoUrl: z.url(),
   certificate: z.string().min(1),
 });
 
@@ -45,86 +41,61 @@ const getAllByPrefixAndKey = (
   return Array.from(xmlDoc.getElementsByTagName(`${key}`));
 };
 
-const formatErrorReason = (error: unknown): string => {
-  if (error instanceof z.ZodError) {
-    return error.issues
-      .map((issue) => {
-        const path = issue.path.join('.');
-        return path.length > 0 ? `${path}: ${issue.message}` : issue.message;
-      })
-      .join('; ');
-  }
-  if (error instanceof Error) return error.message;
-  return 'Unknown parsing error';
-};
-
 export const parseSAMLMetadataFromXMLFile = (
   xmlString: string,
 ):
   | { success: true; data: z.infer<typeof validator> }
-  | { success: false; reason: string } => {
+  | { success: false; error: unknown } => {
   try {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
     if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
-      throw new Error('File is not valid XML');
+      throw new Error('Error parsing XML');
     }
 
     const entityDescriptor = getByPrefixAndKey(xmlDoc, 'EntityDescriptor');
-    if (!entityDescriptor)
-      throw new Error('EntityDescriptor element is missing');
+    if (!entityDescriptor) throw new Error('No EntityDescriptor found');
 
     const IDPSSODescriptor = getByPrefixAndKey(xmlDoc, 'IDPSSODescriptor');
-    if (!IDPSSODescriptor)
-      throw new Error('IDPSSODescriptor element is missing');
+    if (!IDPSSODescriptor) throw new Error('No IDPSSODescriptor found');
 
     const keyDescriptors = getByPrefixAndKey(IDPSSODescriptor, 'KeyDescriptor');
-    if (!keyDescriptors) throw new Error('KeyDescriptor element is missing');
+    if (!keyDescriptors) throw new Error('No KeyDescriptor found');
 
     const keyInfo = getByPrefixAndKey(keyDescriptors, 'KeyInfo');
-    if (!keyInfo) throw new Error('KeyInfo element is missing');
+    if (!keyInfo) throw new Error('No KeyInfo found');
 
     const x509Data = getByPrefixAndKey(keyInfo, 'X509Data');
-    if (!x509Data) throw new Error('X509Data element is missing');
+    if (!x509Data) throw new Error('No X509Data found');
 
     const x509Certificate = getByPrefixAndKey(
       x509Data,
       'X509Certificate',
     )?.textContent?.trim();
-    if (!x509Certificate)
-      throw new Error('X509Certificate is missing or empty');
+    if (!x509Certificate) throw new Error('No X509Certificate found');
 
     const singleSignOnServices = getAllByPrefixAndKey(
       IDPSSODescriptor,
       'SingleSignOnService',
-    ).map((service) => ({
-      binding: service.getAttribute('Binding'),
-      location: service.getAttribute('Location'),
-    }));
-
-    // Prefer HTTP-Redirect (the default authnRequestBinding on the SP side),
-    // fall back to HTTP-POST since both are valid SAML 2.0 bindings and many
-    // IdPs (e.g. JumpCloud) only advertise HTTP-POST.
-    const ssoUrl =
-      singleSignOnServices.find((s) => s.binding === HTTP_REDIRECT_BINDING)
-        ?.location ??
-      singleSignOnServices.find((s) => s.binding === HTTP_POST_BINDING)
-        ?.location;
-
-    if (!ssoUrl) {
-      throw new Error(
-        'No SingleSignOnService with HTTP-Redirect or HTTP-POST binding was found',
-      );
-    }
+    );
 
     const result = {
-      ssoUrl,
+      ssoUrl: singleSignOnServices
+        .map((service) => ({
+          Binding: service.getAttribute('Binding'),
+          Location: service.getAttribute('Location'),
+        }))
+        .find(
+          (singleSignOnService) =>
+            singleSignOnService.Binding ===
+            'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+        )?.Location,
       certificate: x509Certificate,
       entityID: entityDescriptor?.getAttribute('entityID'),
     };
 
     return { success: true, data: validator.parse(result) };
   } catch (error) {
-    return { success: false, reason: formatErrorReason(error) };
+    return { success: false, error };
   }
 };

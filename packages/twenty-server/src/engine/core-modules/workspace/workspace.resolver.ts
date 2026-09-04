@@ -14,14 +14,12 @@ import { FeatureFlagKey, FileFolder } from 'twenty-shared/types';
 import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 
 import { MetadataResolver } from 'src/engine/api/graphql/graphql-config/decorators/metadata-resolver.decorator';
-import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 import { ApiKeyEntity } from 'src/engine/core-modules/api-key/api-key.entity';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { ApplicationDTO } from 'src/engine/core-modules/application/dtos/application.dto';
 import { fromFlatApplicationToApplicationDto } from 'src/engine/core-modules/application/utils/from-flat-application-to-application-dto.util';
 import { type AuthContextUser } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { BillingEntitlementDTO } from 'src/engine/core-modules/billing/dtos/billing-entitlement.dto';
-import { BillingCustomerEntity } from 'src/engine/core-modules/billing/entities/billing-customer.entity';
 import { BillingSubscriptionEntity } from 'src/engine/core-modules/billing/entities/billing-subscription.entity';
 import { BillingSubscriptionService } from 'src/engine/core-modules/billing/services/billing-subscription.service';
 import { DomainValidRecords } from 'src/engine/core-modules/dns-manager/dtos/domain-valid-records';
@@ -32,6 +30,7 @@ import { EnterprisePlanService } from 'src/engine/core-modules/enterprise/servic
 import { FeatureFlagDTO } from 'src/engine/core-modules/feature-flag/dtos/feature-flag.dto';
 import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
 import { FileUrlService } from 'src/engine/core-modules/file/file-url/file-url.service';
+import { FileService } from 'src/engine/core-modules/file/services/file.service';
 import { PreventNestToAutoLogGraphqlErrorsFilter } from 'src/engine/core-modules/graphql/filters/prevent-nest-to-auto-log-graphql-errors.filter';
 import { ResolverValidationPipe } from 'src/engine/core-modules/graphql/pipes/resolver-validation.pipe';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
@@ -71,6 +70,7 @@ import { fromRoleEntityToRoleDto } from 'src/engine/metadata-modules/role/utils/
 import { ViewDTO } from 'src/engine/metadata-modules/view/dtos/view.dto';
 import { ViewService } from 'src/engine/metadata-modules/view/services/view.service';
 import { getRequest } from 'src/utils/extract-request';
+import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 const OriginHeader = createParamDecorator(
   (_: unknown, ctx: ExecutionContext) => {
     const request = getRequest(ctx);
@@ -91,6 +91,7 @@ export class WorkspaceResolver {
     private readonly workspaceDomainsService: WorkspaceDomainsService,
     private readonly userWorkspaceService: UserWorkspaceService,
     private readonly twentyConfigService: TwentyConfigService,
+    private readonly fileService: FileService,
     private readonly fileUrlService: FileUrlService,
     private readonly billingSubscriptionService: BillingSubscriptionService,
     private readonly featureFlagService: FeatureFlagService,
@@ -105,7 +106,7 @@ export class WorkspaceResolver {
   @Query(() => WorkspaceEntity)
   @UseGuards(WorkspaceAuthGuard, NoPermissionGuard)
   async currentWorkspace(@AuthWorkspace() { id }: WorkspaceEntity) {
-    const workspace = await this.workspaceService.findOneWorkspaceById(id);
+    const workspace = await this.workspaceService.findById(id);
 
     assert(workspace, 'Workspace not found');
 
@@ -115,14 +116,11 @@ export class WorkspaceResolver {
   @Mutation(() => WorkspaceEntity)
   @UseGuards(UserAuthGuard, WorkspaceAuthGuard, NoPermissionGuard)
   async activateWorkspace(
-    // Deprecated: the workspace name is set at creation. This argument is kept
-    // for backward compatibility (removing it would be a breaking schema change)
-    // but is ignored.
-    @Args('data') _data: ActivateWorkspaceInput,
+    @Args('data') data: ActivateWorkspaceInput,
     @AuthUser() user: AuthContextUser,
     @AuthWorkspace() workspace: WorkspaceEntity,
   ) {
-    return await this.workspaceService.activateWorkspace(user, workspace);
+    return await this.workspaceService.activateWorkspace(user, workspace, data);
   }
 
   @Mutation(() => WorkspaceEntity)
@@ -173,8 +171,7 @@ export class WorkspaceResolver {
     SettingsPermissionGuard(PermissionFlagType.WORKSPACE),
   )
   async deleteCurrentWorkspace(@AuthWorkspace() { id }: WorkspaceEntity) {
-    await this.workspaceService.suspendWorkspace(id);
-    return this.workspaceService.deleteWorkspace(id, true);
+    return this.workspaceService.deleteWorkspace(id);
   }
 
   @ResolveField(() => [BillingSubscriptionEntity])
@@ -286,17 +283,6 @@ export class WorkspaceResolver {
     });
   }
 
-  @ResolveField(() => BillingCustomerEntity, { nullable: true })
-  async billingCustomer(
-    @Parent() workspace: WorkspaceEntity,
-  ): Promise<BillingCustomerEntity | null> {
-    if (!this.twentyConfigService.isBillingEnabled()) {
-      return null;
-    }
-
-    return this.billingSubscriptionService.getBillingCustomer(workspace.id);
-  }
-
   @ResolveField(() => Number)
   async workspaceMembersCount(
     @Parent() workspace: WorkspaceEntity,
@@ -322,6 +308,11 @@ export class WorkspaceResolver {
     return this.billingSubscriptionService.getWorkspaceEntitlements(
       workspace.id,
     );
+  }
+
+  @ResolveField(() => Boolean)
+  hasValidEnterpriseKey(): boolean {
+    return this.enterprisePlanService.hasValidEnterpriseKey();
   }
 
   @ResolveField(() => Boolean)
@@ -415,7 +406,7 @@ export class WorkspaceResolver {
       let workspaceLogoWithToken = '';
 
       if (isDefined(workspace.logoFileId)) {
-        workspaceLogoWithToken = await this.fileUrlService.signFileByIdUrl({
+        workspaceLogoWithToken = this.fileUrlService.signFileByIdUrl({
           fileId: workspace.logoFileId,
           workspaceId: workspace.id,
           fileFolder: FileFolder.CorePicture,
@@ -457,7 +448,7 @@ export class WorkspaceResolver {
       assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
 
       const logo = isDefined(workspace.logoFileId)
-        ? await this.fileUrlService.signFileByIdUrl({
+        ? this.fileUrlService.signFileByIdUrl({
             fileId: workspace.logoFileId,
             workspaceId: workspace.id,
             fileFolder: FileFolder.CorePicture,

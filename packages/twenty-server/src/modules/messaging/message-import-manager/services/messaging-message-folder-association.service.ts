@@ -29,61 +29,57 @@ export class MessagingMessageFolderAssociationService {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const repository =
-          await this.globalWorkspaceOrmManager.getRepository<MessageChannelMessageAssociationMessageFolderWorkspaceEntity>(
-            workspaceId,
-            'messageChannelMessageAssociationMessageFolder',
-          );
-
-        const records = associations.flatMap((association) =>
-          association.messageFolderIds.map((folderId) => ({
-            messageChannelMessageAssociationId:
-              association.messageChannelMessageAssociationId,
-            messageFolderId: folderId,
-          })),
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      const repository =
+        await this.globalWorkspaceOrmManager.getRepository<MessageChannelMessageAssociationMessageFolderWorkspaceEntity>(
+          workspaceId,
+          'messageChannelMessageAssociationMessageFolder',
         );
 
-        if (records.length === 0) {
-          return;
-        }
+      const records = associations.flatMap((association) =>
+        association.messageFolderIds.map((folderId) => ({
+          messageChannelMessageAssociationId:
+            association.messageChannelMessageAssociationId,
+          messageFolderId: folderId,
+        })),
+      );
 
-        const associationIds = [
-          ...new Set(
-            records.map((record) => record.messageChannelMessageAssociationId),
-          ),
-        ];
+      if (records.length === 0) {
+        return;
+      }
 
-        const existingRecords = await repository.find(
-          {
-            where: {
-              messageChannelMessageAssociationId: In(associationIds),
-            },
+      const associationIds = [
+        ...new Set(
+          records.map((record) => record.messageChannelMessageAssociationId),
+        ),
+      ];
+
+      const existingRecords = await repository.find(
+        {
+          where: {
+            messageChannelMessageAssociationId: In(associationIds),
           },
-          transactionManager,
-        );
+        },
+        transactionManager,
+      );
 
-        const existingKeys = new Set(
-          existingRecords.map(
-            (record) =>
-              `${record.messageChannelMessageAssociationId}:${record.messageFolderId}`,
-          ),
-        );
-
-        const recordsToInsert = records.filter(
+      const existingKeys = new Set(
+        existingRecords.map(
           (record) =>
-            !existingKeys.has(
-              `${record.messageChannelMessageAssociationId}:${record.messageFolderId}`,
-            ),
-        );
+            `${record.messageChannelMessageAssociationId}:${record.messageFolderId}`,
+        ),
+      );
 
-        if (recordsToInsert.length > 0) {
-          await repository.insert(recordsToInsert, transactionManager);
-        }
-      },
-      authContext,
-      { lite: true },
-    );
+      const recordsToInsert = records.filter(
+        (record) =>
+          !existingKeys.has(
+            `${record.messageChannelMessageAssociationId}:${record.messageFolderId}`,
+          ),
+      );
+
+      if (recordsToInsert.length > 0) {
+        await repository.insert(recordsToInsert, transactionManager);
+      }
+    }, authContext);
   }
 }

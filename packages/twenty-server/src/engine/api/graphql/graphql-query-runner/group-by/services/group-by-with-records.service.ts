@@ -16,7 +16,6 @@ import { CommonExtendedQueryRunnerContext } from 'src/engine/api/common/types/co
 import { type CommonGroupByOutputItem } from 'src/engine/api/common/types/common-group-by-output-item.type';
 import { CommonSelectedFieldsResult } from 'src/engine/api/common/types/common-selected-fields-result.type';
 import { GraphqlQueryParser } from 'src/engine/api/graphql/graphql-query-runner/graphql-query-parsers/graphql-query.parser';
-import { addRelationJoinAliasToQueryBuilder } from 'src/engine/api/graphql/graphql-query-runner/graphql-query-parsers/utils/add-relation-join-alias.util';
 import { formatResultWithGroupByDimensionValues } from 'src/engine/api/graphql/graphql-query-runner/group-by/resolvers/utils/format-result-with-group-by-dimension-values.util';
 import { getGroupLimit } from 'src/engine/api/graphql/graphql-query-runner/group-by/utils/get-group-limit.util';
 import { buildColumnsToSelect } from 'src/engine/api/graphql/graphql-query-runner/utils/build-columns-to-select';
@@ -281,12 +280,19 @@ export class GroupByWithRecordsService {
         );
 
       if (isNonEmptyString(orderByRawSQL)) {
+        const existingJoinAliases = new Set(
+          queryBuilder.expressionMap.joinAttributes.map(
+            (joinAttribute) => joinAttribute.alias.name,
+          ),
+        );
+
         for (const joinInfo of relationJoins) {
-          addRelationJoinAliasToQueryBuilder({
-            queryBuilder,
-            parentAlias: flatObjectMetadata.nameSingular,
-            relationName: joinInfo.joinAlias,
-          });
+          if (!existingJoinAliases.has(joinInfo.joinAlias)) {
+            queryBuilder.leftJoin(
+              `${flatObjectMetadata.nameSingular}.${joinInfo.joinAlias}`,
+              joinInfo.joinAlias,
+            );
+          }
         }
 
         return queryBuilder.addSelect(

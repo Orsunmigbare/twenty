@@ -15,20 +15,9 @@ import {
   type ObjectManifest,
   type RoleManifest,
 } from 'twenty-shared/application';
-import {
-  type PermissionFlagType,
-  SystemPermissionFlag,
-} from 'twenty-shared/constants';
 import { isDefined } from 'twenty-shared/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
-
-const SYSTEM_PERMISSION_FLAG_BY_UNIVERSAL_IDENTIFIER = Object.fromEntries(
-  Object.entries(SystemPermissionFlag).map(([key, uuid]) => [
-    uuid,
-    key as PermissionFlagType,
-  ]),
-);
 
 type SettingsApplicationPermissionsTabProps = {
   defaultRoleId?: string | null;
@@ -132,14 +121,12 @@ const buildSyntheticRole = (
     canReadFieldValue: permission.canReadFieldValue,
     canUpdateFieldValue: permission.canUpdateFieldValue,
   })),
-  permissionFlags: (defaultRole.permissionFlagUniversalIdentifiers ?? []).map(
-    (permissionFlagUniversalIdentifier) => ({
-      __typename: 'RolePermissionFlag' as const,
+  permissionFlags: (defaultRole.permissionFlags ?? []).map(
+    (permissionFlag) => ({
+      __typename: 'PermissionFlag' as const,
       id: uuidv4(),
       roleId: defaultRole.universalIdentifier,
-      flag: SYSTEM_PERMISSION_FLAG_BY_UNIVERSAL_IDENTIFIER[
-        permissionFlagUniversalIdentifier
-      ],
+      flag: permissionFlag.flag,
     }),
   ),
 });
@@ -148,21 +135,21 @@ const buildFieldMetadataItemFromMarketplaceField = (
   field: ObjectFieldManifest,
 ): FieldMetadataItem => {
   const now = new Date().toISOString();
-  const universalIdentifier = field.universalIdentifier ?? uuidv4();
 
   return {
-    id: universalIdentifier,
-    universalIdentifier,
+    id: field.universalIdentifier ?? uuidv4(),
+    universalIdentifier: field.universalIdentifier ?? uuidv4(),
     name: field.name,
     label: field.label,
     type: (field.type as FieldMetadataType) ?? FieldMetadataType.TEXT,
     description: field.description ?? '',
     icon: field.icon ?? 'IconField',
     isActive: true,
+    isCustom: true,
     isSystem: false,
     isNullable: true,
     isUnique: false,
-    isUIEditable: true,
+    isUIReadOnly: false,
     createdAt: now,
     updatedAt: now,
     defaultValue: null,
@@ -172,7 +159,7 @@ const buildFieldMetadataItemFromMarketplaceField = (
   };
 };
 
-const buildObjectMetadataItemsFromMarketplaceApp = (
+const buildobjectMetadataItemsFromMarketplaceApp = (
   defaultRole: RoleManifest,
   objectUniversalIdToIdMap: Record<string, string>,
   marketplaceAppObjects: ObjectManifest[],
@@ -238,12 +225,12 @@ const buildObjectMetadataItemsFromMarketplaceApp = (
         labelPlural: appObject.labelPlural,
         description: appObject.description ?? '',
         icon: appObject.icon ?? 'IconBox',
+        isCustom: true,
         isRemote: false,
         isActive: true,
         isSystem: false,
         isSearchable: false,
-        isUIEditable: true,
-        isUICreatable: true,
+        isUIReadOnly: false,
         isLabelSyncedWithName: false,
         labelIdentifierFieldMetadataId: '',
         fields,
@@ -254,7 +241,6 @@ const buildObjectMetadataItemsFromMarketplaceApp = (
           (field) => !nonUpdatableFieldIds.has(field.id),
         ),
         indexMetadatas: [],
-        searchFieldMetadatas: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -293,7 +279,7 @@ const MarketplaceRoleEffect = ({
           fieldUniversalIdToIdMap,
         ),
         objectMetadataItemsFromMarketplaceApp:
-          buildObjectMetadataItemsFromMarketplaceApp(
+          buildobjectMetadataItemsFromMarketplaceApp(
             defaultRole,
             objectUniversalIdToIdMap,
             marketplaceAppObjects,

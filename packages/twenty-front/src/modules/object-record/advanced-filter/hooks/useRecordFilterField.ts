@@ -6,7 +6,7 @@ import { isValidSubFieldName } from '@/settings/data-model/utils/isValidSubField
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { isNonEmptyString } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
-import { useIcons } from 'twenty-ui/icon';
+import { useIcons } from 'twenty-ui/display';
 
 export const useRecordFilterField = (recordFilterId: string) => {
   const currentRecordFilters = useAtomComponentStateValue(
@@ -20,9 +20,6 @@ export const useRecordFilterField = (recordFilterId: string) => {
   const { fieldMetadataItem } = useFieldMetadataItemById(
     recordFilter?.fieldMetadataId ?? '',
   );
-
-  const { fieldMetadataItem: relationTargetFieldMetadataItem } =
-    useFieldMetadataItemById(recordFilter?.relationTargetFieldMetadataId ?? '');
 
   const { getIcon } = useIcons();
 
@@ -41,15 +38,9 @@ export const useRecordFilterField = (recordFilterId: string) => {
         )
       : '';
 
-  const fieldLabel = fieldMetadataItem?.label ?? '';
-
-  const baseLabel = isDefined(relationTargetFieldMetadataItem)
-    ? `${fieldLabel} → ${relationTargetFieldMetadataItem.label}`
-    : fieldLabel;
-
   const label = isNonEmptyString(subFieldLabel)
-    ? `${baseLabel} / ${subFieldLabel}`
-    : baseLabel;
+    ? `${recordFilter?.label} / ${subFieldLabel}`
+    : (recordFilter?.label ?? '');
 
   return {
     label,

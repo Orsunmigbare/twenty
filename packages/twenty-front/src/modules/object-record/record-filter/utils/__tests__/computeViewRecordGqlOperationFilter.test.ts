@@ -22,12 +22,6 @@ const petMockObjectMetadataItem = getMockObjectMetadataItemOrThrow('pet');
 
 const personMockObjectMetadataItem = getMockObjectMetadataItemOrThrow('person');
 
-const companyFields = companyMockObjectMetadataItem.fields;
-
-const personFields = personMockObjectMetadataItem.fields;
-
-const petFields = petMockObjectMetadataItem.fields;
-
 const mockFilterValueDependencies: RecordFilterValueDependencies = {
   currentWorkspaceMemberId: '32219445-f587-4c40-b2b1-6d3205ed96da',
   timeZone: 'Europe/Paris',
@@ -60,7 +54,7 @@ describe('computeViewRecordGqlOperationFilter', () => {
       filterValueDependencies: mockFilterValueDependencies,
       recordFilters: [nameFilter],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -113,7 +107,7 @@ describe('computeViewRecordGqlOperationFilter', () => {
       filterValueDependencies: mockFilterValueDependencies,
       recordFilters: [nameFilter, employeesFilter],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -193,7 +187,7 @@ describe('should work as expected for the different field types', () => {
         addressFilterIsNotEmpty,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -657,7 +651,7 @@ describe('should work as expected for the different field types', () => {
         phonesFilterIsNotEmpty,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: personFields,
+      fields: personMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -854,7 +848,7 @@ describe('should work as expected for the different field types', () => {
         emailsFilterIsNotEmpty,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: personFields,
+      fields: personMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1066,7 +1060,7 @@ describe('should work as expected for the different field types', () => {
         dateFilterIsNotEmpty,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1168,7 +1162,7 @@ describe('should work as expected for the different field types', () => {
         employeesFilterIsNotEmpty,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1270,7 +1264,7 @@ describe('should work as expected for the different field types', () => {
         ARRFilterIsNot,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1347,7 +1341,7 @@ describe('should work as expected for the different field types', () => {
       filterValueDependencies: mockFilterValueDependencies,
       recordFilters: [ARRFilterIn, ARRFilterNotIn],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1407,7 +1401,7 @@ describe('should work as expected for the different field types', () => {
       filterValueDependencies: mockFilterValueDependencies,
       recordFilters: [selectFilterIs, selectFilterIsNot],
       recordFilterGroups: [],
-      fieldMetadataItems: petFields,
+      fields: petMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({
@@ -1480,7 +1474,7 @@ describe('should work as expected for the different field types', () => {
         multiSelectFilterDoesNotContain,
       ],
       recordFilterGroups: [],
-      fieldMetadataItems: companyFields,
+      fields: companyMockObjectMetadataItem.fields,
     });
 
     expect(result).toEqual({

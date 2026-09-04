@@ -52,31 +52,19 @@ export class CreateFieldActionHandlerService extends WorkspaceMigrationRunnerAct
     const allFieldIdToBeCreatedInActionByUniversalIdentifierMap = new Map<
       string,
       string
-    >(Object.entries(action.fieldIdByUniversalIdentifier ?? {}));
+    >();
 
-    if (
-      !allFieldIdToBeCreatedInActionByUniversalIdentifierMap.has(
-        action.flatEntity.universalIdentifier,
-      )
-    ) {
-      allFieldIdToBeCreatedInActionByUniversalIdentifierMap.set(
-        action.flatEntity.universalIdentifier,
-        action.id ?? v4(),
-      );
-    }
+    allFieldIdToBeCreatedInActionByUniversalIdentifierMap.set(
+      action.flatEntity.universalIdentifier,
+      action.id ?? v4(),
+    );
 
-    if (
-      isDefined(action.relatedUniversalFlatFieldMetadata) &&
-      !allFieldIdToBeCreatedInActionByUniversalIdentifierMap.has(
-        action.relatedUniversalFlatFieldMetadata.universalIdentifier,
-      )
-    ) {
+    if (isDefined(action.relatedUniversalFlatFieldMetadata)) {
       allFieldIdToBeCreatedInActionByUniversalIdentifierMap.set(
         action.relatedUniversalFlatFieldMetadata.universalIdentifier,
         action.relatedFieldId ?? v4(),
       );
     }
-
     const universalFlatFieldMetadatas = isDefined(
       action.relatedUniversalFlatFieldMetadata,
     )

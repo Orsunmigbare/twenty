@@ -3,7 +3,7 @@ import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { type ReactNode } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { Tag } from 'twenty-ui/data-display';
+import { Tag } from 'twenty-ui/components';
 import {
   IconAlertTriangle,
   IconBrandNpm,
@@ -11,7 +11,7 @@ import {
   IconLink,
   IconMail,
   IconWorld,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 export type ContentEntry = {

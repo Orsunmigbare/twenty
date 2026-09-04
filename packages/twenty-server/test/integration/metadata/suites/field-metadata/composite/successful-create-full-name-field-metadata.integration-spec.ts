@@ -48,7 +48,7 @@ const SUCCESSFUL_TEST_CASES: EachTestingContext<{
         label: 'Customer Name',
         defaultValue: {
           firstName: "'Jane'",
-          lastName: null,
+          lastName: "''",
         },
       },
     },
@@ -59,7 +59,10 @@ const SUCCESSFUL_TEST_CASES: EachTestingContext<{
       input: {
         name: 'authorName',
         label: 'Author Name',
-        defaultValue: null,
+        defaultValue: {
+          firstName: "''",
+          lastName: "''",
+        },
       },
     },
   },

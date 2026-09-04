@@ -2,7 +2,6 @@ import { msg } from '@lingui/core/macro';
 import { type ObjectRecord } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
-import { type ConflictingFieldGroup } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/types/conflicting-field-group.type';
 import { type PartialObjectRecordWithId } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/types/partial-object-record-with-id.type';
 import { getValueFromPath } from 'src/engine/api/common/common-query-runners/common-create-many-query-runner/utils/get-value-from-path.util';
 import {
@@ -12,66 +11,44 @@ import {
 
 export const getMatchingRecordId = (
   record: Partial<ObjectRecord>,
-  conflictingFieldGroups: ConflictingFieldGroup[],
+  conflictingFields: {
+    baseField: string;
+    fullPath: string;
+    column: string;
+  }[],
   existingRecords: PartialObjectRecordWithId[],
 ): string | undefined => {
-  const matchingRecordIds = conflictingFieldGroups.reduce<string[]>(
-    (acc, fieldGroup) => {
-      const requestFieldValues = fieldGroup.conflictingProperties.map(
-        (conflictingProperty) => ({
-          conflictingProperty,
-          value: getValueFromPath(record, conflictingProperty.fullPath),
-        }),
+  const matchingRecordIds = conflictingFields.reduce<string[]>((acc, field) => {
+    const requestFieldValue = getValueFromPath(record, field.fullPath);
+
+    const matchingRecord = existingRecords.find((existingRecord) => {
+      const existingFieldValue = getValueFromPath(
+        existingRecord,
+        field.fullPath,
       );
 
-      if (requestFieldValues.some(({ value }) => !isDefined(value))) {
-        return acc;
-      }
-
-      const matchingRecord = existingRecords.find((existingRecord) =>
-        requestFieldValues.every(({ conflictingProperty, value }) => {
-          const existingFieldValue = getValueFromPath(
-            existingRecord,
-            conflictingProperty.fullPath,
-          );
-
-          return isDefined(existingFieldValue) && existingFieldValue === value;
-        }),
+      return (
+        isDefined(existingFieldValue) &&
+        existingFieldValue === requestFieldValue
       );
+    });
 
-      if (isDefined(matchingRecord)) {
-        acc.push(matchingRecord.id);
-      }
+    if (isDefined(matchingRecord)) {
+      acc.push(matchingRecord.id);
+    }
 
-      return acc;
-    },
-    [],
-  );
+    return acc;
+  }, []);
 
   if ([...new Set(matchingRecordIds)].length > 1) {
-    const conflictingFieldsValues = conflictingFieldGroups
-      .map((group) => {
-        const values = group.conflictingProperties
-          .map((conflictingProperty) => {
-            const value = getValueFromPath(
-              record,
-              conflictingProperty.fullPath,
-            );
+    const conflictingFieldsValues = conflictingFields
+      .map((field) => {
+        const value = getValueFromPath(record, field.fullPath);
 
-            return isDefined(value)
-              ? `${conflictingProperty.fullPath}: ${value}`
-              : undefined;
-          })
-          .filter(isDefined);
-
-        if (values.length === 0) {
-          return undefined;
-        }
-
-        return `${group.baseFields.join(', ')} (${values.join(', ')})`;
+        return isDefined(value) ? `${field.fullPath}: ${value}` : undefined;
       })
       .filter(isDefined)
-      .join('; ');
+      .join(', ');
 
     throw new CommonQueryRunnerException(
       `Multiple records found with the same unique field values for ${conflictingFieldsValues}. Cannot determine which record to update.`,

@@ -7,6 +7,7 @@ import { MessageChannelVisibility } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { In, Repository } from 'typeorm';
 
+import { NotFoundError } from 'src/engine/core-modules/graphql/utils/graphql-errors.util';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 import { MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
@@ -89,8 +90,7 @@ export class ApplyMessagesVisibilityRestrictionsService {
             .filter(isDefined);
 
           if (messageChannels.length === 0) {
-            messages.splice(i, 1);
-            continue;
+            throw new NotFoundError('Associated message channels not found');
           }
 
           const messageChannelsGroupByVisibility = groupBy(
@@ -157,7 +157,6 @@ export class ApplyMessagesVisibilityRestrictionsService {
         return messages;
       },
       authContext,
-      { lite: true },
     );
   }
 }

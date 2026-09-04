@@ -8,7 +8,7 @@ import {
 } from 'src/modules/messaging/message-folder-manager/interfaces/message-folder-driver.interface';
 
 import { MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
-import { MicrosoftOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/microsoft/microsoft-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 import { shouldCreateFolderByDefault } from 'src/modules/messaging/message-folder-manager/utils/should-create-folder-by-default.util';
 import { shouldSyncFolderByDefault } from 'src/modules/messaging/message-folder-manager/utils/should-sync-folder-by-default.util';
@@ -31,20 +31,22 @@ export class MicrosoftGetAllFoldersService implements MessageFolderDriver {
   private readonly logger = new Logger(MicrosoftGetAllFoldersService.name);
 
   constructor(
-    private readonly microsoftOAuth2ClientProvider: MicrosoftOAuth2ClientProvider,
+    private readonly oAuth2ClientManagerService: OAuth2ClientManagerService,
     private readonly microsoftMessageListFetchErrorHandler: MicrosoftMessageListFetchErrorHandler,
   ) {}
 
   async getAllMessageFolders(
     connectedAccount: Pick<
       ConnectedAccountEntity,
-      'id' | 'handle' | 'provider'
+      'accessToken' | 'refreshToken' | 'id' | 'handle' | 'provider'
     >,
     messageChannel: Pick<MessageChannelEntity, 'messageFolderImportPolicy'>,
   ): Promise<DiscoveredMessageFolder[]> {
     try {
       const microsoftClient =
-        await this.microsoftOAuth2ClientProvider.getClient(connectedAccount.id);
+        await this.oAuth2ClientManagerService.getMicrosoftOAuth2Client(
+          connectedAccount,
+        );
 
       const response = await microsoftClient
         .api('/me/mailFolders')
@@ -55,8 +57,9 @@ export class MicrosoftGetAllFoldersService implements MessageFolderDriver {
           this.logger.error(
             `Connected account ${connectedAccount.id}: Error fetching folders: ${error.message}`,
           );
+          this.microsoftMessageListFetchErrorHandler.handleError(error);
 
-          return this.microsoftMessageListFetchErrorHandler.handleError(error);
+          return { value: [] };
         });
 
       const folders = (response.value as MicrosoftGraphFolder[]) || [];

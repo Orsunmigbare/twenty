@@ -67,7 +67,7 @@ export const Elipsis: Story = {
 
 export const Performance = getProfilingStory({
   componentName: 'MultiSelectFieldDisplay',
-  averageThresholdInMs: 0.4,
+  averageThresholdInMs: 0.2,
   numberOfRuns: 50,
   numberOfTestsPerRun: 100,
 });

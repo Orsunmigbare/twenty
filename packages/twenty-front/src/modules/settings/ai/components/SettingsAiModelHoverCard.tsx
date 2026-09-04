@@ -1,12 +1,7 @@
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { useContext } from 'react';
-import {
-  Chip,
-  ChipAccent,
-  ChipSize,
-  ChipVariant,
-} from 'twenty-ui/data-display';
+import { Chip, ChipAccent, ChipSize, ChipVariant } from 'twenty-ui/components';
 import {
   IconBolt,
   IconBuildingSkyscraper,
@@ -15,7 +10,7 @@ import {
   IconUsers,
   IconWindow,
   type IconComponent,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { type AiModelSummary } from '@/settings/ai/types/AiModelSummary';

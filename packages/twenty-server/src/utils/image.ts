@@ -1,14 +1,32 @@
-import { detectPdf } from '@file-type/pdf';
 import { type AxiosInstance } from 'axios';
-import { isNonEmptyString } from '@sniptt/guards';
-import { FileTypeParser } from 'file-type';
-import { isDefined } from 'twenty-shared/utils';
+
+const cropRegex = /([w|h])([0-9]+)/;
+
+export type ShortCropSize = `${'w' | 'h'}${number}` | 'original';
+
+export interface CropSize {
+  type: 'width' | 'height';
+  value: number;
+}
+
+export const getCropSize = (value: ShortCropSize): CropSize | null => {
+  const match = value.match(cropRegex);
+
+  if (value === 'original' || match === null) {
+    return null;
+  }
+
+  return {
+    type: match[1] === 'w' ? 'width' : 'height',
+    value: +match[2],
+  };
+};
 
 export const getImageBufferFromUrl = async (
   url: string,
   axiosInstance: AxiosInstance,
 ): Promise<Buffer> => {
-  if (!isNonEmptyString(url) || url.trim().length === 0) {
+  if (!url || typeof url !== 'string' || url.trim().length === 0) {
     throw new Error('Invalid URL provided: URL must be a non-empty string');
   }
 
@@ -34,7 +52,7 @@ export const getImageBufferFromUrl = async (
 
     const contentType = response.headers['content-type'];
 
-    if (isNonEmptyString(contentType) && !contentType.startsWith('image/')) {
+    if (contentType && !contentType.startsWith('image/')) {
       throw new Error(
         `Invalid content type: expected image/*, got ${contentType}`,
       );
@@ -46,20 +64,4 @@ export const getImageBufferFromUrl = async (
 
     throw new Error(`Failed to fetch image from ${url}: ${message}`);
   }
-};
-
-export const fetchImageWithTypeFromUrl = async (
-  imageUrl: string,
-  axiosInstance: AxiosInstance,
-): Promise<{ buffer: Buffer; extension: string } | undefined> => {
-  const buffer = await getImageBufferFromUrl(imageUrl, axiosInstance);
-
-  const parser = new FileTypeParser({ customDetectors: [detectPdf] });
-  const type = await parser.fromBuffer(buffer);
-
-  if (!isDefined(type) || !type.mime.startsWith('image/')) {
-    return undefined;
-  }
-
-  return { buffer, extension: type.ext };
 };

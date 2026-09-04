@@ -1,8 +1,5 @@
-import {
-  defineCommandMenuItem,
-  featureFlags,
-  objectPermissions,
-} from '@/sdk/define';
+import { defineCommandMenuItem } from '@/sdk/define';
+import { featureFlags, objectPermissions } from '@/sdk/front-component';
 
 export default defineCommandMenuItem({
   universalIdentifier: 'feature-flag-gated-cmd',

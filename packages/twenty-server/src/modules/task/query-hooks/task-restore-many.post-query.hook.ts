@@ -13,7 +13,9 @@ import { TaskWorkspaceEntity } from 'src/modules/task/standard-objects/task.work
   key: `task.restoreMany`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class TaskRestoreManyPostQueryHook implements WorkspacePostQueryHookInstance {
+export class TaskRestoreManyPostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly taskPostQueryHookService: TaskPostQueryHookService,
   ) {}

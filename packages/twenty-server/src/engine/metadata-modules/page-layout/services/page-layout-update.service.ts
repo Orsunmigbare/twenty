@@ -36,7 +36,7 @@ import {
 } from 'src/engine/metadata-modules/page-layout/exceptions/page-layout.exception';
 import { fromFlatPageLayoutWithTabsAndWidgetsToPageLayoutDto } from 'src/engine/metadata-modules/page-layout/utils/from-flat-page-layout-with-tabs-and-widgets-to-page-layout-dto.util';
 import { isCallerOverridingEntity } from 'src/engine/metadata-modules/utils/is-caller-overriding-entity.util';
-import { resolveEffectiveEntity } from 'src/engine/metadata-modules/utils/resolve-effective-entity.util';
+import { resolveFlatEntityOverridableProperties } from 'src/engine/metadata-modules/utils/resolve-flat-entity-overridable-properties.util';
 import { sanitizeOverridableEntityInput } from 'src/engine/metadata-modules/utils/sanitize-overridable-entity-input.util';
 import { ViewService } from 'src/engine/metadata-modules/view/services/view.service';
 import { WorkspaceMigrationBuilderException } from 'src/engine/workspace-manager/workspace-migration/exceptions/workspace-migration-builder-exception';
@@ -283,7 +283,9 @@ export class PageLayoutUpdateService {
       .filter(isDefined)
       .filter((tab) => tab.pageLayoutId === existingPageLayout.id);
 
-    const resolvedExistingTabs = existingTabs.map(resolveEffectiveEntity);
+    const resolvedExistingTabs = existingTabs.map(
+      resolveFlatEntityOverridableProperties,
+    );
 
     const {
       toCreate: entitiesToCreate,
@@ -326,7 +328,6 @@ export class PageLayoutUpdateService {
           layoutMode: tabInput.layoutMode ?? PageLayoutTabLayoutMode.GRID,
           overrides: null,
           isActive: true,
-          isSystemSideEffect: false,
         };
       },
     );
@@ -344,7 +345,6 @@ export class PageLayoutUpdateService {
           entityApplicationUniversalIdentifier:
             existingTab.applicationUniversalIdentifier,
           workspaceCustomApplicationUniversalIdentifier,
-          isSystemSideEffect: existingTab.isSystemSideEffect,
         });
 
         const editableProperties = {
@@ -384,7 +384,6 @@ export class PageLayoutUpdateService {
           entityApplicationUniversalIdentifier:
             existingTab.applicationUniversalIdentifier,
           workspaceCustomApplicationUniversalIdentifier,
-          isSystemSideEffect: existingTab.isSystemSideEffect,
         });
 
         const editableProperties = {
@@ -559,7 +558,9 @@ export class PageLayoutUpdateService {
       flatPageLayoutWidgetMaps,
     });
 
-    const resolvedExistingWidgets = existingWidgets.map(resolveEffectiveEntity);
+    const resolvedExistingWidgets = existingWidgets.map(
+      resolveFlatEntityOverridableProperties,
+    );
 
     const {
       toCreate: entitiesToCreate,
@@ -604,7 +605,6 @@ export class PageLayoutUpdateService {
           overrides: null,
           universalOverrides: null,
           isActive: true,
-          isSystemSideEffect: false,
           universalConfiguration:
             fromPageLayoutWidgetConfigurationToUniversalConfiguration({
               configuration: widgetInput.configuration,
@@ -721,7 +721,6 @@ export class PageLayoutUpdateService {
       entityApplicationUniversalIdentifier:
         existingWidget.applicationUniversalIdentifier,
       workspaceCustomApplicationUniversalIdentifier,
-      isSystemSideEffect: existingWidget.isSystemSideEffect,
     });
 
     const configuration = widgetInput.configuration ?? null;

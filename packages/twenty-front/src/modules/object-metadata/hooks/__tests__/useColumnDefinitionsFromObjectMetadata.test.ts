@@ -13,7 +13,6 @@ import {
   SubscriptionInterval,
   SubscriptionStatus,
   WorkspaceActivationStatus,
-  WorkspaceDiscoverability,
 } from '~/generated-metadata/graphql';
 import { getJestMetadataAndApolloMocksAndCommandMenuWrapper } from '~/testing/jest/getJestMetadataAndApolloMocksAndCommandMenuWrapper';
 import { getTestEnrichedObjectMetadataItemsMock } from '~/testing/utils/getTestEnrichedObjectMetadataItemsMock';
@@ -36,11 +35,11 @@ describe('useColumnDefinitionsFromObjectMetadata', () => {
       allowImpersonation: false,
       subdomain: 'test',
       activationStatus: WorkspaceActivationStatus.ACTIVE,
+      hasValidEnterpriseKey: false,
       hasValidSignedEnterpriseKey: false,
       hasValidEnterpriseValidityToken: false,
       metadataVersion: 1,
       isPublicInviteLinkEnabled: false,
-      workspaceDiscoverability: WorkspaceDiscoverability.PUBLIC,
       isGoogleAuthEnabled: true,
       isMicrosoftAuthEnabled: false,
       isPasswordAuthEnabled: true,
@@ -76,7 +75,6 @@ describe('useColumnDefinitionsFromObjectMetadata', () => {
       smartModel: AUTO_SELECT_SMART_MODEL_ID,
       enabledAiModelIds: [],
       useRecommendedModels: true,
-      isInternalMessagesImportEnabled: false,
     });
 
     const companyObjectMetadata = getTestEnrichedObjectMetadataItemsMock().find(

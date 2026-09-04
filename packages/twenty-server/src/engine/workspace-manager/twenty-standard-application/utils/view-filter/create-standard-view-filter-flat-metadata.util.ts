@@ -96,8 +96,6 @@ export const createStandardViewFilterFlatMetadata = <
     operand,
     value,
     subFieldName,
-    relationTargetFieldMetadataId: null,
-    relationTargetFieldMetadataUniversalIdentifier: null,
     positionInViewFilterGroup,
     createdAt: now,
     updatedAt: now,

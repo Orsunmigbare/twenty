@@ -1,7 +1,7 @@
 import { AiChatAssistantMessageRenderer } from '@/ai/components/AiChatAssistantMessageRenderer';
 import { mapDBMessagesToUIMessages } from '@/ai/utils/mapDBMessagesToUIMessages';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { Table } from '@/ui/layout/table/components/Table';
 import { TableCell } from '@/ui/layout/table/components/TableCell';
 import { TableHeader } from '@/ui/layout/table/components/TableHeader';
@@ -13,8 +13,7 @@ import Skeleton from 'react-loading-skeleton';
 import { useParams } from 'react-router-dom';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
-import { Status } from 'twenty-ui/data-display';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, Status } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import {
@@ -75,12 +74,12 @@ export const SettingsAgentTurnDetail = () => {
 
   if (loading) {
     return (
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={t`Turn Details`}
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
           {
@@ -96,18 +95,18 @@ export const SettingsAgentTurnDetail = () => {
         <SettingsPageContainer>
           <Skeleton height={200} />
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     );
   }
 
   if (!turn) {
     return (
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={t`Turn Not Found`}
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
           { children: t`Turn` },
@@ -116,17 +115,17 @@ export const SettingsAgentTurnDetail = () => {
         <SettingsPageContainer>
           <div>{t`Turn not found`}</div>
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     );
   }
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       title={t`Turn Details`}
       links={[
         {
           children: t`Workspace`,
-          href: getSettingsPath(SettingsPath.General),
+          href: getSettingsPath(SettingsPath.Workspace),
         },
         { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
         {
@@ -242,6 +241,6 @@ export const SettingsAgentTurnDetail = () => {
           )}
         </Section>
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

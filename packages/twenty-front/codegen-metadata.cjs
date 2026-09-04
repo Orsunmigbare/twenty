@@ -17,9 +17,6 @@ module.exports = {
 
     './src/modules/settings/**/graphql/**/*.{ts,tsx}',
     '!./src/modules/settings/admin-panel/**/graphql/**/*.{ts,tsx}',
-    // DPA operations are served by the core (/graphql) schema via @CoreResolver,
-    // not the metadata schema, so they must not be validated against /metadata.
-    '!./src/modules/settings/legal/**/graphql/**/*.{ts,tsx}',
     './src/modules/logic-functions/graphql/**/*.{ts,tsx}',
 
     './src/modules/databases/graphql/**/*.{ts,tsx}',
@@ -34,7 +31,6 @@ module.exports = {
 
     './src/modules/page-layout/widgets/**/graphql/**/*.{ts,tsx}',
     './src/modules/activities/emails/graphql/mutations/**/*.{ts,tsx}',
-    './src/modules/activities/emails/graphql/metadata-queries/**/*.{ts,tsx}',
 
     './src/modules/dashboards/graphql/**/*.{ts,tsx}',
     './src/modules/page-layout/graphql/**/*.{ts,tsx}',
@@ -49,7 +45,6 @@ module.exports = {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
       config: {
         skipTypename: false,
-        defaultScalarType: 'any',
         scalars: {
           DateTime: 'string',
           UUID: 'string',

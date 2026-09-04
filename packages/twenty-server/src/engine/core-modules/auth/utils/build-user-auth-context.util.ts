@@ -1,4 +1,4 @@
-import { type RawAuthContext } from 'src/engine/core-modules/auth/types/raw-auth-context.type';
+import { type RawAuthContext } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { type UserWorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 
 type UserAuthContextInput = {
@@ -7,6 +7,7 @@ type UserAuthContextInput = {
   user: NonNullable<RawAuthContext['user']>;
   workspaceMemberId: NonNullable<RawAuthContext['workspaceMemberId']>;
   workspaceMember: NonNullable<RawAuthContext['workspaceMember']>;
+  workspaceMetadataVersion?: string;
 };
 
 export const buildUserAuthContext = (
@@ -19,5 +20,6 @@ export const buildUserAuthContext = (
     user: input.user,
     workspaceMemberId: input.workspaceMemberId,
     workspaceMember: input.workspaceMember,
+    workspaceMetadataVersion: input.workspaceMetadataVersion,
   };
 };

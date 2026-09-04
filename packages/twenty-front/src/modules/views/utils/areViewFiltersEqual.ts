@@ -12,7 +12,6 @@ export const areViewFiltersEqual = (
     'value',
     'operand',
     'subFieldName',
-    'relationTargetFieldMetadataId',
   ];
 
   return propertiesToCompare.every((property) =>

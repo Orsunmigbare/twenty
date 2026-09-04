@@ -1,9 +1,3 @@
-import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
-import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
-import { type AllStandardObjectName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-name.type';
-import { type StandardBuilderArgs } from 'src/engine/workspace-manager/twenty-standard-application/types/metadata-standard-buillder-args.type';
-import { TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER } from 'twenty-shared/application';
-import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 import {
   type FieldMetadataComplexOption,
   type FieldMetadataDefaultOption,
@@ -11,6 +5,13 @@ import {
   type FieldMetadataSettings,
   type FieldMetadataType,
 } from 'twenty-shared/types';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
+
+import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
+import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
+import { type AllStandardObjectName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-name.type';
+import { type StandardBuilderArgs } from 'src/engine/workspace-manager/twenty-standard-application/types/metadata-standard-buillder-args.type';
+
 export type CreateStandardRelationFieldContext<
   O extends AllStandardObjectName,
   T extends AllStandardObjectName,
@@ -33,13 +34,11 @@ export type CreateStandardMorphOrRelationFieldContext<
   targetObjectName: T;
   targetFieldName: AllStandardObjectFieldName<T>;
   isNullable?: boolean;
-  isUIEditable?: boolean;
-  isSystemSideEffect?: boolean;
+  isUIReadOnly?: boolean;
   defaultValue?: FieldMetadataDefaultValueForAnyType;
   settings: FieldMetadataSettings<F>;
   options?: FieldMetadataDefaultOption[] | FieldMetadataComplexOption[] | null;
   morphId: F extends FieldMetadataType.MORPH_RELATION ? string : null;
-  junctionTargetFieldUniversalIdentifier?: string;
 };
 
 export type CreateStandardRelationFieldArgs<
@@ -64,14 +63,12 @@ export const createStandardRelationFieldFlatMetadata = <
     targetObjectName,
     targetFieldName,
     isNullable = true,
-    isUIEditable = true,
-    isSystemSideEffect = false,
+    isUIReadOnly = false,
     defaultValue = null,
     settings,
     options: fieldOptions = null,
     morphId,
     type,
-    junctionTargetFieldUniversalIdentifier,
   },
   standardObjectMetadataRelatedEntityIds,
   twentyStandardApplicationId,
@@ -99,14 +96,14 @@ export const createStandardRelationFieldFlatMetadata = <
     label,
     description,
     icon,
+    isCustom: false,
     isActive: true,
     isSystem: false,
-    isSystemSideEffect,
     isNullable,
     isUnique: false,
-    isUIEditable,
+    isUIReadOnly,
     isLabelSyncedWithName: false,
-    overrides: null,
+    standardOverrides: null,
     defaultValue,
     settings,
     options: fieldOptions,
@@ -119,12 +116,10 @@ export const createStandardRelationFieldFlatMetadata = <
     fieldPermissionIds: [],
     kanbanAggregateOperationViewIds: [],
     calendarViewIds: [],
-    calendarEndViewIds: [],
     mainGroupByFieldMetadataViewIds: [],
     createdAt: now,
     updatedAt: now,
-    applicationUniversalIdentifier:
-      TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,
+    applicationUniversalIdentifier: twentyStandardApplicationId,
     objectMetadataUniversalIdentifier:
       STANDARD_OBJECTS[objectName].universalIdentifier,
     relationTargetObjectMetadataUniversalIdentifier:
@@ -136,17 +131,9 @@ export const createStandardRelationFieldFlatMetadata = <
     fieldPermissionUniversalIdentifiers: [],
     kanbanAggregateOperationViewUniversalIdentifiers: [],
     calendarViewUniversalIdentifiers: [],
-    calendarEndViewUniversalIdentifiers: [],
     mainGroupByFieldMetadataViewUniversalIdentifiers: [],
     viewSortIds: [],
     viewSortUniversalIdentifiers: [],
-    searchFieldMetadataIds: [],
-    searchFieldMetadataUniversalIdentifiers: [],
-    universalSettings: {
-      ...settings,
-      ...(junctionTargetFieldUniversalIdentifier && {
-        junctionTargetFieldUniversalIdentifier,
-      }),
-    },
+    universalSettings: settings,
   };
 };

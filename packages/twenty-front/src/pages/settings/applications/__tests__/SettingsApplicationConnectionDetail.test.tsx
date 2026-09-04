@@ -65,8 +65,8 @@ jest.mock('@/settings/components/SettingsPageContainer', () => ({
   ),
 }));
 
-jest.mock('@/settings/components/layout/SettingsPageLayout', () => ({
-  SettingsPageLayout: ({ children }: { children: ReactNode }) => (
+jest.mock('@/ui/layout/page/components/SubMenuTopBarContainer', () => ({
+  SubMenuTopBarContainer: ({ children }: { children: ReactNode }) => (
     <>{children}</>
   ),
 }));
@@ -137,7 +137,7 @@ describe('SettingsApplicationConnectionDetail', () => {
     mockedUseMyAppConnectedAccounts.mockReturnValue({
       accounts: [
         {
-          __typename: 'ConnectedAccountPublicDTO',
+          __typename: 'ConnectedAccountDTO',
           id: 'account-1',
           handle: 'workspace@example.com',
           provider: 'app',

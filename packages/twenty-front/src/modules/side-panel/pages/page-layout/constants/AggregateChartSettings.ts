@@ -2,7 +2,6 @@ import { CHART_SETTINGS_HEADINGS } from '@/side-panel/pages/page-layout/constant
 import { CHART_DATA_SOURCE_SETTING } from '@/side-panel/pages/page-layout/constants/settings/ChartDataSourceSetting';
 import { DATA_DISPLAY_AGGREGATE_SETTING } from '@/side-panel/pages/page-layout/constants/settings/DataDisplayAggregateSetting';
 import { FILTER_SETTING } from '@/side-panel/pages/page-layout/constants/settings/FilterSetting';
-import { FORMAT_SETTING } from '@/side-panel/pages/page-layout/constants/settings/FormatSetting';
 import { PREFIX_SETTING } from '@/side-panel/pages/page-layout/constants/settings/PrefixSetting';
 import { SUFFIX_SETTING } from '@/side-panel/pages/page-layout/constants/settings/SuffixSetting';
 import { type ChartSettingsGroup } from '@/side-panel/pages/page-layout/types/ChartSettingsGroup';
@@ -18,6 +17,6 @@ export const AGGREGATE_CHART_SETTINGS: ChartSettingsGroup[] = [
   },
   {
     heading: CHART_SETTINGS_HEADINGS.STYLE,
-    items: [FORMAT_SETTING, PREFIX_SETTING, SUFFIX_SETTING],
+    items: [PREFIX_SETTING, SUFFIX_SETTING],
   },
 ];

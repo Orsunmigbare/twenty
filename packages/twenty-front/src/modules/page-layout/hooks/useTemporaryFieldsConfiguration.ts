@@ -8,6 +8,5 @@ export const useTemporaryFieldsConfiguration = (): FieldsConfiguration => {
     __typename: 'FieldsConfiguration',
     configurationType: WidgetConfigurationType.FIELDS,
     viewId: null,
-    newFieldDefaultVisibility: true,
   };
 };

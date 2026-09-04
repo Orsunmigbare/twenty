@@ -1,5 +1,4 @@
 import { useContextStoreObjectMetadataItemOrThrow } from '@/context-store/hooks/useContextStoreObjectMetadataItemOrThrow';
-import { flattenedFieldMetadataItemsSelector } from '@/object-metadata/states/flattenedFieldMetadataItemsSelector';
 import { useAggregateRecords } from '@/object-record/hooks/useAggregateRecords';
 import { currentRecordFilterGroupsComponentState } from '@/object-record/record-filter-group/states/currentRecordFilterGroupsComponentState';
 import { useFilterValueDependencies } from '@/object-record/record-filter/hooks/useFilterValueDependencies';
@@ -7,11 +6,9 @@ import { anyFieldFilterValueComponentState } from '@/object-record/record-filter
 import { currentRecordFiltersComponentState } from '@/object-record/record-filter/states/currentRecordFiltersComponentState';
 import { AggregateOperations } from '@/object-record/record-table/constants/AggregateOperations';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
-import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
-import { useGetRecordGroupVisibilityFilters } from '@/views/hooks/useGetRecordGroupVisibilityFilters';
+import { useGetViewGroupsFilters } from '@/views/hooks/useGetViewGroupsFilters';
 import {
   computeRecordGqlOperationFilter,
-  isDefined,
   turnAnyFieldFilterIntoRecordGqlFilter,
 } from 'twenty-shared/utils';
 
@@ -28,23 +25,14 @@ export const useGetRecordIndexTotalCount = () => {
 
   const { filterValueDependencies } = useFilterValueDependencies();
 
-  const flattenedFieldMetadataItems = useAtomStateValue(
-    flattenedFieldMetadataItemsSelector,
-  );
+  const recordGroupsVisibilityFilter = useGetViewGroupsFilters();
 
-  const { recordFilters: recordGroupsVisibilityFilter, recordGroupGqlFilter } =
-    useGetRecordGroupVisibilityFilters();
-
-  const computedFilter = computeRecordGqlOperationFilter({
+  const filter = computeRecordGqlOperationFilter({
     filterValueDependencies,
     recordFilters: [...currentRecordFilters, ...recordGroupsVisibilityFilter],
     recordFilterGroups: currentRecordFilterGroups,
-    fieldMetadataItems: flattenedFieldMetadataItems,
+    fields: objectMetadataItem.fields,
   });
-
-  const filter = isDefined(recordGroupGqlFilter)
-    ? { and: [computedFilter, recordGroupGqlFilter] }
-    : computedFilter;
 
   const anyFieldFilterValue = useAtomComponentStateValue(
     anyFieldFilterValueComponentState,

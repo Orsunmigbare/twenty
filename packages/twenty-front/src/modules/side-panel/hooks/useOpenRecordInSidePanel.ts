@@ -14,7 +14,6 @@ import { getIconColorForObjectType } from '@/object-metadata/utils/getIconColorF
 import { getLabelIdentifierFieldMetadataItem } from '@/object-metadata/utils/getLabelIdentifierFieldMetadataItem';
 import { viewableRecordIdState } from '@/object-record/record-side-panel/states/viewableRecordIdState';
 import { useOpenNewRecordTitleCell } from '@/object-record/record-title-cell/hooks/useOpenNewRecordTitleCell';
-import { setRecordPageActiveTabId } from '@/page-layout/utils/setRecordPageActiveTabId';
 import {
   ContextStorePageType,
   CoreObjectNameSingular,
@@ -26,7 +25,7 @@ import { t } from '@lingui/core/macro';
 import { useStore } from 'jotai';
 import { useCallback } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { useIcons } from 'twenty-ui/icon';
+import { useIcons } from 'twenty-ui/display';
 import { v4 } from 'uuid';
 
 export const useOpenRecordInSidePanel = () => {
@@ -42,25 +41,14 @@ export const useOpenRecordInSidePanel = () => {
     ({
       recordId,
       objectNameSingular,
-      tab,
       isNewRecord = false,
       resetNavigationStack = false,
     }: {
       recordId: string;
       objectNameSingular: string;
-      tab?: string;
       isNewRecord?: boolean;
       resetNavigationStack?: boolean;
     }) => {
-      if (isDefined(tab)) {
-        setRecordPageActiveTabId({
-          recordId,
-          objectNameSingular,
-          tabId: tab,
-          store,
-        });
-      }
-
       const navigationStack = store.get(sidePanelNavigationStackState.atom);
 
       const currentNavigationStackItem = navigationStack.at(-1);

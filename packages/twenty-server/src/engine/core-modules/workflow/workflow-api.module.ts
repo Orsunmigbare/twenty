@@ -8,9 +8,7 @@ import { WorkflowTriggerResolver } from 'src/engine/core-modules/workflow/resolv
 import { WorkflowVersionEdgeResolver } from 'src/engine/core-modules/workflow/resolvers/workflow-version-edge.resolver';
 import { WorkflowVersionStepResolver } from 'src/engine/core-modules/workflow/resolvers/workflow-version-step.resolver';
 import { WorkflowVersionResolver } from 'src/engine/core-modules/workflow/resolvers/workflow-version.resolver';
-import { WorkflowVersionCoreModule } from 'src/engine/core-modules/workflow/workflow-version-core.module';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
-import { ConnectedAccountMetadataModule } from 'src/engine/metadata-modules/connected-account/connected-account-metadata.module';
 import { WorkspaceManyOrAllFlatEntityMapsCacheModule } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.module';
 import { LogicFunctionModule } from 'src/engine/metadata-modules/logic-function/logic-function.module';
 import { PermissionsModule } from 'src/engine/metadata-modules/permissions/permissions.module';
@@ -36,8 +34,6 @@ import { WorkflowTriggerModule } from 'src/modules/workflow/workflow-trigger/wor
     LogicFunctionModule,
     CodeStepBuildModule,
     WorkspaceManyOrAllFlatEntityMapsCacheModule,
-    ConnectedAccountMetadataModule,
-    WorkflowVersionCoreModule,
   ],
   controllers: [WorkflowTriggerController],
   providers: [

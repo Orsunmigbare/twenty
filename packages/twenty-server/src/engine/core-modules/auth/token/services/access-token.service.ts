@@ -6,7 +6,7 @@ import { addMilliseconds } from 'date-fns';
 import { type Request } from 'express';
 import ms from 'ms';
 import { assertIsDefinedOrThrow } from 'twenty-shared/utils';
-import { isWorkspaceProvisioned } from 'twenty-shared/workspace';
+import { isWorkspaceActiveOrSuspended } from 'twenty-shared/workspace';
 import { Repository } from 'typeorm';
 
 import {
@@ -15,10 +15,11 @@ import {
 } from 'src/engine/core-modules/auth/auth.exception';
 import { type AuthToken } from 'src/engine/core-modules/auth/dto/auth-token.dto';
 import { JwtAuthStrategy } from 'src/engine/core-modules/auth/strategies/jwt.auth.strategy';
-import { type AuthContext } from 'src/engine/core-modules/auth/types/auth-context.type';
-import { type AccessTokenJwtPayload } from 'src/engine/core-modules/auth/types/access-token-jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
-import { type PlaygroundTokenJwtPayload } from 'src/engine/core-modules/auth/types/playground-token-jwt-payload.type';
+import {
+  type AccessTokenJwtPayload,
+  type AuthContext,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
@@ -46,36 +47,42 @@ export class AccessTokenService {
     private readonly userWorkspaceRepository: Repository<UserWorkspaceEntity>,
   ) {}
 
-  private async resolveTokenSubject(
-    userId: string,
-    workspaceId: string,
-  ): Promise<{
-    user: UserEntity;
-    workspace: WorkspaceEntity;
-    userWorkspace: UserWorkspaceEntity;
-    workspaceMemberId: string | undefined;
-  }> {
-    const [user, workspace, userWorkspace] = await Promise.all([
-      this.userRepository.findOne({ where: { id: userId } }),
-      this.workspaceRepository.findOne({ where: { id: workspaceId } }),
-      this.userWorkspaceRepository.findOne({
-        where: { userId, workspaceId },
-      }),
-    ]);
+  async generateAccessToken({
+    userId,
+    workspaceId,
+    authProvider,
+    isImpersonating,
+    impersonatorUserWorkspaceId,
+    impersonatedUserWorkspaceId,
+  }: Omit<
+    AccessTokenJwtPayload,
+    'type' | 'workspaceMemberId' | 'userWorkspaceId' | 'sub'
+  >): Promise<AuthToken> {
+    const expiresIn = this.twentyConfigService.get('ACCESS_TOKEN_EXPIRES_IN');
+
+    const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
     userValidator.assertIsDefinedOrThrow(
       user,
       new AuthException('User is not found', AuthExceptionCode.INVALID_INPUT),
     );
+
+    let tokenWorkspaceMemberId: string | undefined;
+
+    const workspace = await this.workspaceRepository.findOne({
+      where: { id: workspaceId },
+    });
+
     assertIsDefinedOrThrow(workspace, WorkspaceNotFoundDefaultError);
-    assertIsDefinedOrThrow(userWorkspace, UserWorkspaceNotFoundDefaultError);
 
-    let workspaceMemberId: string | undefined;
-
-    if (isWorkspaceProvisioned(workspace)) {
+    if (isWorkspaceActiveOrSuspended(workspace)) {
       const authContext = buildSystemAuthContext(workspaceId);
 
-      workspaceMemberId =
+      tokenWorkspaceMemberId =
         await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
           async () => {
             const workspaceMemberRepository =
@@ -86,7 +93,9 @@ export class AccessTokenService {
               );
 
             const workspaceMember = await workspaceMemberRepository.findOne({
-              where: { userId: user.id },
+              where: {
+                userId: user.id,
+              },
             });
 
             assertIsDefinedOrThrow(
@@ -105,80 +114,43 @@ export class AccessTokenService {
           authContext,
         );
     }
+    const userWorkspace = await this.userWorkspaceRepository.findOne({
+      where: {
+        userId: user.id,
+        workspaceId,
+      },
+    });
 
-    return { user, workspace, userWorkspace, workspaceMemberId };
-  }
+    assertIsDefinedOrThrow(userWorkspace, UserWorkspaceNotFoundDefaultError);
 
-  async generateAccessToken({
-    userId,
-    workspaceId,
-    authProvider,
-    isImpersonating,
-    impersonatorUserWorkspaceId,
-    impersonatedUserWorkspaceId,
-  }: Omit<
-    AccessTokenJwtPayload,
-    'type' | 'workspaceMemberId' | 'userWorkspaceId' | 'sub'
-  >): Promise<AuthToken> {
-    const expiresIn = this.twentyConfigService.get('ACCESS_TOKEN_EXPIRES_IN');
-    const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
-
-    const { user, userWorkspace, workspaceMemberId } =
-      await this.resolveTokenSubject(userId, workspaceId);
+    const payloadImpersonatorUserWorkspaceId =
+      isImpersonating === true ? impersonatorUserWorkspaceId : undefined;
+    const payloadOriginalUserWorkspaceId =
+      isImpersonating === true ? impersonatedUserWorkspaceId : undefined;
 
     const jwtPayload: AccessTokenJwtPayload = {
       sub: user.id,
       userId: user.id,
       workspaceId,
-      workspaceMemberId,
+      workspaceMemberId: tokenWorkspaceMemberId,
       userWorkspaceId: userWorkspace.id,
       type: JwtTokenTypeEnum.ACCESS,
       authProvider,
       isImpersonating: isImpersonating === true,
-      impersonatorUserWorkspaceId:
-        isImpersonating === true ? impersonatorUserWorkspaceId : undefined,
-      impersonatedUserWorkspaceId:
-        isImpersonating === true ? impersonatedUserWorkspaceId : undefined,
+      impersonatorUserWorkspaceId: payloadImpersonatorUserWorkspaceId,
+      impersonatedUserWorkspaceId: payloadOriginalUserWorkspaceId,
     };
 
-    const token = await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
-      expiresIn,
-    });
-
-    return { token, expiresAt };
-  }
-
-  async generatePlaygroundToken({
-    userId,
-    workspaceId,
-    authProvider,
-  }: Pick<
-    PlaygroundTokenJwtPayload,
-    'userId' | 'workspaceId' | 'authProvider'
-  >): Promise<AuthToken> {
-    const expiresIn = this.twentyConfigService.get(
-      'PLAYGROUND_TOKEN_EXPIRES_IN',
-    );
-    const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
-
-    const { user, userWorkspace, workspaceMemberId } =
-      await this.resolveTokenSubject(userId, workspaceId);
-
-    const jwtPayload: PlaygroundTokenJwtPayload = {
-      sub: user.id,
-      userId: user.id,
-      workspaceId,
-      workspaceMemberId,
-      userWorkspaceId: userWorkspace.id,
-      type: JwtTokenTypeEnum.PLAYGROUND,
-      authProvider,
+    return {
+      token: this.jwtWrapperService.sign(jwtPayload, {
+        secret: this.jwtWrapperService.generateAppSecret(
+          JwtTokenTypeEnum.ACCESS,
+          workspaceId,
+        ),
+        expiresIn,
+      }),
+      expiresAt,
     };
-
-    const token = await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
-      expiresIn,
-    });
-
-    return { token, expiresAt };
   }
 
   async validateToken(token: string): Promise<AuthContext> {

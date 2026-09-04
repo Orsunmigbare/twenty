@@ -20,13 +20,12 @@ export type CodeExecutionResult = {
 
 export type ExecutionContext = {
   env?: Record<string, string>;
-  sessionId?: string;
 };
 
 export type StreamCallbacks = {
   onStdout?: (line: string) => void;
   onStderr?: (line: string) => void;
-  onResult?: (result: OutputFile) => Promise<void>;
+  onResult?: (result: OutputFile) => void;
 };
 
 export interface CodeInterpreterDriver {
@@ -36,6 +35,4 @@ export interface CodeInterpreterDriver {
     context?: ExecutionContext,
     callbacks?: StreamCallbacks,
   ): Promise<CodeExecutionResult>;
-  releaseSession?(sessionId: string): Promise<void>;
-  sweepExpiredSessions?(maxAgeMs: number): Promise<number>;
 }

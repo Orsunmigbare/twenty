@@ -59,7 +59,10 @@ const SUCCESSFUL_TEST_CASES: EachTestingContext<{
       input: {
         name: 'body',
         label: 'Body',
-        defaultValue: null,
+        defaultValue: {
+          blocknote: null,
+          markdown: null,
+        },
       },
     },
   },

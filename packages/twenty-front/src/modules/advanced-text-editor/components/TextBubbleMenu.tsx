@@ -13,7 +13,7 @@ import {
   IconListNumbers,
   IconStrikethrough,
   IconUnderline,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 export const StyledBubbleMenuContainer = styled.div`

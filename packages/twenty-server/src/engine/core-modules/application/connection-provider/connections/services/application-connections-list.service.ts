@@ -9,7 +9,6 @@ import { isDefined } from 'twenty-shared/utils';
 import { ConnectionProviderEntity } from 'src/engine/core-modules/application/connection-provider/connection-provider.entity';
 import { type AppConnectionDto } from 'src/engine/core-modules/application/connection-provider/connections/dtos/app-connection.dto';
 import { ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
-import { ConnectedAccountTokenEncryptionService } from 'src/engine/metadata-modules/connected-account/services/connected-account-token-encryption.service';
 import { ConnectedAccountRefreshTokensService } from 'src/modules/connected-account/refresh-tokens-manager/services/connected-account-refresh-tokens.service';
 
 type ListArgs = {
@@ -39,7 +38,6 @@ export class ApplicationConnectionsListService {
 
   constructor(
     private readonly refreshTokensService: ConnectedAccountRefreshTokensService,
-    private readonly connectedAccountTokenEncryptionService: ConnectedAccountTokenEncryptionService,
     @InjectRepository(ConnectedAccountEntity)
     private readonly connectedAccountRepository: Repository<ConnectedAccountEntity>,
     @InjectRepository(ConnectionProviderEntity)
@@ -209,7 +207,7 @@ export class ApplicationConnectionsListService {
     }
 
     try {
-      const encryptedTokens = await this.refreshTokensService.resolveTokens(
+      const tokens = await this.refreshTokensService.refreshAndSaveTokens(
         account,
         workspaceId,
       );
@@ -221,10 +219,7 @@ export class ApplicationConnectionsListService {
         handle: account.handle,
         visibility: account.visibility as 'user' | 'workspace',
         userWorkspaceId: account.userWorkspaceId,
-        accessToken: this.connectedAccountTokenEncryptionService.decrypt({
-          ciphertext: encryptedTokens.accessToken,
-          workspaceId,
-        }),
+        accessToken: tokens.accessToken,
         scopes: account.scopes ?? provider.oauthConfig?.scopes ?? [],
         authFailedAt: account.authFailedAt?.toISOString() ?? null,
       };

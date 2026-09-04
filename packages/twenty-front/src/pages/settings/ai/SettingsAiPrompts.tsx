@@ -3,17 +3,13 @@ import { styled } from '@linaria/react';
 import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
 import { FormAdvancedTextFieldInput } from '@/object-record/record-field/ui/form-types/components/FormAdvancedTextFieldInput';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useQuery } from '@apollo/client/react';
 import { t } from '@lingui/core/macro';
 import { SettingsPath } from 'twenty-shared/types';
-import {
-  getSettingsPath,
-  getValidTimeZoneOrUndefined,
-  isDefined,
-} from 'twenty-shared/utils';
-import { H2Title, H3Title } from 'twenty-ui/typography';
+import { getSettingsPath, isDefined } from 'twenty-shared/utils';
+import { H2Title, H3Title } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { GetAiSystemPromptPreviewDocument } from '~/generated-metadata/graphql';
@@ -52,23 +48,9 @@ export const SettingsAiPrompts = () => {
       `**${t`Locale`}:** ${currentWorkspaceMember.locale ?? 'en'}`,
     ];
 
-    const validTimeZone = getValidTimeZoneOrUndefined(
-      currentWorkspaceMember.timeZone,
-    );
-
-    if (isDefined(validTimeZone)) {
-      parts.push(`**${t`Timezone`}:** ${validTimeZone}`);
+    if (isDefined(currentWorkspaceMember.timeZone)) {
+      parts.push(`**${t`Timezone`}:** ${currentWorkspaceMember.timeZone}`);
     }
-
-    const currentDate = new Intl.DateTimeFormat('en-US', {
-      timeZone: validTimeZone,
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(new Date());
-
-    parts.push(`**${t`Current date`}:** ${currentDate}`);
 
     return parts.join('\n\n');
   };
@@ -89,11 +71,11 @@ export const SettingsAiPrompts = () => {
     : '';
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       links={[
         {
           children: t`Workspace`,
-          href: getSettingsPath(SettingsPath.General),
+          href: getSettingsPath(SettingsPath.Workspace),
         },
         { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
         { children: t`System Prompt` },
@@ -174,6 +156,6 @@ export const SettingsAiPrompts = () => {
           </StyledFormContainer>
         </Section>
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

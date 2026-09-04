@@ -92,14 +92,12 @@ const deriveAllMetadataEventsFromCreateAction = (
     case 'commandMenuItem':
     case 'frontComponent':
     case 'navigationMenuItem':
-    case 'rolePermissionFlag':
     case 'permissionFlag':
     case 'objectPermission':
     case 'fieldPermission':
     case 'viewSort':
     case 'webhook':
-    case 'connectionProvider':
-    case 'searchFieldMetadata': {
+    case 'connectionProvider': {
       return [
         {
           type: 'created',

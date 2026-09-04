@@ -18,7 +18,7 @@ describe('Core REST API Update One endpoint', () => {
       primaryEmail: 'updated@example.com',
       additionalEmails: ['extra@example.com'],
     },
-    jobTitle: generateRecordName(TEST_PERSON_1_ID),
+    city: generateRecordName(TEST_PERSON_1_ID),
   };
 
   beforeAll(async () => {
@@ -43,7 +43,7 @@ describe('Core REST API Update One endpoint', () => {
     });
   });
 
-  it('should update an existing person (name, emails, and jobTitle)', async () => {
+  it('should update an existing person (name, emails, and city)', async () => {
     const response = await makeRestAPIRequest({
       method: 'patch',
       path: `/people/${TEST_PERSON_1_ID}`,
@@ -63,7 +63,8 @@ describe('Core REST API Update One endpoint', () => {
     expect(updatedPerson.emails.additionalEmails).toEqual(
       updatedData.emails.additionalEmails,
     );
-    expect(updatedPerson.jobTitle).toBe(updatedData.jobTitle);
+    expect(updatedPerson.city).toBe(updatedData.city);
+    expect(updatedPerson.jobTitle).toBe('');
     expect(updatedPerson.companyId).toBe(TEST_COMPANY_1_ID);
   });
 

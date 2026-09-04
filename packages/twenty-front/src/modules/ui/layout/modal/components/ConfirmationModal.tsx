@@ -8,10 +8,14 @@ import { ModalStatefulWrapper } from '@/ui/layout/modal/components/ModalStateful
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import { H1Title, H1TitleFontColor } from 'twenty-ui/typography';
+import { H1Title, H1TitleFontColor } from 'twenty-ui/display';
 import { Button, type ButtonAccent } from 'twenty-ui/input';
-import { Section, SectionAlignment, SectionFontColor } from 'twenty-ui/layout';
-import { type ModalOverlay } from 'twenty-ui/surfaces';
+import {
+  Section,
+  SectionAlignment,
+  SectionFontColor,
+  type ModalOverlay,
+} from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 export type ConfirmationModalProps = {
@@ -182,7 +186,7 @@ export const ConfirmationModal = ({
 
       <StyledCenteredButton
         onClick={handleConfirmClick}
-        variant="primary"
+        variant="secondary"
         accent={confirmButtonAccent}
         title={translatedConfirmButtonText}
         disabled={!isValidValue || loading}

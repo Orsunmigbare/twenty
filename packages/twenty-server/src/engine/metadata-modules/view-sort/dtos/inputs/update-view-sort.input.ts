@@ -4,7 +4,6 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -19,11 +18,6 @@ class UpdateViewSortInputUpdates {
   @IsEnum(ViewSortDirection)
   @Field(() => ViewSortDirection, { nullable: true })
   direction?: ViewSortDirection;
-
-  @IsOptional()
-  @IsString()
-  @Field(() => String, { nullable: true })
-  subFieldName?: string | null;
 }
 
 @InputType()

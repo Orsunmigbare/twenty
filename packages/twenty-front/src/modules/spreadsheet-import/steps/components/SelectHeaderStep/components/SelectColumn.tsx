@@ -1,5 +1,6 @@
+// @ts-expect-error // Todo: remove usage of react-data-grid
 // prettier-ignore
-import { useRowSelection, type Column, type RenderCellProps } from 'react-data-grid';
+import { useRowSelection, type Column, type FormatterProps } from 'react-data-grid';
 
 import { t } from '@lingui/core/macro';
 import { type ImportedRow } from '@/spreadsheet-import/types';
@@ -7,10 +8,10 @@ import { Radio } from 'twenty-ui/input';
 
 const SELECT_COLUMN_KEY = 'select-row';
 
-type SelectFormatterProps = RenderCellProps<unknown>;
+type SelectFormatterProps = FormatterProps<unknown>;
 
 const SelectFormatter = (props: SelectFormatterProps) => {
-  const { isRowSelected, onRowSelectionChange } = useRowSelection();
+  const [isRowSelected, onRowSelectionChange] = useRowSelection();
 
   return (
     <Radio
@@ -37,7 +38,7 @@ export const SelectColumn: Column<any, any> = {
   sortable: false,
   frozen: true,
   cellClass: 'rdg-radio',
-  renderCell: SelectFormatter,
+  formatter: SelectFormatter,
 };
 
 export const generateSelectionColumns = (data: ImportedRow[]) => {

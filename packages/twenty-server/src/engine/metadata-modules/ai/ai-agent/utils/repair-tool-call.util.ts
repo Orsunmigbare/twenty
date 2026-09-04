@@ -110,7 +110,7 @@ export const repairToolCall = async ({
         ? extractCacheCreationTokensFromSteps(steps)
         : 0;
 
-      void billingContext.aiBillingService.calculateAndBillUsage(
+      billingContext.aiBillingService.calculateAndBillUsage(
         billingContext.modelId,
         { usage, cacheCreationTokens },
         billingContext.workspaceId,

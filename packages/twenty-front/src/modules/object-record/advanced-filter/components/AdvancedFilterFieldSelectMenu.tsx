@@ -11,20 +11,17 @@ import { useAtomComponentSelectorValue } from '@/ui/utilities/state/jotai/hooks/
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { AdvancedFilterFieldSelectSearchInput } from '@/object-record/advanced-filter/components/AdvancedFilterFieldSelectSearchInput';
 import { useAdvancedFilterFieldSelectDropdown } from '@/object-record/advanced-filter/hooks/useAdvancedFilterFieldSelectDropdown';
-import { useApplyAdvancedFilterSourceField } from '@/object-record/advanced-filter/hooks/useApplyAdvancedFilterSourceField';
+import { useSelectFieldUsedInAdvancedFilterDropdown } from '@/object-record/advanced-filter/hooks/useSelectFieldUsedInAdvancedFilterDropdown';
 import { AdvancedFilterContext } from '@/object-record/advanced-filter/states/context/AdvancedFilterContext';
 import { ObjectFilterDropdownFilterSelectMenuItem } from '@/object-record/object-filter-dropdown/components/ObjectFilterDropdownFilterSelectMenuItem';
 import { fieldMetadataItemIdUsedInDropdownComponentState } from '@/object-record/object-filter-dropdown/states/fieldMetadataItemIdUsedInDropdownComponentState';
 import { objectFilterDropdownIsSelectingCompositeFieldComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownIsSelectingCompositeFieldComponentState';
-import { objectFilterDropdownIsSelectingRelationTargetFieldComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownIsSelectingRelationTargetFieldComponentState';
 import { objectFilterDropdownSubMenuFieldTypeComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownSubMenuFieldTypeComponentState';
 import { isCompositeFilterableFieldType } from '@/object-record/object-filter-dropdown/utils/isCompositeFilterableFieldType';
-import { isManyToOneRelationField } from '@/object-metadata/utils/isManyToOneRelationField';
 import { visibleRecordFieldsComponentSelector } from '@/object-record/record-field/states/visibleRecordFieldsComponentSelector';
 import { useFilterableFieldMetadataItems } from '@/object-record/record-filter/hooks/useFilterableFieldMetadataItems';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuSectionLabel } from '@/ui/layout/dropdown/components/DropdownMenuSectionLabel';
-import { usePushFocusForLeafFieldValuePicker } from '@/object-record/advanced-filter/hooks/usePushFocusForLeafFieldValuePicker';
 import { GenericDropdownContentWidth } from '@/ui/layout/dropdown/constants/GenericDropdownContentWidth';
 import { useAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentState';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
@@ -90,8 +87,8 @@ export const AdvancedFilterFieldSelectMenu = ({
     advancedFilterFieldSelectDropdownId,
   );
 
-  const { applyAdvancedFilterSourceField } =
-    useApplyAdvancedFilterSourceField();
+  const { selectFieldUsedInAdvancedFilterDropdown } =
+    useSelectFieldUsedInAdvancedFilterDropdown();
 
   const [, setObjectFilterDropdownSubMenuFieldType] = useAtomComponentState(
     objectFilterDropdownSubMenuFieldTypeComponentState,
@@ -102,17 +99,9 @@ export const AdvancedFilterFieldSelectMenu = ({
       objectFilterDropdownIsSelectingCompositeFieldComponentState,
     );
 
-  const [, setObjectFilterDropdownIsSelectingRelationTargetField] =
-    useAtomComponentState(
-      objectFilterDropdownIsSelectingRelationTargetFieldComponentState,
-    );
-
   const setFieldMetadataItemIdUsedInDropdown = useSetAtomComponentState(
     fieldMetadataItemIdUsedInDropdownComponentState,
   );
-
-  const { pushFocusForLeafFieldValuePicker } =
-    usePushFocusForLeafFieldValuePicker();
 
   const handleFieldMetadataItemSelect = (
     selectedFieldMetadataItem: FieldMetadataItem,
@@ -123,41 +112,19 @@ export const AdvancedFilterFieldSelectMenu = ({
       selectedFieldMetadataItem.type,
     );
 
-    const isRelationTraversalField = isManyToOneRelationField(
-      selectedFieldMetadataItem,
-    );
-
-    const compositeSubMenuFieldType =
-      !isRelationTraversalField && isCompositeFilterableFieldType(filterType)
-        ? filterType
-        : null;
-
-    // For sub-menu paths (composite or relation traversal) we only stage
-    // the source field in the dropdown state and open the sub-menu —
-    // upsertRecordFilter happens in the sub-menu's hook once the user
-    // makes the final choice. Otherwise navigating back from the sub-menu
-    // would leave an orphan partial filter in the chip list.
-    if (isRelationTraversalField) {
-      setFieldMetadataItemIdUsedInDropdown(selectedFieldMetadataItem.id);
-      setObjectFilterDropdownIsSelectingRelationTargetField(true);
-      return;
-    }
-
-    if (compositeSubMenuFieldType !== null) {
-      setFieldMetadataItemIdUsedInDropdown(selectedFieldMetadataItem.id);
-      setObjectFilterDropdownSubMenuFieldType(compositeSubMenuFieldType);
-      setObjectFilterDropdownIsSelectingCompositeField(true);
-      return;
-    }
-
-    applyAdvancedFilterSourceField({
-      sourceFieldMetadataItem: selectedFieldMetadataItem,
+    selectFieldUsedInAdvancedFilterDropdown({
+      fieldMetadataItemId: selectedFieldMetadataItem.id,
       recordFilterId,
     });
 
-    pushFocusForLeafFieldValuePicker(selectedFieldMetadataItem);
+    if (isCompositeFilterableFieldType(filterType)) {
+      setObjectFilterDropdownSubMenuFieldType(filterType);
 
-    closeAdvancedFilterFieldSelectDropdown();
+      setFieldMetadataItemIdUsedInDropdown(selectedFieldMetadataItem.id);
+      setObjectFilterDropdownIsSelectingCompositeField(true);
+    } else {
+      closeAdvancedFilterFieldSelectDropdown();
+    }
   };
 
   const shouldShowVisibleFields = visibleFieldMetadataItems.length > 0;

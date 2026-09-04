@@ -10,7 +10,6 @@ import { InstanceCommandRunnerService } from 'src/engine/core-modules/upgrade/se
 import { UpgradeCommandRegistryService } from 'src/engine/core-modules/upgrade/services/upgrade-command-registry.service';
 import { UpgradeMigrationService } from 'src/engine/core-modules/upgrade/services/upgrade-migration.service';
 import { UpgradeSequenceReaderService } from 'src/engine/core-modules/upgrade/services/upgrade-sequence-reader.service';
-import { UpgradeStatusService } from 'src/engine/core-modules/upgrade/services/upgrade-status.service';
 import { WorkspaceVersionService } from 'src/engine/workspace-manager/workspace-version/services/workspace-version.service';
 
 type RunInstanceCommandsOptions = {
@@ -35,7 +34,6 @@ export class RunInstanceCommandsCommand extends CommandRunner {
     private readonly upgradeSequenceReaderService: UpgradeSequenceReaderService,
     private readonly instanceUpgradeService: InstanceCommandRunnerService,
     private readonly upgradeMigrationService: UpgradeMigrationService,
-    private readonly upgradeStatusService: UpgradeStatusService,
   ) {
     super();
   }
@@ -67,7 +65,7 @@ export class RunInstanceCommandsCommand extends CommandRunner {
       await this.runLegacyPendingTypeOrmMigrations();
 
       const activeOrSuspendedWorkspaceIds =
-        await this.workspaceVersionService.getProvisionedWorkspaceIds();
+        await this.workspaceVersionService.getActiveOrSuspendedWorkspaceIds();
 
       const sequence = this.upgradeSequenceReaderService.getUpgradeSequence();
 
@@ -104,20 +102,6 @@ export class RunInstanceCommandsCommand extends CommandRunner {
         chalk.red(`Instance commands failed: ${error.message}`),
       );
       throw error;
-    } finally {
-      await this.safeInvalidateUpgradeStatusCache();
-    }
-  }
-
-  private async safeInvalidateUpgradeStatusCache(): Promise<void> {
-    try {
-      await this.upgradeStatusService.invalidateInstanceAndAllWorkspacesStatus();
-    } catch (error) {
-      this.logger.warn(
-        `Failed to invalidate upgrade-status cache: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
     }
   }
 
@@ -133,7 +117,7 @@ export class RunInstanceCommandsCommand extends CommandRunner {
     }
 
     const activeOrSuspendedWorkspaceIds =
-      await this.workspaceVersionService.getProvisionedWorkspaceIds();
+      await this.workspaceVersionService.getActiveOrSuspendedWorkspaceIds();
 
     if (activeOrSuspendedWorkspaceIds.length === 0) {
       return;

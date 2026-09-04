@@ -15,8 +15,6 @@ import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
 import { RowLevelPermissionPredicateGroupEntity } from 'src/engine/metadata-modules/row-level-permission-predicate/entities/row-level-permission-predicate-group.entity';
 import { RowLevelPermissionPredicateEntity } from 'src/engine/metadata-modules/row-level-permission-predicate/entities/row-level-permission-predicate.entity';
 import { type FlatRowLevelPermissionPredicateGroupMaps } from 'src/engine/metadata-modules/row-level-permission-predicate/types/flat-row-level-permission-predicate-group-maps.type';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { regroupEntitiesByRelatedEntityId } from 'src/engine/workspace-cache/utils/regroup-entities-by-related-entity-id';
@@ -26,16 +24,16 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatRowLevelPermissionPredicateGroupMaps')
 export class WorkspaceFlatRowLevelPermissionPredicateGroupMapCacheService extends WorkspaceCacheProvider<FlatRowLevelPermissionPredicateGroupMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(RowLevelPermissionPredicateGroupEntity)
-    private readonly rowLevelPermissionPredicateGroupRepository: WorkspaceScopedRepository<RowLevelPermissionPredicateGroupEntity>,
+    @InjectRepository(RowLevelPermissionPredicateGroupEntity)
+    private readonly rowLevelPermissionPredicateGroupRepository: Repository<RowLevelPermissionPredicateGroupEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
     @InjectRepository(ObjectMetadataEntity)
     private readonly objectMetadataRepository: Repository<ObjectMetadataEntity>,
-    @InjectWorkspaceScopedRepository(RoleEntity)
-    private readonly roleRepository: WorkspaceScopedRepository<RoleEntity>,
-    @InjectWorkspaceScopedRepository(RowLevelPermissionPredicateEntity)
-    private readonly rowLevelPermissionPredicateRepository: WorkspaceScopedRepository<RowLevelPermissionPredicateEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
+    @InjectRepository(RowLevelPermissionPredicateEntity)
+    private readonly rowLevelPermissionPredicateRepository: Repository<RowLevelPermissionPredicateEntity>,
   ) {
     super();
   }
@@ -50,7 +48,8 @@ export class WorkspaceFlatRowLevelPermissionPredicateGroupMapCacheService extend
       roles,
       rowLevelPermissionPredicates,
     ] = await Promise.all([
-      this.rowLevelPermissionPredicateGroupRepository.find(workspaceId, {
+      this.rowLevelPermissionPredicateGroupRepository.find({
+        where: { workspaceId },
         withDeleted: true,
       }),
       this.applicationRepository.find({
@@ -63,11 +62,13 @@ export class WorkspaceFlatRowLevelPermissionPredicateGroupMapCacheService extend
         select: ['id', 'universalIdentifier'],
         withDeleted: true,
       }),
-      this.roleRepository.find(workspaceId, {
+      this.roleRepository.find({
+        where: { workspaceId },
         select: ['id', 'universalIdentifier'],
         withDeleted: true,
       }),
-      this.rowLevelPermissionPredicateRepository.find(workspaceId, {
+      this.rowLevelPermissionPredicateRepository.find({
+        where: { workspaceId },
         select: [
           'id',
           'universalIdentifier',

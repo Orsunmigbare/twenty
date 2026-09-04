@@ -1,8 +1,10 @@
 import { Separator } from '@/settings/components/Separator';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { addressFieldSettingsSchema } from '@/object-record/record-field/ui/validation-schemas/addressFieldSettingsSchema';
-import { addressFieldValueSchema } from '@/object-record/record-field/ui/validation-schemas/addressFieldValueSchema';
+import {
+  addressSchema as addressFieldDefaultValueSchema,
+  addressSettingsSchema,
+} from '@/object-record/record-field/ui/types/guards/isFieldAddressValue';
 import { SettingsOptionCardContentSelect } from '@/settings/components/SettingsOptions/SettingsOptionCardContentSelect';
 import { MultiSelectAddressFields } from '@/settings/data-model/fields/forms/address/components/MultiSelectAddressFields';
 import { DEFAULT_SELECTION_ADDRESS_WITH_MESSAGES } from '@/settings/data-model/fields/forms/address/constants/DefaultSelectionAddressWithMessages';
@@ -18,7 +20,7 @@ import {
   IconMap,
   IconRefresh,
   type IconComponentProps,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { type SelectOption } from 'twenty-ui/input';
 import { z } from 'zod';
 import { applySimpleQuotesToString } from '~/utils/string/applySimpleQuotesToString';
@@ -31,8 +33,8 @@ type SettingsDataModelFieldAddressFormProps = {
 };
 
 export const settingsDataModelFieldAddressFormSchema = z.object({
-  defaultValue: addressFieldValueSchema,
-  settings: addressFieldSettingsSchema,
+  defaultValue: addressFieldDefaultValueSchema,
+  settings: addressSettingsSchema,
 });
 
 export type SettingsDataModelFieldTextFormValues = z.infer<

@@ -8,7 +8,6 @@ export const createMockCommandMenuItems =
   (): CommandMenuItemFieldsFragment[] => [
     {
       __typename: 'CommandMenuItem',
-      isActive: true,
       id: 'mock-add-to-favorites',
       workflowVersionId: null,
       frontComponentId: null,
@@ -27,7 +26,6 @@ export const createMockCommandMenuItems =
     },
     {
       __typename: 'CommandMenuItem',
-      isActive: true,
       id: 'mock-export',
       workflowVersionId: null,
       frontComponentId: null,
@@ -46,7 +44,6 @@ export const createMockCommandMenuItems =
     },
     {
       __typename: 'CommandMenuItem',
-      isActive: true,
       id: 'mock-delete',
       workflowVersionId: null,
       frontComponentId: null,
@@ -65,7 +62,6 @@ export const createMockCommandMenuItems =
     },
     {
       __typename: 'CommandMenuItem',
-      isActive: true,
       id: 'mock-go-to-people',
       workflowVersionId: null,
       frontComponentId: null,

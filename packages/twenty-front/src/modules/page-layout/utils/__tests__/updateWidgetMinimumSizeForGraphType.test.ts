@@ -83,6 +83,7 @@ describe('updateWidgetMinimumSizeForGraphType', () => {
 
     const configurationTypes = [
       WidgetConfigurationType.AGGREGATE_CHART,
+      WidgetConfigurationType.GAUGE_CHART,
       WidgetConfigurationType.PIE_CHART,
       WidgetConfigurationType.BAR_CHART,
       WidgetConfigurationType.LINE_CHART,
@@ -191,7 +192,7 @@ describe('updateWidgetMinimumSizeForGraphType', () => {
     (updateLayoutItemConstraints as jest.Mock).mockReturnValue(updatedLayouts);
 
     const result = updateWidgetMinimumSizeForGraphType({
-      configurationType: WidgetConfigurationType.BAR_CHART,
+      configurationType: WidgetConfigurationType.GAUGE_CHART,
       widgetId: 'widget-1',
       tabId: 'tab-1',
       currentLayouts: mockLayouts,

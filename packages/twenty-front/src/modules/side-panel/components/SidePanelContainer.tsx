@@ -22,7 +22,6 @@ const StyledSidePanelContainer = styled.div<{ isMobile: boolean }>`
 
     return `calc(100% - ${mobileOffset})`;
   }};
-  min-height: 0;
 `;
 
 type SidePanelContainerProps = {

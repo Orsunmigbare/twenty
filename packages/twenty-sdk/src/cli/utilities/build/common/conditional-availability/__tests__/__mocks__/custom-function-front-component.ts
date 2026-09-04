@@ -1,8 +1,5 @@
-import {
-  defineCommandMenuItem,
-  selectedRecords,
-  someDefined,
-} from '@/sdk/define';
+import { defineCommandMenuItem } from '@/sdk/define';
+import { someDefined, selectedRecords } from '@/sdk/front-component';
 
 export default defineCommandMenuItem({
   universalIdentifier: 'custom-function-cmd',

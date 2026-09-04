@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { IsNull } from 'typeorm';
+import { IsNull, type Repository } from 'typeorm';
 
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
@@ -17,16 +18,14 @@ import { type UpdateViewFilterGroupInput } from 'src/engine/metadata-modules/vie
 import { type ViewFilterGroupDTO } from 'src/engine/metadata-modules/view-filter-group/dtos/view-filter-group.dto';
 import { ViewFilterGroupEntity } from 'src/engine/metadata-modules/view-filter-group/entities/view-filter-group.entity';
 import { fromFlatViewFilterGroupToViewFilterGroupDto } from 'src/engine/metadata-modules/view-filter-group/utils/from-flat-view-filter-group-to-view-filter-group-dto.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceMigrationBuilderException } from 'src/engine/workspace-manager/workspace-migration/exceptions/workspace-migration-builder-exception';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
 @Injectable()
 export class ViewFilterGroupService {
   constructor(
-    @InjectWorkspaceScopedRepository(ViewFilterGroupEntity)
-    private readonly viewFilterGroupRepository: WorkspaceScopedRepository<ViewFilterGroupEntity>,
+    @InjectRepository(ViewFilterGroupEntity)
+    private readonly viewFilterGroupRepository: Repository<ViewFilterGroupEntity>,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
     private readonly flatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
     private readonly applicationService: ApplicationService,
@@ -321,8 +320,9 @@ export class ViewFilterGroupService {
   async findByWorkspaceId(
     workspaceId: string,
   ): Promise<ViewFilterGroupEntity[]> {
-    return this.viewFilterGroupRepository.find(workspaceId, {
+    return this.viewFilterGroupRepository.find({
       where: {
+        workspaceId,
         deletedAt: IsNull(),
       },
       order: { positionInViewFilterGroup: 'ASC' },
@@ -340,8 +340,9 @@ export class ViewFilterGroupService {
     workspaceId: string,
     viewId: string,
   ): Promise<ViewFilterGroupEntity[]> {
-    return this.viewFilterGroupRepository.find(workspaceId, {
+    return this.viewFilterGroupRepository.find({
       where: {
+        workspaceId,
         viewId,
         deletedAt: IsNull(),
       },
@@ -360,22 +361,20 @@ export class ViewFilterGroupService {
     id: string,
     workspaceId: string,
   ): Promise<ViewFilterGroupEntity | null> {
-    const viewFilterGroup = await this.viewFilterGroupRepository.findOne(
-      workspaceId,
-      {
-        where: {
-          id,
-          deletedAt: IsNull(),
-        },
-        relations: [
-          'workspace',
-          'view',
-          'viewFilters',
-          'parentViewFilterGroup',
-          'childViewFilterGroups',
-        ],
+    const viewFilterGroup = await this.viewFilterGroupRepository.findOne({
+      where: {
+        id,
+        workspaceId,
+        deletedAt: IsNull(),
       },
-    );
+      relations: [
+        'workspace',
+        'view',
+        'viewFilters',
+        'parentViewFilterGroup',
+        'childViewFilterGroups',
+      ],
+    });
 
     return viewFilterGroup || null;
   }

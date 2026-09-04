@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { IconArrowUpRight } from 'twenty-ui/icon';
+import { IconArrowUpRight } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 import { isLayoutCustomizationModeEnabledState } from '@/layout-customization/states/isLayoutCustomizationModeEnabledState';

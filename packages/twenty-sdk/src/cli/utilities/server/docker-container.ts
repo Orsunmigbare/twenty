@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 
 export const CONTAINER_NAME = 'twenty-app-dev';
 export const TEST_CONTAINER_NAME = 'twenty-app-dev-test';
@@ -8,9 +8,8 @@ export const DEFAULT_TEST_PORT = 2021;
 
 export const isContainerRunning = (containerName = CONTAINER_NAME): boolean => {
   try {
-    const result = execFileSync(
-      'docker',
-      ['inspect', '-f', '{{.State.Running}}', containerName],
+    const result = execSync(
+      `docker inspect -f '{{.State.Running}}' ${containerName}`,
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     ).trim();
 
@@ -25,14 +24,8 @@ export const getContainerPort = (containerName = CONTAINER_NAME): number => {
     containerName === TEST_CONTAINER_NAME ? DEFAULT_TEST_PORT : DEFAULT_PORT;
 
   try {
-    const result = execFileSync(
-      'docker',
-      [
-        'inspect',
-        '-f',
-        '{{range .Config.Env}}{{println .}}{{end}}',
-        containerName,
-      ],
+    const result = execSync(
+      `docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' ${containerName}`,
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     );
 
@@ -46,7 +39,7 @@ export const getContainerPort = (containerName = CONTAINER_NAME): number => {
 
 export const containerExists = (containerName = CONTAINER_NAME): boolean => {
   try {
-    execFileSync('docker', ['inspect', containerName], {
+    execSync(`docker inspect ${containerName}`, {
       stdio: ['pipe', 'pipe', 'ignore'],
     });
 
@@ -56,41 +49,17 @@ export const containerExists = (containerName = CONTAINER_NAME): boolean => {
   }
 };
 
-export const getImageForVersion = (version = 'latest'): string => {
-  const tag = /^\d+\.\d+\.\d+/.test(version) ? `v${version}` : version;
-
-  return `twentycrm/twenty-app-dev:${tag}`;
-};
+export const getImageForVersion = (version = 'latest'): string =>
+  `twentycrm/twenty-app-dev:${version}`;
 
 export const getContainerDigest = (
   containerName = CONTAINER_NAME,
 ): string | null => {
   try {
-    return execFileSync(
-      'docker',
-      ['inspect', '-f', '{{.Image}}', containerName],
-      {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      },
-    ).trim();
-  } catch {
-    return null;
-  }
-};
-
-export const getContainerImageTag = (
-  containerName = CONTAINER_NAME,
-): string | null => {
-  try {
-    return execFileSync(
-      'docker',
-      ['inspect', '-f', '{{.Config.Image}}', containerName],
-      {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      },
-    ).trim();
+    return execSync(`docker inspect -f '{{.Image}}' ${containerName}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return null;
   }
@@ -98,7 +67,7 @@ export const getContainerImageTag = (
 
 export const getImageDigest = (image: string): string | null => {
   try {
-    return execFileSync('docker', ['inspect', '-f', '{{.Id}}', image], {
+    return execSync(`docker inspect -f '{{.Id}}' ${image}`, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'ignore'],
     }).trim();
@@ -112,14 +81,8 @@ export const getContainerEnvVar = (
   containerName = CONTAINER_NAME,
 ): string | null => {
   try {
-    const result = execFileSync(
-      'docker',
-      [
-        'inspect',
-        '-f',
-        '{{range .Config.Env}}{{println .}}{{end}}',
-        containerName,
-      ],
+    const result = execSync(
+      `docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' ${containerName}`,
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     );
 
@@ -133,7 +96,7 @@ export const getContainerEnvVar = (
 
 export const checkDockerRunning = (): boolean => {
   try {
-    execFileSync('docker', ['info'], { stdio: 'ignore' });
+    execSync('docker info', { stdio: 'ignore' });
 
     return true;
   } catch {

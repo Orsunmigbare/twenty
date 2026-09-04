@@ -1,24 +1,18 @@
 import { useObjectPermissionsForObject } from '@/object-record/hooks/useObjectPermissionsForObject';
 import { useCurrentRecordGroupId } from '@/object-record/record-group/hooks/useCurrentRecordGroupId';
 import { recordGroupDefinitionFamilyState } from '@/object-record/record-group/states/recordGroupDefinitionFamilyState';
-import { getFieldMetadataItemGqlFieldName } from '@/object-metadata/utils/getFieldMetadataItemGqlFieldName';
 import { recordIndexGroupFieldMetadataItemComponentState } from '@/object-record/record-index/states/recordIndexGroupFieldMetadataComponentState';
 import { useRecordTableContextOrThrow } from '@/object-record/record-table/contexts/RecordTableContext';
 import { useCreateNewIndexRecord } from '@/object-record/record-table/hooks/useCreateNewIndexRecord';
 import { RecordTableActionRow } from '@/object-record/record-table/record-table-row/components/RecordTableActionRow';
-import { isRecordTableCellsNonEditableComponentState } from '@/object-record/record-table/states/isRecordTableCellsNonEditableComponentState';
-import { canCreateRecordsForObjectMetadataItem } from '@/object-record/utils/canCreateRecordsForObjectMetadataItem';
-import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
+import { isRecordTableCreateDisabled } from '@/object-record/record-table/utils/isRecordTableCreateDisabled';
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
+import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { t } from '@lingui/core/macro';
-import { IconPlus } from 'twenty-ui/icon';
+import { IconPlus } from 'twenty-ui/display';
 
 export const RecordTableRecordGroupSectionAddNew = () => {
   const { objectMetadataItem } = useRecordTableContextOrThrow();
-
-  const isRecordTableCellsNonEditable = useAtomComponentStateValue(
-    isRecordTableCellsNonEditableComponentState,
-  );
 
   const currentRecordGroupId = useCurrentRecordGroupId();
 
@@ -43,16 +37,13 @@ export const RecordTableRecordGroupSectionAddNew = () => {
     objectMetadataItem.id,
   );
 
-  if (
-    !canCreateRecordsForObjectMetadataItem({
-      objectPermissions,
-      objectMetadataItem,
-    })
-  ) {
+  const hasObjectUpdatePermissions = objectPermissions.canUpdateObjectRecords;
+
+  if (!hasObjectUpdatePermissions) {
     return null;
   }
 
-  if (isRecordTableCellsNonEditable) {
+  if (isRecordTableCreateDisabled(objectMetadataItem)) {
     return null;
   }
 
@@ -67,8 +58,7 @@ export const RecordTableRecordGroupSectionAddNew = () => {
 
         createNewIndexRecord({
           position: 'last',
-          [getFieldMetadataItemGqlFieldName(fieldMetadataItem)]:
-            recordGroupDefinition?.value,
+          [fieldMetadataItem.name]: recordGroupDefinition?.value,
         });
       }}
     />

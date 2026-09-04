@@ -11,13 +11,12 @@ type SimplifiedFlatObjectMetadata = {
   universalIdentifier: string;
   applicationId: string | null;
   dataSourceId: string | null;
-  overrides: null;
+  standardOverrides: null;
   isCustom: boolean;
   isRemote: boolean;
   isActive: boolean;
   isSystem: boolean;
-  isUIEditable: boolean;
-  isUICreatable: boolean;
+  isUIReadOnly: boolean;
   isAuditLogged: boolean;
   isSearchable: boolean;
   duplicateCriteria: string[] | null;
@@ -38,11 +37,19 @@ type SimplifiedFlatObjectMetadata = {
   viewUniversalIdentifiers: string[];
 };
 
-type DatabaseEventMetadata = {
+type WorkspaceEventBatch<WorkspaceEvent> = {
   name: string;
   workspaceId: string;
   objectMetadata: SimplifiedFlatObjectMetadata;
+  userId: string;
+  userWorkspaceId: string;
+  workspaceMemberId: string;
+  recordId: string;
+  events: WorkspaceEvent[];
 };
 
-export type DatabaseEventPayload<T = ObjectRecordEvent> =
-  DatabaseEventMetadata & T;
+export type DatabaseEventPayload<T = ObjectRecordEvent> = Omit<
+  WorkspaceEventBatch<T>,
+  'events'
+> &
+  T;

@@ -1,4 +1,3 @@
-import { metadataStoreStorage } from '@/metadata-store/storage/metadataStoreStorage';
 import { createAtomFamilyState } from '@/ui/utilities/state/jotai/utils/createAtomFamilyState';
 
 export type MetadataEntityStoreStatus =
@@ -52,14 +51,12 @@ const METADATA_STORE_ITEM_INITIAL_VALUE: MetadataStoreItem = {
   status: 'empty',
 };
 
-export const METADATA_STORE_KEY_PREFIX = 'metadataStoreState__';
-
 export const metadataStoreState = createAtomFamilyState<
   MetadataStoreItem,
   MetadataEntityKey
 >({
   key: 'metadataStoreState',
   defaultValue: METADATA_STORE_ITEM_INITIAL_VALUE,
-  storage: metadataStoreStorage,
+  useLocalStorage: true,
   localStorageOptions: { getOnInit: true },
 });

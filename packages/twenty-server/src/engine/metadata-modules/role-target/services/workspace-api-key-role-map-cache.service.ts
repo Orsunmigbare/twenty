@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { IsNull, Not } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 
 import { WorkspaceCacheProvider } from 'src/engine/workspace-cache/interfaces/workspace-cache-provider.service';
 
 import { RoleTargetEntity } from 'src/engine/metadata-modules/role-target/role-target.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 
 @Injectable()
@@ -15,15 +14,16 @@ export class WorkspaceApiKeyRoleMapCacheService extends WorkspaceCacheProvider<
   Record<string, string>
 > {
   constructor(
-    @InjectWorkspaceScopedRepository(RoleTargetEntity)
-    private readonly roleTargetRepository: WorkspaceScopedRepository<RoleTargetEntity>,
+    @InjectRepository(RoleTargetEntity)
+    private readonly roleTargetRepository: Repository<RoleTargetEntity>,
   ) {
     super();
   }
 
   async computeForCache(workspaceId: string): Promise<Record<string, string>> {
-    const roleTargetsMap = await this.roleTargetRepository.find(workspaceId, {
+    const roleTargetsMap = await this.roleTargetRepository.find({
       where: {
+        workspaceId,
         apiKeyId: Not(IsNull()),
       },
     });

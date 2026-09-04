@@ -2,18 +2,20 @@ import { useQuery } from '@apollo/client/react';
 import { isDefined } from 'twenty-shared/utils';
 import {
   BillingProductKey,
-  GetResourceCreditUsageDocument,
+  GetMeteredProductsUsageDocument,
 } from '~/generated-metadata/graphql';
 
+// V2 hook — same query shape as useGetWorkflowNodeExecutionUsage but finds
+// the RESOURCE_CREDIT product instead of WORKFLOW_NODE_EXECUTION.
 export const useGetResourceCreditUsage = () => {
-  const { data, loading, refetch } = useQuery(GetResourceCreditUsageDocument);
+  const { data, loading, refetch } = useQuery(GetMeteredProductsUsageDocument);
 
   const refetchResourceCreditUsage = () => {
     refetch();
   };
 
   const isGetResourceCreditUsageQueryLoaded = () => {
-    return isDefined(data?.getResourceCreditUsage) && !loading;
+    return isDefined(data?.getMeteredProductsUsage) && !loading;
   };
 
   const getResourceCreditUsage = () => {
@@ -21,7 +23,7 @@ export const useGetResourceCreditUsage = () => {
       throw new Error('getResourceCreditUsage was not loaded');
     }
 
-    const usage = data.getResourceCreditUsage.find(
+    const usage = data.getMeteredProductsUsage.find(
       (productUsage) =>
         productUsage.productKey === BillingProductKey.RESOURCE_CREDIT,
     );

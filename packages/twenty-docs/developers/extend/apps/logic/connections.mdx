@@ -42,9 +42,6 @@ export default defineConnectionProvider({
     // Optional: provider's RFC 7009 token revocation endpoint, called on disconnect.
     // revokeEndpoint: 'https://example.com/oauth/revoke',
   },
-  // Optional: a logic function in this app to run right after a connection is
-  // established. See "Run a logic function on connect".
-  // onConnectLogicFunction: { universalIdentifier: '3a2b1c0d-...-...' },
 });
 ```
 
@@ -85,42 +82,8 @@ Key points:
 The OAuth callback URL your provider needs to whitelist is:
 
 ```
-https://<your-twenty-server>/auth/apps/callback
+https://<your-twenty-server>/apps/oauth/callback
 ```
-
-</Accordion>
-
-<Accordion title="Run a logic function on connect" description="React the moment a connection is established">
-
-Some providers hand you data at connect time that you need to persist before the connection is usable — the classic example is Slack, where the OAuth response identifies the workspace's `team_id` that inbound events will be keyed by. Set `onConnectLogicFunction` to reference a logic function in the same app (by its `universalIdentifier`), and it runs right after the `ConnectedAccount` is created.
-
-```ts src/connection-providers/slack-connection.ts
-export default defineConnectionProvider({
-  universalIdentifier: '...',
-  name: 'slack',
-  displayName: 'Slack',
-  type: 'oauth',
-  oauth: {
-    /* ... */
-  },
-  // Runs claimSlackTeam after every successful Slack connection.
-  onConnectLogicFunction: {
-    universalIdentifier: '3a2b1c0d-1111-4222-8333-444455556666',
-  },
-});
-```
-
-The hook runs **asynchronously in the connecting workspace** (it is enqueued, not awaited), so a slow or failing hook never blocks or breaks the OAuth callback — make it idempotent and handle its own retries. The handler receives:
-
-```ts
-type OnConnectPayload = {
-  connectionProviderId: string;
-  connectionProviderName: string; // e.g. 'slack'
-  connectedAccountId: string;
-};
-```
-
-From there use `getConnection(connectedAccountId)` to read the fresh access token and call the provider's API (e.g. Slack `auth.test`) or persist a mapping with the [key-value store](/developers/extend/apps/logic/key-value-store).
 
 </Accordion>
 
@@ -219,7 +182,7 @@ Multiple connections per (user, provider) are allowed, so the same user can hold
 For each connection provider, the server admin needs to register an OAuth app at the third party first.
 
 1. Go to the provider's developer settings (e.g. https://linear.app/settings/api/applications/new).
-2. Set the **Redirect URI** to `<SERVER_URL>/auth/apps/callback`.
+2. Set the **Redirect URI** to `<SERVER_URL>/apps/oauth/callback`.
 3. Copy the generated **Client ID** and **Client Secret**.
 4. Open the installed app in Twenty as a server admin → set the values on the corresponding `serverVariables`.
 5. Workspace members can then add connections from the per-app **Connections** section.

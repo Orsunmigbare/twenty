@@ -10,7 +10,7 @@ import {
   settingsDataModelObjectAboutFormSchema,
 } from '@/settings/data-model/validation-schemas/settingsDataModelObjectAboutFormSchema';
 import { isDDLLockedState } from '@/client-config/states/isDDLLockedState';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLingui } from '@lingui/react/macro';
@@ -18,7 +18,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
@@ -77,12 +77,12 @@ export const SettingsNewObject = () => {
   return (
     // oxlint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...formConfig}>
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={t`New Object`}
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
             children: t`Objects`,
@@ -114,7 +114,7 @@ export const SettingsNewObject = () => {
             />
           </Section>
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     </FormProvider>
   );
 };

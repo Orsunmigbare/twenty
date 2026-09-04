@@ -13,7 +13,9 @@ import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace
   key: `workflow.deleteMany`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class WorkflowDeleteManyPostQueryHook implements WorkspacePostQueryHookInstance {
+export class WorkflowDeleteManyPostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly workflowCommonWorkspaceService: WorkflowCommonWorkspaceService,
   ) {}

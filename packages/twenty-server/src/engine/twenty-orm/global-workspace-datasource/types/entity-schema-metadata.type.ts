@@ -5,9 +5,8 @@ import { type ObjectMetadataEntity } from 'src/engine/metadata-modules/object-me
 
 export type EntitySchemaObjectMetadata = Pick<
   ObjectMetadataEntity,
-  'id' | 'nameSingular'
+  'id' | 'nameSingular' | 'isCustom'
 > & {
-  isCustom: boolean;
   fieldIds: string[];
 };
 
@@ -20,7 +19,6 @@ export type EntitySchemaFieldMetadata<
   | 'type'
   | 'settings'
   | 'isNullable'
-  | 'isUnique'
   | 'defaultValue'
   | 'options'
   | 'objectMetadataId'
@@ -39,7 +37,6 @@ export type EntitySchemaFieldMetadataMaps = {
 export const buildEntitySchemaMetadataMaps = (
   objectMetadatas: ObjectMetadataEntity[],
   fieldMetadatas: FieldMetadataEntity[],
-  standardApplicationId: string | undefined,
 ): {
   objectMetadataMaps: EntitySchemaObjectMetadataMaps;
   fieldMetadataMaps: EntitySchemaFieldMetadataMaps;
@@ -62,7 +59,7 @@ export const buildEntitySchemaMetadataMaps = (
     objectMetadataMaps.byId[object.id] = {
       id: object.id,
       nameSingular: object.nameSingular,
-      isCustom: object.applicationId !== standardApplicationId,
+      isCustom: object.isCustom,
       fieldIds: fieldIdsByObjectId.get(object.id) ?? [],
     };
   }
@@ -76,7 +73,6 @@ export const buildEntitySchemaMetadataMaps = (
       type: field.type,
       settings: field.settings,
       isNullable: field.isNullable,
-      isUnique: field.isUnique,
       defaultValue: field.defaultValue,
       options: field.options,
       objectMetadataId: field.objectMetadataId,

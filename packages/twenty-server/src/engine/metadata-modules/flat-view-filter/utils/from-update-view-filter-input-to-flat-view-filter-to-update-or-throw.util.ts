@@ -87,22 +87,5 @@ export const fromUpdateViewFilterInputToFlatViewFilterToUpdateOrThrow = ({
       viewFilterGroupUniversalIdentifier;
   }
 
-  if (
-    updatedEditableFieldProperties.relationTargetFieldMetadataId !== undefined
-  ) {
-    const { relationTargetFieldMetadataUniversalIdentifier } =
-      resolveEntityRelationUniversalIdentifiers({
-        metadataName: 'viewFilter',
-        foreignKeyValues: {
-          relationTargetFieldMetadataId:
-            flatViewFilterToUpdate.relationTargetFieldMetadataId,
-        },
-        flatEntityMaps: { flatFieldMetadataMaps },
-      });
-
-    flatViewFilterToUpdate.relationTargetFieldMetadataUniversalIdentifier =
-      relationTargetFieldMetadataUniversalIdentifier;
-  }
-
   return flatViewFilterToUpdate;
 };

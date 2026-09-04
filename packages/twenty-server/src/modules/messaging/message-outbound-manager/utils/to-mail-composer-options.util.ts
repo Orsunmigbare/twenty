@@ -1,5 +1,4 @@
 import { type SendMessageInput } from 'src/modules/messaging/message-outbound-manager/types/send-message-input.type';
-import { isDefined } from 'twenty-shared/utils';
 
 export const toMailComposerOptions = (
   from: string,
@@ -25,11 +24,7 @@ export const toMailComposerOptions = (
     ...(sendMessageInput.inReplyTo
       ? {
           inReplyTo: sendMessageInput.inReplyTo,
-          references:
-            isDefined(sendMessageInput.references) &&
-            sendMessageInput.references.length > 0
-              ? sendMessageInput.references
-              : sendMessageInput.inReplyTo,
+          references: sendMessageInput.inReplyTo,
         }
       : {}),
   };

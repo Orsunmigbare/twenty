@@ -5,19 +5,22 @@ import { styled } from '@linaria/react';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { useIsMobile } from 'twenty-ui/utilities';
 
-const StyledSection = styled.div`
+const StyledSection = styled.div<{ isSettingsDrawer?: boolean }>`
+  margin-bottom: ${({ isSettingsDrawer }) =>
+    isSettingsDrawer ? themeCssVariables.spacing[3] : '0'};
   width: 100%;
 `;
 
 const StyledSectionInnerContainerMinusScrollPadding = styled.div<{
   isMobile: boolean;
+  isSettingsDrawer: boolean;
   isMainNavCollapsed: boolean;
 }>`
   display: flex;
   flex-direction: column;
   gap: ${themeCssVariables.betweenSiblingsGap};
-  width: ${({ isMobile, isMainNavCollapsed }) =>
-    isMobile || isMainNavCollapsed
+  width: ${({ isMobile, isSettingsDrawer, isMainNavCollapsed }) =>
+    isMobile || isSettingsDrawer || isMainNavCollapsed
       ? '100%'
       : `calc(100% - ${themeCssVariables.spacing[2]})`};
 `;
@@ -38,9 +41,10 @@ export const NavigationDrawerSection = ({
     !isSettingsDrawer && !isMobile && !isNavigationDrawerExpanded;
 
   return (
-    <StyledSection className={className}>
+    <StyledSection isSettingsDrawer={isSettingsDrawer} className={className}>
       <StyledSectionInnerContainerMinusScrollPadding
         isMobile={isMobile}
+        isSettingsDrawer={isSettingsDrawer}
         isMainNavCollapsed={isMainNavCollapsed}
       >
         {children}

@@ -6,7 +6,6 @@ import { WorkspaceFlatPageLayoutMapCacheService } from 'src/engine/metadata-modu
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { PageLayoutTabEntity } from 'src/engine/metadata-modules/page-layout-tab/entities/page-layout-tab.entity';
 import { PageLayoutEntity } from 'src/engine/metadata-modules/page-layout/entities/page-layout.entity';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 
 @Module({
   imports: [
@@ -17,11 +16,7 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
       ObjectMetadataEntity,
     ]),
   ],
-  providers: [
-    WorkspaceFlatPageLayoutMapCacheService,
-    provideWorkspaceScopedRepository(PageLayoutEntity),
-    provideWorkspaceScopedRepository(PageLayoutTabEntity),
-  ],
+  providers: [WorkspaceFlatPageLayoutMapCacheService],
   exports: [WorkspaceFlatPageLayoutMapCacheService],
 })
 export class FlatPageLayoutModule {}

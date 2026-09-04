@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -15,31 +12,21 @@ import {
 
 const CALENDAR_EVENT_PARTICIPANT_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .calendarEventParticipantRecordPage.tabs.home.universalIdentifier,
+    universalIdentifier: '20202020-ab0c-400c-800c-ca1e0a0c0c01',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .calendarEventParticipantRecordPage.tabs.home.widgets.fields
-            .universalIdentifier,
+        universalIdentifier: '20202020-ac0c-400c-800c-ca1e0a0c0c11',
         ...WIDGET_PROPS.fields,
       },
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .calendarEventParticipantRecordPage.tabs.timeline.universalIdentifier,
+    universalIdentifier: '20202020-ab0c-400c-800c-ca1e0a0c0c02',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .calendarEventParticipantRecordPage.tabs.timeline.widgets.timeline
-            .universalIdentifier,
+        universalIdentifier: '20202020-ac0c-400c-800c-ca1e0a0c0c21',
         ...WIDGET_PROPS.timeline,
       },
     },
@@ -51,9 +38,7 @@ export const STANDARD_CALENDAR_EVENT_PARTICIPANT_PAGE_LAYOUT_CONFIG = {
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier:
     STANDARD_OBJECTS.calendarEventParticipant.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-      .calendarEventParticipantRecordPage.universalIdentifier,
+  universalIdentifier: '20202020-a10c-400c-800c-ca1e0a0c0001',
   defaultTabUniversalIdentifier: null,
   tabs: CALENDAR_EVENT_PARTICIPANT_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

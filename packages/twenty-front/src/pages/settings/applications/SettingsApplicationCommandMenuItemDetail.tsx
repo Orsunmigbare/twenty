@@ -1,6 +1,6 @@
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import { SettingsSectionSkeletonLoader } from '@/settings/components/SettingsSectionSkeletonLoader';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useQuery } from '@apollo/client/react';
 import { t } from '@lingui/core/macro';
 import { useParams } from 'react-router-dom';
@@ -40,7 +40,7 @@ export const SettingsApplicationCommandMenuItemDetail = () => {
   const breadcrumbLinks = [
     {
       children: t`Workspace`,
-      href: getSettingsPath(SettingsPath.General),
+      href: getSettingsPath(SettingsPath.Workspace),
     },
     {
       children: t`Applications`,
@@ -52,7 +52,7 @@ export const SettingsApplicationCommandMenuItemDetail = () => {
   ];
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       title={commandMenuItem?.label ?? t`Command menu item`}
       links={breadcrumbLinks}
     >
@@ -76,6 +76,6 @@ export const SettingsApplicationCommandMenuItemDetail = () => {
           />
         )}
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

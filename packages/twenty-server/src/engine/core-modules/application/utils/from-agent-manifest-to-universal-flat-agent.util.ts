@@ -22,7 +22,7 @@ export const fromAgentManifestToUniversalFlatAgent = ({
     description: agentManifest.description ?? null,
     prompt: agentManifest.prompt,
     modelId: (agentManifest.modelId as ModelId) ?? AUTO_SELECT_SMART_MODEL_ID,
-    responseFormat: agentManifest.responseFormat ?? { type: 'text' },
+    responseFormat: { type: 'text' },
     modelConfiguration: null,
     evaluationInputs: [],
     isCustom: false,

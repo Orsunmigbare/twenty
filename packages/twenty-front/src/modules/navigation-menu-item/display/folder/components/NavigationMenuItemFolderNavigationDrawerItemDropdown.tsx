@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { IconDotsVertical, IconPencil, IconTrash } from 'twenty-ui/icon';
+import { IconDotsVertical, IconPencil, IconTrash } from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
 

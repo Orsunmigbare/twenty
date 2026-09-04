@@ -90,8 +90,6 @@ export class ViewQueryParamsService {
           recordFilterGroupId: viewFilter.viewFilterGroupId,
           operand: viewFilter.operand,
           subFieldName: viewFilter.subFieldName,
-          relationTargetFieldMetadataId:
-            viewFilter.relationTargetFieldMetadataId ?? null,
         } as RecordFilter;
       })
       .filter(isDefined);
@@ -107,10 +105,33 @@ export class ViewQueryParamsService {
           : RecordFilterGroupLogicalOperator.AND,
     }));
 
+    const fields = recordFilters
+      .map((filter) => {
+        const field = findFlatEntityByIdInFlatEntityMaps({
+          flatEntityId: filter.fieldMetadataId,
+          flatEntityMaps: flatFieldMetadataMaps,
+        });
+
+        if (!field) return null;
+
+        return {
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          label: field.label,
+          options: field.options?.map((opt) => ({
+            id: opt.id ?? '',
+            label: opt.label,
+            value: opt.value,
+            color: 'color' in opt ? opt.color : undefined,
+            position: opt.position,
+          })),
+        };
+      })
+      .filter(isDefined);
+
     const filter = computeRecordGqlOperationFilter({
-      fieldMetadataItems: Object.values(
-        flatFieldMetadataMaps.byUniversalIdentifier,
-      ).filter(isDefined),
+      fields,
       recordFilters,
       recordFilterGroups,
       filterValueDependencies: { currentWorkspaceMemberId, timeZone },

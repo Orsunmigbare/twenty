@@ -13,8 +13,6 @@ import { FlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metada
 import { fromIndexMetadataEntityToFlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metadata/utils/from-index-metadata-entity-to-flat-index-metadata.util';
 import { IndexMetadataEntity } from 'src/engine/metadata-modules/index-metadata/index-metadata.entity';
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/workspace-manager/workspace-migration/utils/add-flat-entity-to-flat-entity-maps-through-mutation-or-throw.util';
@@ -25,8 +23,8 @@ export class WorkspaceFlatIndexMapCacheService extends WorkspaceCacheProvider<
   FlatEntityMaps<FlatIndexMetadata>
 > {
   constructor(
-    @InjectWorkspaceScopedRepository(IndexMetadataEntity)
-    private readonly indexMetadataRepository: WorkspaceScopedRepository<IndexMetadataEntity>,
+    @InjectRepository(IndexMetadataEntity)
+    private readonly indexMetadataRepository: Repository<IndexMetadataEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
     @InjectRepository(ObjectMetadataEntity)
@@ -42,9 +40,22 @@ export class WorkspaceFlatIndexMapCacheService extends WorkspaceCacheProvider<
   ): Promise<FlatEntityMaps<FlatIndexMetadata>> {
     const [indexes, applications, objectMetadatas, fieldMetadatas] =
       await Promise.all([
-        this.indexMetadataRepository.find(workspaceId, {
+        this.indexMetadataRepository.find({
+          where: {
+            workspaceId,
+          },
           withDeleted: true,
           relationLoadStrategy: 'join',
+          select: {
+            indexFieldMetadatas: {
+              id: true,
+              indexMetadataId: true,
+              fieldMetadataId: true,
+              order: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
           relations: ['indexFieldMetadatas'],
         }),
         this.applicationRepository.find({

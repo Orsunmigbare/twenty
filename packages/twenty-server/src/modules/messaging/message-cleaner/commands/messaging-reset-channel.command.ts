@@ -42,48 +42,44 @@ export class MessagingResetChannelCommand extends CommandRunner {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      this.logger.log(
+        `No message channel ID provided, resetting all message channels in workspace ${workspaceId}`,
+      );
+
+      const messageChannels = await this.messageChannelRepository.find({
+        where: {
+          ...(isDefined(messageChannelId) ? { id: messageChannelId } : {}),
+          workspaceId,
+        },
+      });
+
+      if (messageChannels.length === 0) {
         this.logger.log(
-          `No message channel ID provided, resetting all message channels in workspace ${workspaceId}`,
+          `No message channels found in workspace ${workspaceId}`,
         );
 
-        const messageChannels = await this.messageChannelRepository.find({
-          where: {
-            ...(isDefined(messageChannelId) ? { id: messageChannelId } : {}),
-            workspaceId,
-          },
-        });
+        return;
+      }
 
-        if (messageChannels.length === 0) {
-          this.logger.log(
-            `No message channels found in workspace ${workspaceId}`,
-          );
+      this.logger.log(
+        `Found ${messageChannels.length} message channels to reset`,
+      );
 
-          return;
-        }
-
-        this.logger.log(
-          `Found ${messageChannels.length} message channels to reset`,
+      for (const messageChannel of messageChannels) {
+        await this.messagingChannelSyncStatusService.resetAndMarkAsMessagesListFetchPending(
+          [messageChannel.id],
+          workspaceId,
         );
-
-        for (const messageChannel of messageChannels) {
-          await this.messagingChannelSyncStatusService.resetAndMarkAsMessagesListFetchPending(
-            [messageChannel.id],
-            workspaceId,
-          );
-          await this.messagingMessageCleanerService.cleanOrphanMessagesAndThreads(
-            workspaceId,
-          );
-        }
-
-        this.logger.log(
-          `Successfully reset all ${messageChannels.length} message channels in workspace ${workspaceId}`,
+        await this.messagingMessageCleanerService.cleanOrphanMessagesAndThreads(
+          workspaceId,
         );
-      },
-      authContext,
-      { lite: true },
-    );
+      }
+
+      this.logger.log(
+        `Successfully reset all ${messageChannels.length} message channels in workspace ${workspaceId}`,
+      );
+    }, authContext);
   }
 
   @Option({

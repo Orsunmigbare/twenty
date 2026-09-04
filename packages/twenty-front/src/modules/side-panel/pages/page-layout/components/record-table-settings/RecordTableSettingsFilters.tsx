@@ -71,7 +71,10 @@ export const RecordTableSettingsFilters = ({
             isWorkflowFindRecords={false}
             onUpdate={handleFilterUpdate}
           />
-          <RecordTableSettingsFiltersInitializeStateEffect view={view} />
+          <RecordTableSettingsFiltersInitializeStateEffect
+            view={view}
+            objectMetadataItem={objectMetadataItem}
+          />
         </RecordFiltersComponentInstanceContext.Provider>
       </RecordFilterGroupsComponentInstanceContext.Provider>
     </StyledFilterSettingsContainer>

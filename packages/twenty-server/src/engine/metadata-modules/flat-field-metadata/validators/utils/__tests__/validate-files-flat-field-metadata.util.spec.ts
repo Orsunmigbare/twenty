@@ -57,7 +57,7 @@ describe('validateFilesFlatFieldMetadata', () => {
 [
   {
     "code": "INVALID_FIELD_INPUT",
-    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 60",
+    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 10",
   },
 ]
 `);
@@ -74,16 +74,16 @@ describe('validateFilesFlatFieldMetadata', () => {
 [
   {
     "code": "INVALID_FIELD_INPUT",
-    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 60",
+    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 10",
   },
 ]
 `);
   });
 
-  it('should return error when maxNumberOfValues exceeds max (61)', () => {
+  it('should return error when maxNumberOfValues exceeds max (11)', () => {
     const errors = callValidator(
       createFlatEntityToValidate({
-        universalSettings: { maxNumberOfValues: 61 },
+        universalSettings: { maxNumberOfValues: 11 },
       }),
     );
 
@@ -91,7 +91,7 @@ describe('validateFilesFlatFieldMetadata', () => {
 [
   {
     "code": "INVALID_FIELD_INPUT",
-    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 60",
+    "message": "maxNumberOfValues must be defined in settings and be a number greater than 0 and less than or equal to 10",
   },
 ]
 `);

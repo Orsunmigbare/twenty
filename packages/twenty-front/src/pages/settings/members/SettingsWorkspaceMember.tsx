@@ -1,26 +1,25 @@
 import { useParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { useImpersonationSession } from '@/auth/hooks/useImpersonationSession';
+import { CoreObjectNameSingular, SettingsPath } from 'twenty-shared/types';
 import { useFindOneRecord } from '@/object-record/hooks/useFindOneRecord';
+import { useImpersonationSession } from '@/auth/hooks/useImpersonationSession';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import { SettingsRolesQueryEffect } from '@/settings/roles/components/SettingsRolesQueryEffect';
 import { useHasPermissionFlag } from '@/settings/roles/hooks/useHasPermissionFlag';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
-import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { t } from '@lingui/core/macro';
-import { CoreObjectNameSingular, SettingsPath } from 'twenty-shared/types';
-import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { IconInfoCircle, IconLockOpen } from 'twenty-ui/icon';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+import { getSettingsPath } from 'twenty-shared/utils';
+import { IconInfoCircle, IconLockOpen } from 'twenty-ui/display';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
-import { currentUserState } from '@/auth/states/currentUserState';
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { isImpersonatingState } from '@/auth/states/isImpersonatingState';
 import { useUpdateOneRecord } from '@/object-record/hooks/useUpdateOneRecord';
@@ -30,9 +29,9 @@ import { useWorkspaceMemberRoles } from '@/settings/members/hooks/useWorkspaceMe
 import { type WorkspaceMember } from '@/workspace-member/types/WorkspaceMember';
 import { useMutation } from '@apollo/client/react';
 import {
+  PermissionFlagType,
   DeleteUserWorkspaceDocument,
   ImpersonateDocument,
-  PermissionFlagType,
 } from '~/generated-metadata/graphql';
 
 const SETTINGS_WORKSPACE_MEMBER_TABS = {
@@ -50,7 +49,6 @@ export const SettingsWorkspaceMember = () => {
   const navigateSettings = useNavigateSettings();
   const { enqueueErrorSnackBar, enqueueSuccessSnackBar } = useSnackBar();
   const { openModal, closeModal } = useModal();
-  const currentUser = useAtomStateValue(currentUserState);
   const currentWorkspace = useAtomStateValue(currentWorkspaceState);
   const { startImpersonating } = useImpersonationSession();
   const [impersonate] = useMutation(ImpersonateDocument);
@@ -145,15 +143,6 @@ export const SettingsWorkspaceMember = () => {
       return;
     }
 
-    if (!isDefined(currentUser?.id) || member.userId === currentUser.id) {
-      enqueueErrorSnackBar({
-        message: t`You cannot impersonate your own account`,
-        options: { duration: 2000 },
-      });
-
-      return;
-    }
-
     await impersonate({
       variables: {
         userId: member.userId,
@@ -161,7 +150,6 @@ export const SettingsWorkspaceMember = () => {
       },
       onCompleted: async (data) => {
         const { loginToken } = data.impersonate;
-
         await startImpersonating(loginToken.token);
       },
       onError: () => {
@@ -179,12 +167,12 @@ export const SettingsWorkspaceMember = () => {
     <>
       <SettingsRolesQueryEffect />
       {isLoading ? null : (
-        <SettingsPageLayout
+        <SubMenuTopBarContainer
           title={`${member.name.firstName} ${member.name.lastName}`}
           links={[
             {
               children: t`Workspace`,
-              href: getSettingsPath(SettingsPath.General),
+              href: getSettingsPath(SettingsPath.Workspace),
             },
             {
               children: t`Members`,
@@ -215,14 +203,7 @@ export const SettingsWorkspaceMember = () => {
             {activeTabId === SETTINGS_WORKSPACE_MEMBER_TABS.TABS_IDS.INFOS && (
               <MemberInfosTab
                 member={member}
-                onImpersonate={
-                  canImpersonate &&
-                  isDefined(member.userId) &&
-                  isDefined(currentUser?.id) &&
-                  member.userId !== currentUser.id
-                    ? handleImpersonate
-                    : undefined
-                }
+                onImpersonate={canImpersonate ? handleImpersonate : undefined}
                 onNameChange={debouncedUpdateName}
                 onDelete={() => openModal(DELETE_MEMBER_MODAL_ID)}
               />
@@ -241,12 +222,12 @@ export const SettingsWorkspaceMember = () => {
           <ConfirmationModal
             modalInstanceId={DELETE_MEMBER_MODAL_ID}
             title={t`Remove member from workspace`}
-            subtitle={t`This action cannot be undone. This member will be removed and unassigned from their records. Their synced emails and calendars will stop syncing and be reassigned to you.`}
+            subtitle={t`This action cannot be undone. This will permanently remove this member from this workspace and remove them from all their assignments.`}
             onConfirmClick={handleDeleteMember}
             confirmButtonText={t`Remove member`}
             loading={isDeleting}
           />
-        </SettingsPageLayout>
+        </SubMenuTopBarContainer>
       )}
     </>
   );

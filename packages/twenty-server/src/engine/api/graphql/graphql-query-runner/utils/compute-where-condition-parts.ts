@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 
-import { FieldMetadataType } from 'twenty-shared/types';
+import { type FieldMetadataType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 import { type ObjectLiteral } from 'typeorm';
 
@@ -30,7 +30,7 @@ export const computeWhereConditionParts = ({
   objectNameSingular: string;
   key: string;
   subFieldKey?: string;
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   value: any;
   fieldMetadataType: FieldMetadataType;
   useDirectTableReference?: boolean;
@@ -42,8 +42,6 @@ export const computeWhereConditionParts = ({
   const fieldReference = useDirectTableReference
     ? `"${key}"`
     : `"${objectNameSingular}"."${key}"`;
-
-  const isDateTimeField = fieldMetadataType === FieldMetadataType.DATE_TIME;
 
   //TODO : Remove filter null equivalence injection once feature flag removed + null equivalence transformation added in ORM
   const nullEquivalentFieldValue = findPostgresDefaultNullEquivalentValue(
@@ -61,37 +59,16 @@ export const computeWhereConditionParts = ({
         params: {},
       };
     case 'eq':
-      if (isDateTimeField) {
-        return {
-          sql: `(${fieldReference} >= :${key}${paramSuffix} AND ${fieldReference} < :${key}${paramSuffix}::timestamptz + interval '1 millisecond')${hasNullEquivalentFieldValue ? ` OR ${fieldReference} IS NULL` : ''}`,
-          params: { [`${key}${paramSuffix}`]: value },
-        };
-      }
-
       return {
         sql: `${fieldReference} = :${key}${paramSuffix}${hasNullEquivalentFieldValue ? ` OR ${fieldReference} IS NULL` : ''}`,
         params: { [`${key}${paramSuffix}`]: value },
       };
     case 'neq':
-      if (isDateTimeField) {
-        return {
-          sql: `(${fieldReference} < :${key}${paramSuffix} OR ${fieldReference} >= :${key}${paramSuffix}::timestamptz + interval '1 millisecond')${hasNullEquivalentFieldValue ? ` AND ${fieldReference} IS NOT NULL` : ''}`,
-          params: { [`${key}${paramSuffix}`]: value },
-        };
-      }
-
       return {
         sql: `${fieldReference} != :${key}${paramSuffix}${hasNullEquivalentFieldValue ? ` AND ${fieldReference} IS NOT NULL` : ''}`,
         params: { [`${key}${paramSuffix}`]: value },
       };
     case 'gt':
-      if (isDateTimeField) {
-        return {
-          sql: `${fieldReference} >= :${key}${paramSuffix}::timestamptz + interval '1 millisecond'`,
-          params: { [`${key}${paramSuffix}`]: value },
-        };
-      }
-
       return {
         sql: `${fieldReference} > :${key}${paramSuffix}`,
         params: { [`${key}${paramSuffix}`]: value },
@@ -107,13 +84,6 @@ export const computeWhereConditionParts = ({
         params: { [`${key}${paramSuffix}`]: value },
       };
     case 'lte':
-      if (isDateTimeField) {
-        return {
-          sql: `${fieldReference} < :${key}${paramSuffix}::timestamptz + interval '1 millisecond'`,
-          params: { [`${key}${paramSuffix}`]: value },
-        };
-      }
-
       return {
         sql: `${fieldReference} <= :${key}${paramSuffix}`,
         params: { [`${key}${paramSuffix}`]: value },

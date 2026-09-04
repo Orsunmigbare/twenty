@@ -9,7 +9,7 @@ import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
 import { TextArea } from '@/ui/input/components/TextArea';
 import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { SettingsPath } from 'twenty-shared/types';
 import {
@@ -18,12 +18,10 @@ import {
   isDefined,
   isValidUrl,
 } from 'twenty-shared/utils';
-import { IconTrash } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconTrash } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
-import { SETTINGS_API_WEBHOOKS_TABS } from '~/pages/settings/api-webhooks/constants/SettingsApiWebhooksTabs';
 import { SettingsDatabaseEventsForm } from '@/settings/components/SettingsDatabaseEventsForm';
 
 const DELETE_WEBHOOK_MODAL_ID = 'delete-webhook-modal';
@@ -74,21 +72,17 @@ export const SettingsDevelopersWebhookForm = ({
   return (
     // oxlint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...formConfig}>
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={getTitle()}
+        reserveTitleSpace
         links={[
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
-            children: t`MCP & APIs`,
-            href: getSettingsPath(
-              SettingsPath.ApiWebhooks,
-              undefined,
-              undefined,
-              SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.WEBHOOKS,
-            ),
+            children: t`APIs & Webhooks`,
+            href: getSettingsPath(SettingsPath.ApiWebhooks),
           },
           { children: isCreationMode ? t`New` : getTitle() },
         ]}
@@ -96,15 +90,7 @@ export const SettingsDevelopersWebhookForm = ({
           <SaveAndCancelButtons
             isSaveDisabled={!canSave}
             isCancelDisabled={formConfig.formState.isSubmitting}
-            onCancel={() =>
-              navigate(
-                SettingsPath.ApiWebhooks,
-                undefined,
-                undefined,
-                undefined,
-                SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.WEBHOOKS,
-              )
-            }
+            onCancel={() => navigate(SettingsPath.ApiWebhooks)}
             onSave={formConfig.handleSubmit(handleSave)}
           />
         }
@@ -149,7 +135,6 @@ export const SettingsDevelopersWebhookForm = ({
                   textAreaId={descriptionTextAreaId}
                   placeholder={t`Write a description`}
                   minRows={4}
-                  maxRows={5}
                   value={value || ''}
                   onChange={onChange}
                 />
@@ -208,7 +193,7 @@ export const SettingsDevelopersWebhookForm = ({
             </Section>
           )}
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
       {!isCreationMode && (
         <ConfirmationModal
           confirmationPlaceholder={t`yes`}

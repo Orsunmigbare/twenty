@@ -3,7 +3,6 @@ import { Logo } from '@/auth/components/Logo';
 import { Title } from '@/auth/components/Title';
 import { useAuth } from '@/auth/hooks/useAuth';
 import { useHasAccessTokenPair } from '@/auth/hooks/useHasAccessTokenPair';
-import { StyledOnboardingContentContainer } from '@/auth/components/StyledOnboardingContentContainer';
 import { currentUserState } from '@/auth/states/currentUserState';
 import { workspacePublicDataState } from '@/auth/states/workspacePublicDataState';
 import { PASSWORD_REGEX } from '@/auth/utils/passwordRegex';
@@ -13,7 +12,7 @@ import { useIsCurrentLocationOnAWorkspace } from '@/domain-manager/hooks/useIsCu
 import { useRedirect } from '@/domain-manager/hooks/useRedirect';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { TextInput } from '@/ui/input/components/TextInput';
-import { ModalContent } from 'twenty-ui/surfaces';
+import { ModalContent } from 'twenty-ui/layout';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { styled } from '@linaria/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +30,7 @@ import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomStat
 import { AppPath } from 'twenty-shared/types';
 import { MainButton } from 'twenty-ui/input';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
-import { AnimatedEaseIn } from 'twenty-ui/layout';
+import { AnimatedEaseIn } from 'twenty-ui/utilities';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@apollo/client/react';
 import {
@@ -41,14 +40,14 @@ import {
 import { useNavigateApp } from '~/hooks/useNavigateApp';
 import { logError } from '~/utils/logError';
 
-const passwordLengthMessage = msg`Password must be between 8 and 50 characters`;
+const passwordMinLengthMessage = msg`Password must be min. 8 characters`;
 
 const validationSchema = z
   .object({
     passwordResetToken: z.string(),
     newPassword: z
       .string()
-      .regex(PASSWORD_REGEX, i18n._(passwordLengthMessage)),
+      .regex(PASSWORD_REGEX, i18n._(passwordMinLengthMessage)),
   })
   .required();
 
@@ -60,6 +59,12 @@ const StyledMainContainer = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   width: 100%;
+`;
+
+const StyledContentContainer = styled.div`
+  margin-bottom: ${themeCssVariables.spacing[8]};
+  margin-top: ${themeCssVariables.spacing[4]};
+  width: 200px;
 `;
 
 const StyledForm = styled.form`
@@ -224,7 +229,7 @@ export const PasswordReset = () => {
             />
           </AnimatedEaseIn>
           <Title animate>{passwordActionLabel}</Title>
-          <StyledOnboardingContentContainer>
+          <StyledContentContainer>
             {!email ? (
               <SkeletonTheme
                 baseColor={theme.background.quaternary}
@@ -306,7 +311,7 @@ export const PasswordReset = () => {
                 </StyledMainButtonContainer>
               </StyledForm>
             )}
-          </StyledOnboardingContentContainer>
+          </StyledContentContainer>
         </StyledMainContainer>
       </ModalContent>
     )

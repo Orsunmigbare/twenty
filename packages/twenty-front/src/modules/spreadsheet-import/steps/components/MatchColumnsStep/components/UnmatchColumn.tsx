@@ -22,12 +22,10 @@ const getExpandableContainerTitle = (
   )?.label;
 
   const unmatchedCount =
-    'matchedOptions' in column
-      ? column.matchedOptions.filter((option) => !isDefined(option.value))
-          .length
-      : 0;
+    'matchedOptions' in column &&
+    column.matchedOptions?.filter((option) => !isDefined(option.value)).length;
 
-  return t`Match ${fieldLabel ?? ''} (${unmatchedCount} Unmatched)`;
+  return t`Match ${fieldLabel} (${unmatchedCount} Unmatched)`;
 };
 
 type UnmatchColumnProps = {

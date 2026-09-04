@@ -25,7 +25,7 @@ import {
   IllustrationIconSetting,
   IllustrationIconText,
   IllustrationIconUser,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 
 //TODO : isIncludedInUniqueConstraint refactor - https://github.com/twentyhq/core-team-issues/issues/1097
@@ -209,7 +209,7 @@ export const SETTINGS_COMPOSITE_FIELD_TYPE_CONFIGS = {
             .primaryPhoneCallingCode,
         isImportable: true,
         isFilterable: true,
-        isIncludedInUniqueConstraint: true,
+        isIncludedInUniqueConstraint: false,
       },
       {
         subFieldName:
@@ -220,7 +220,7 @@ export const SETTINGS_COMPOSITE_FIELD_TYPE_CONFIGS = {
             .primaryPhoneCountryCode,
         isImportable: true,
         isFilterable: false,
-        isIncludedInUniqueConstraint: true,
+        isIncludedInUniqueConstraint: false,
       },
       {
         subFieldName:

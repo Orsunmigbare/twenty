@@ -1,35 +1,42 @@
-import { FileFolder } from 'twenty-shared/types';
+import { UnrecoverableError } from 'bullmq';
+import { extractFolderPathFilenameAndTypeOrThrow } from 'twenty-shared/utils';
 
-import { FileStorageService } from 'src/engine/core-modules/file-storage/services/file-storage.service';
+import { FileService } from 'src/engine/core-modules/file/services/file.service';
 import { Process } from 'src/engine/core-modules/message-queue/decorators/process.decorator';
 import { Processor } from 'src/engine/core-modules/message-queue/decorators/processor.decorator';
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 
 export type FileDeletionJobData = {
   workspaceId: string;
-  fileId: string;
-  fileFolder: FileFolder;
+  fullPath: string;
 };
 
 @Processor(MessageQueue.deleteCascadeQueue)
 export class FileDeletionJob {
-  constructor(private readonly fileStorageService: FileStorageService) {}
+  constructor(private readonly fileService: FileService) {}
 
   @Process(FileDeletionJob.name)
-  async handle({
-    workspaceId,
-    fileId,
-    fileFolder,
-  }: FileDeletionJobData): Promise<void> {
+  async handle(data: FileDeletionJobData): Promise<void> {
+    const { workspaceId, fullPath } = data;
+
+    const { folderPath, filename } =
+      extractFolderPathFilenameAndTypeOrThrow(fullPath);
+
+    if (!filename) {
+      throw new UnrecoverableError(
+        `[${FileDeletionJob.name}] Cannot parse filename from full path - ${fullPath}`,
+      );
+    }
+
     try {
-      await this.fileStorageService.deleteByFileId({
-        fileId,
+      await this.fileService.deleteFile({
         workspaceId,
-        fileFolder,
+        filename,
+        folderPath,
       });
     } catch {
       throw new Error(
-        `[${FileDeletionJob.name}] Cannot delete file - ${fileId} in folder ${fileFolder}`,
+        `[${FileDeletionJob.name}] Cannot delete file - ${fullPath}`,
       );
     }
   }

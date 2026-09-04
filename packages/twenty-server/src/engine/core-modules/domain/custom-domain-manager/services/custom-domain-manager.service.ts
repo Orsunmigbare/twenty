@@ -5,9 +5,9 @@ import { msg } from '@lingui/core/macro';
 import { assertIsDefinedOrThrow, isDefined } from 'twenty-shared/utils';
 import { Repository } from 'typeorm';
 
-import { EventLogEmitterService } from 'src/engine/core-modules/event-logs/emit/event-log-emitter.service';
-import { CUSTOM_DOMAIN_ACTIVATED_EVENT } from 'src/engine/core-modules/event-logs/emit/events/workspace-event/custom-domain/custom-domain-activated';
-import { CUSTOM_DOMAIN_DEACTIVATED_EVENT } from 'src/engine/core-modules/event-logs/emit/events/workspace-event/custom-domain/custom-domain-deactivated';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
+import { CUSTOM_DOMAIN_ACTIVATED_EVENT } from 'src/engine/core-modules/audit/utils/events/workspace-event/custom-domain/custom-domain-activated';
+import { CUSTOM_DOMAIN_DEACTIVATED_EVENT } from 'src/engine/core-modules/audit/utils/events/workspace-event/custom-domain/custom-domain-deactivated';
 import { BillingEntitlementKey } from 'src/engine/core-modules/billing/enums/billing-entitlement-key.enum';
 import { BillingService } from 'src/engine/core-modules/billing/services/billing.service';
 import { DomainValidRecords } from 'src/engine/core-modules/dns-manager/dtos/domain-valid-records';
@@ -24,13 +24,11 @@ export class CustomDomainManagerService {
   constructor(
     @InjectRepository(WorkspaceEntity)
     private readonly workspaceRepository: Repository<WorkspaceEntity>,
-    // Enforces global uniqueness of a custom domain across all workspaces.
-    // eslint-disable-next-line twenty/prefer-workspace-scoped-repository
     @InjectRepository(PublicDomainEntity)
     private readonly publicDomainRepository: Repository<PublicDomainEntity>,
     private readonly billingService: BillingService,
     private readonly dnsManagerService: DnsManagerService,
-    private readonly eventLogEmitterService: EventLogEmitterService,
+    private readonly auditService: AuditService,
   ) {}
 
   async isCustomDomainEnabled(workspaceId: string) {
@@ -112,11 +110,11 @@ export class CustomDomainManagerService {
 
       await this.workspaceRepository.save(workspace);
 
-      const eventLogContext = this.eventLogEmitterService.createContext({
+      const analytics = this.auditService.createContext({
         workspaceId: workspace.id,
       });
 
-      void eventLogContext.insertWorkspaceEvent(
+      analytics.insertWorkspaceEvent(
         workspace.isCustomDomainEnabled
           ? CUSTOM_DOMAIN_ACTIVATED_EVENT
           : CUSTOM_DOMAIN_DEACTIVATED_EVENT,
@@ -124,9 +122,6 @@ export class CustomDomainManagerService {
       );
     }
 
-    return {
-      ...customDomainWithRecords,
-      isCustomDomainEnabled: workspace.isCustomDomainEnabled,
-    };
+    return customDomainWithRecords;
   }
 }

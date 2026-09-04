@@ -1,4 +1,7 @@
 import { Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
 
 import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
 import { Process } from 'src/engine/core-modules/message-queue/decorators/process.decorator';
@@ -8,8 +11,7 @@ import { MessageQueueService } from 'src/engine/core-modules/message-queue/servi
 import { AgentAsyncExecutorService } from 'src/engine/metadata-modules/ai/ai-agent-execution/services/agent-async-executor.service';
 import { AgentEntity } from 'src/engine/metadata-modules/ai/ai-agent/entities/agent.entity';
 import { AgentChatService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat.service';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
+
 import { EvaluateAgentTurnJob } from './evaluate-agent-turn.job';
 
 export type RunEvaluationInputJobData = {
@@ -25,8 +27,8 @@ export class RunEvaluationInputJob {
   private readonly logger = new Logger(RunEvaluationInputJob.name);
 
   constructor(
-    @InjectWorkspaceScopedRepository(AgentEntity)
-    private readonly agentRepository: WorkspaceScopedRepository<AgentEntity>,
+    @InjectRepository(AgentEntity)
+    private readonly agentRepository: Repository<AgentEntity>,
     private readonly agentChatService: AgentChatService,
     private readonly aiAgentExecutorService: AgentAsyncExecutorService,
     @InjectMessageQueue(MessageQueue.aiQueue)
@@ -45,7 +47,7 @@ export class RunEvaluationInputJob {
       workspaceId: data.workspaceId,
     });
 
-    const agent = await this.agentRepository.findOne(data.workspaceId, {
+    const agent = await this.agentRepository.findOne({
       where: { id: data.agentId },
     });
 

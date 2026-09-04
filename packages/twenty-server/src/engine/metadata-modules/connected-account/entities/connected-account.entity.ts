@@ -1,5 +1,4 @@
 import {
-  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -16,8 +15,7 @@ import { type ConnectedAccountProvider } from 'twenty-shared/types';
 
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import { ConnectionProviderEntity } from 'src/engine/core-modules/application/connection-provider/connection-provider.entity';
-import { type EncryptedImapSmtpCaldavParams } from 'src/engine/core-modules/imap-smtp-caldav-connection/types/imap-smtp-caldav-connection.type';
-import { type EncryptedString } from 'src/engine/core-modules/secret-encryption/branded-strings/encrypted-string.type';
+import { type ImapSmtpCaldavParams } from 'src/engine/core-modules/imap-smtp-caldav-connection/types/imap-smtp-caldav-connection.type';
 import { type CalendarChannelEntity } from 'src/engine/metadata-modules/calendar-channel/entities/calendar-channel.entity';
 import { type MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
 import { WorkspaceRelatedEntity } from 'src/engine/workspace-manager/types/workspace-related-entity';
@@ -27,22 +25,6 @@ export type ConnectedAccountVisibility = 'user' | 'workspace';
 @Entity({ name: 'connectedAccount', schema: 'core' })
 @Index('IDX_CONNECTED_ACCOUNT_CONNECTION_PROVIDER_ID', ['connectionProviderId'])
 @Index('IDX_CONNECTED_ACCOUNT_APPLICATION_ID', ['applicationId'])
-@Check(
-  'CHK_connectedAccount_accessToken_encrypted',
-  `"accessToken" IS NULL OR "accessToken" LIKE 'enc:v2:%'`,
-)
-@Check(
-  'CHK_connectedAccount_refreshToken_encrypted',
-  `"refreshToken" IS NULL OR "refreshToken" LIKE 'enc:v2:%'`,
-)
-@Check(
-  'CHK_connectedAccount_connectionParameters_encrypted',
-  `"connectionParameters" IS NULL OR (` +
-    `(("connectionParameters"->'IMAP'->>'password') IS NULL OR ("connectionParameters"->'IMAP'->>'password') LIKE 'enc:v2:%') ` +
-    `AND (("connectionParameters"->'SMTP'->>'password') IS NULL OR ("connectionParameters"->'SMTP'->>'password') LIKE 'enc:v2:%') ` +
-    `AND (("connectionParameters"->'CALDAV'->>'password') IS NULL OR ("connectionParameters"->'CALDAV'->>'password') LIKE 'enc:v2:%')` +
-    `)`,
-)
 export class ConnectedAccountEntity extends WorkspaceRelatedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -54,19 +36,16 @@ export class ConnectedAccountEntity extends WorkspaceRelatedEntity {
   provider: ConnectedAccountProvider;
 
   @Column({ type: 'varchar', nullable: true })
-  accessToken: EncryptedString | null;
+  accessToken: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  refreshToken: EncryptedString | null;
+  refreshToken: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   lastCredentialsRefreshedAt: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   authFailedAt: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  archivedAt: Date | null;
 
   @Column({ type: 'varchar', array: true, nullable: true })
   handleAliases: string[] | null;
@@ -75,7 +54,7 @@ export class ConnectedAccountEntity extends WorkspaceRelatedEntity {
   scopes: string[] | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  connectionParameters: EncryptedImapSmtpCaldavParams | null;
+  connectionParameters: ImapSmtpCaldavParams | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   lastSignedInAt: Date | null;

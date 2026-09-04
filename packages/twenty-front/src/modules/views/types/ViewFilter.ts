@@ -12,5 +12,4 @@ export type ViewFilter = {
   viewFilterGroupId?: string | null;
   positionInViewFilterGroup?: number | null;
   subFieldName?: string | null;
-  relationTargetFieldMetadataId?: string | null;
 };

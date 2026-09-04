@@ -3,6 +3,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { StripeBillingAlertService } from 'src/engine/core-modules/billing/stripe/services/stripe-billing-alert.service';
 import { StripeBillingMeterEventService } from 'src/engine/core-modules/billing/stripe/services/stripe-billing-meter-event.service';
 import { StripeBillingMeterService } from 'src/engine/core-modules/billing/stripe/services/stripe-billing-meter.service';
 import { StripeBillingPortalService } from 'src/engine/core-modules/billing/stripe/services/stripe-billing-portal.service';
@@ -19,7 +20,7 @@ import { StripeInvoiceService } from 'src/engine/core-modules/billing/stripe/ser
 import { StripeSDKModule } from 'src/engine/core-modules/billing/stripe/stripe-sdk/stripe-sdk.module';
 import { BillingCustomerEntity } from 'src/engine/core-modules/billing/entities/billing-customer.entity';
 import { DomainServerConfigModule } from 'src/engine/core-modules/domain/domain-server-config/domain-server-config.module';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
+
 @Module({
   imports: [
     DomainServerConfigModule,
@@ -38,9 +39,9 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
     StripePriceService,
     StripeProductService,
     StripeBillingMeterEventService,
+    StripeBillingAlertService,
     StripeCreditGrantService,
     StripeInvoiceService,
-    provideWorkspaceScopedRepository(BillingCustomerEntity),
   ],
   exports: [
     StripeWebhookService,
@@ -54,6 +55,7 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
     StripeProductService,
     StripeBillingMeterEventService,
     StripeSubscriptionScheduleService,
+    StripeBillingAlertService,
     StripeCreditGrantService,
     StripeInvoiceService,
   ],

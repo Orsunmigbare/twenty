@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 
 const mockApiService = {
   validateAuth: vi.fn().mockResolvedValue({ authValid: true, serverUp: true }),
-  getWorkspaceFrontendUrl: vi.fn().mockResolvedValue('http://localhost:3000'),
   generateApplicationToken: vi.fn().mockResolvedValue({
     success: true,
     data: {
@@ -38,7 +37,6 @@ const mockApiService = {
 vi.mock('@/cli/utilities/api/api-service', () => ({
   ApiService: class {
     validateAuth = mockApiService.validateAuth;
-    getWorkspaceFrontendUrl = mockApiService.getWorkspaceFrontendUrl;
     generateApplicationToken = mockApiService.generateApplicationToken;
     refreshToken = mockApiService.refreshToken;
     findApplicationRegistrationByUniversalIdentifier =

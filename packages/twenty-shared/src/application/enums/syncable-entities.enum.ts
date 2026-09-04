@@ -8,7 +8,6 @@ export enum SyncableEntity {
   Agent = 'agent',
   ConnectionProvider = 'connectionProvider',
   View = 'view',
-  ViewField = 'viewField',
   NavigationMenuItem = 'navigationMenuItem',
   PageLayout = 'pageLayout',
   PageLayoutTab = 'pageLayoutTab',

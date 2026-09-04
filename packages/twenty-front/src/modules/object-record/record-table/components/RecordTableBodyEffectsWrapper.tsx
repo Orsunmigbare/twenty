@@ -10,7 +10,7 @@ import { RecordTableVirtualizedInitialDataLoadEffect } from '@/object-record/rec
 
 export interface RecordTableBodyEffectsWrapperProps {
   hasRecordGroups: boolean;
-  tableBodyRef: React.RefObject<HTMLDivElement | null>;
+  tableBodyRef: React.RefObject<HTMLDivElement>;
 }
 
 export const RecordTableBodyEffectsWrapper = ({

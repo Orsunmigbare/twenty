@@ -1,10 +1,7 @@
 import { trimAndRemoveDuplicatedWhitespacesFromObjectStringProperties } from 'twenty-shared/utils';
 import { v4 } from 'uuid';
 
-import {
-  LogicFunctionExecutionMode,
-  LogicFunctionRuntime,
-} from 'src/engine/metadata-modules/logic-function/logic-function.entity';
+import { LogicFunctionRuntime } from 'src/engine/metadata-modules/logic-function/logic-function.entity';
 import { type CreateLogicFunctionFromSourceInput } from 'src/engine/metadata-modules/logic-function/dtos/create-logic-function-from-source.input';
 import { type UniversalFlatLogicFunction } from 'src/engine/workspace-manager/workspace-migration/universal-flat-entity/types/universal-flat-logic-function.type';
 
@@ -46,7 +43,6 @@ export const fromCreateLogicFunctionFromSourceInputToUniversalFlatLogicFunctionT
       timeoutSeconds: createLogicFunctionFromSourceInput.timeoutSeconds ?? 300,
       checksum,
       isBuildUpToDate,
-      executionMode: LogicFunctionExecutionMode.LIVE,
       handlerName,
       sourceHandlerPath,
       builtHandlerPath,
@@ -56,8 +52,6 @@ export const fromCreateLogicFunctionFromSourceInputToUniversalFlatLogicFunctionT
         createLogicFunctionFromSourceInput.databaseEventTriggerSettings ?? null,
       httpRouteTriggerSettings:
         createLogicFunctionFromSourceInput.httpRouteTriggerSettings ?? null,
-      serverRouteTriggerSettings:
-        createLogicFunctionFromSourceInput.serverRouteTriggerSettings ?? null,
       toolTriggerSettings:
         createLogicFunctionFromSourceInput.toolTriggerSettings ?? null,
       workflowActionTriggerSettings:

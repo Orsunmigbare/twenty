@@ -3,37 +3,47 @@ import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 
 import { GmailEmailAliasErrorHandlerService } from 'src/modules/connected-account/email-alias-manager/drivers/google/services/google-email-alias-error-handler.service';
-import { GoogleOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client.provider';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 
 @Injectable()
 export class GoogleEmailAliasManagerService {
   constructor(
-    private readonly googleOAuth2ClientProvider: GoogleOAuth2ClientProvider,
+    private readonly oAuth2ClientManagerService: OAuth2ClientManagerService,
     private readonly gmailEmailAliasErrorHandlerService: GmailEmailAliasErrorHandlerService,
   ) {}
 
   public async getHandleAliases(connectedAccount: ConnectedAccountEntity) {
-    const oAuth2Client = await this.googleOAuth2ClientProvider.getClient(
-      connectedAccount.id,
-    );
+    const oAuth2Client =
+      await this.oAuth2ClientManagerService.getGoogleOAuth2Client(
+        connectedAccount,
+      );
 
-    const gmailClient = google.gmail({
+    const peopleClient = google.people({
       version: 'v1',
       auth: oAuth2Client,
     });
 
-    const sendAsResponse = await gmailClient.users.settings.sendAs
-      .list({ userId: 'me' })
+    const emailsResponse = await peopleClient.people
+      .get({
+        resourceName: 'people/me',
+        personFields: 'emailAddresses',
+      })
       .catch((error) => {
         throw this.gmailEmailAliasErrorHandlerService.handleError(error);
       });
 
-    return (
-      sendAsResponse.data.sendAs
-        ?.filter((alias) => alias.isPrimary !== true)
-        .map((alias) => alias.sendAsEmail || '')
-        .filter((email) => email.length > 0) ?? []
-    );
+    const emailAddresses = emailsResponse.data.emailAddresses;
+
+    const handleAliases =
+      emailAddresses
+        ?.filter((emailAddress) => {
+          return emailAddress.metadata?.primary !== true;
+        })
+        .map((emailAddress) => {
+          return emailAddress.value || '';
+        }) || [];
+
+    return handleAliases;
   }
 }

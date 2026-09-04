@@ -15,6 +15,7 @@ const VALID_CHART_TYPES: ReadonlyArray<ChartConfiguration['__typename']> = [
   'LineChartConfiguration',
   'PieChartConfiguration',
   'AggregateChartConfiguration',
+  'GaugeChartConfiguration',
 ] as const;
 
 export const assertChartWidgetOrThrow: AssertChartWidgetOrThrow = (

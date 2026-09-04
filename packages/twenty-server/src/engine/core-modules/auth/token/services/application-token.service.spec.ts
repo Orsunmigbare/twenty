@@ -10,7 +10,7 @@ import {
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
 import { ApplicationTokenService } from 'src/engine/core-modules/auth/token/services/application-token.service';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
@@ -29,9 +29,10 @@ describe('ApplicationTokenService', () => {
         {
           provide: JwtWrapperService,
           useValue: {
-            signAsyncOrThrow: jest.fn(),
+            sign: jest.fn(),
             verifyJwtToken: jest.fn(),
             decode: jest.fn(),
+            generateAppSecret: jest.fn(),
             extractJwtFromRequest: jest.fn(),
           },
         },
@@ -80,9 +81,7 @@ describe('ApplicationTokenService', () => {
       jest
         .spyOn(applicationRepository, 'findOne')
         .mockResolvedValue(mockApplication as ApplicationEntity);
-      jest
-        .spyOn(jwtWrapperService, 'signAsyncOrThrow')
-        .mockResolvedValue(mockToken);
+      jest.spyOn(jwtWrapperService, 'sign').mockReturnValue(mockToken);
 
       const result = await service.generateApplicationAccessToken({
         workspaceId,
@@ -93,7 +92,7 @@ describe('ApplicationTokenService', () => {
         token: mockToken,
         expiresAt: expect.any(Date),
       });
-      expect(jwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(jwtWrapperService.sign).toHaveBeenCalledWith(
         expect.objectContaining({
           sub: applicationId,
           applicationId,
@@ -117,9 +116,7 @@ describe('ApplicationTokenService', () => {
       jest
         .spyOn(applicationRepository, 'findOne')
         .mockResolvedValue(mockApplication as ApplicationEntity);
-      jest
-        .spyOn(jwtWrapperService, 'signAsyncOrThrow')
-        .mockResolvedValue(mockToken);
+      jest.spyOn(jwtWrapperService, 'sign').mockReturnValue(mockToken);
 
       const result = await service.generateApplicationAccessToken({
         workspaceId,
@@ -132,7 +129,7 @@ describe('ApplicationTokenService', () => {
         token: mockToken,
         expiresAt: expect.any(Date),
       });
-      expect(jwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(jwtWrapperService.sign).toHaveBeenCalledWith(
         expect.objectContaining({
           sub: applicationId,
           applicationId,
@@ -175,7 +172,7 @@ describe('ApplicationTokenService', () => {
   });
 
   describe('validateApplicationRefreshToken', () => {
-    it('should validate and return payload for a valid refresh token', async () => {
+    it('should validate and return payload for a valid refresh token', () => {
       const mockToken = 'valid-refresh-token';
       const mockPayload = {
         sub: 'application-id',
@@ -186,10 +183,10 @@ describe('ApplicationTokenService', () => {
 
       jest
         .spyOn(jwtWrapperService, 'verifyJwtToken')
-        .mockResolvedValue(undefined);
+        .mockReturnValue(undefined);
       jest.spyOn(jwtWrapperService, 'decode').mockReturnValue(mockPayload);
 
-      const result = await service.validateApplicationRefreshToken(mockToken);
+      const result = service.validateApplicationRefreshToken(mockToken);
 
       expect(result).toEqual(mockPayload);
       expect(jwtWrapperService.verifyJwtToken).toHaveBeenCalledWith(mockToken);
@@ -198,12 +195,12 @@ describe('ApplicationTokenService', () => {
       });
     });
 
-    it('should throw when token type is not APPLICATION_REFRESH', async () => {
+    it('should throw when token type is not APPLICATION_REFRESH', () => {
       const mockToken = 'access-token';
 
       jest
         .spyOn(jwtWrapperService, 'verifyJwtToken')
-        .mockResolvedValue(undefined);
+        .mockReturnValue(undefined);
       jest.spyOn(jwtWrapperService, 'decode').mockReturnValue({
         sub: 'application-id',
         applicationId: 'application-id',
@@ -211,12 +208,12 @@ describe('ApplicationTokenService', () => {
         type: JwtTokenTypeEnum.APPLICATION_ACCESS,
       });
 
-      await expect(
-        service.validateApplicationRefreshToken(mockToken),
-      ).rejects.toThrow(AuthException);
+      expect(() => service.validateApplicationRefreshToken(mockToken)).toThrow(
+        AuthException,
+      );
 
       try {
-        await service.validateApplicationRefreshToken(mockToken);
+        service.validateApplicationRefreshToken(mockToken);
       } catch (error) {
         expect((error as AuthException).code).toBe(
           AuthExceptionCode.APPLICATION_REFRESH_TOKEN_INVALID_OR_EXPIRED,
@@ -224,7 +221,7 @@ describe('ApplicationTokenService', () => {
       }
     });
 
-    it('should throw dedicated code when token verification fails', async () => {
+    it('should throw dedicated code when token verification fails', () => {
       const mockToken = 'invalid-token';
 
       jest.spyOn(jwtWrapperService, 'verifyJwtToken').mockImplementation(() => {
@@ -234,12 +231,12 @@ describe('ApplicationTokenService', () => {
         );
       });
 
-      await expect(
-        service.validateApplicationRefreshToken(mockToken),
-      ).rejects.toThrow(AuthException);
+      expect(() => service.validateApplicationRefreshToken(mockToken)).toThrow(
+        AuthException,
+      );
 
       try {
-        await service.validateApplicationRefreshToken(mockToken);
+        service.validateApplicationRefreshToken(mockToken);
       } catch (error) {
         expect((error as AuthException).code).toBe(
           AuthExceptionCode.APPLICATION_REFRESH_TOKEN_INVALID_OR_EXPIRED,
@@ -247,16 +244,16 @@ describe('ApplicationTokenService', () => {
       }
     });
 
-    it('should rethrow unexpected token verification errors', async () => {
+    it('should rethrow unexpected token verification errors', () => {
       const mockToken = 'invalid-token';
 
       jest.spyOn(jwtWrapperService, 'verifyJwtToken').mockImplementation(() => {
         throw new Error('Unexpected verification error');
       });
 
-      await expect(
-        service.validateApplicationRefreshToken(mockToken),
-      ).rejects.toThrow('Unexpected verification error');
+      expect(() => service.validateApplicationRefreshToken(mockToken)).toThrow(
+        'Unexpected verification error',
+      );
     });
   });
 
@@ -274,9 +271,7 @@ describe('ApplicationTokenService', () => {
       jest
         .spyOn(applicationRepository, 'findOne')
         .mockResolvedValue(mockApplication as ApplicationEntity);
-      jest
-        .spyOn(jwtWrapperService, 'signAsyncOrThrow')
-        .mockResolvedValue(mockToken);
+      jest.spyOn(jwtWrapperService, 'sign').mockReturnValue(mockToken);
 
       const result = await service.generateApplicationTokenPair({
         workspaceId,
@@ -291,7 +286,7 @@ describe('ApplicationTokenService', () => {
         token: mockToken,
         expiresAt: expect.any(Date),
       });
-      expect(jwtWrapperService.signAsyncOrThrow).toHaveBeenCalledTimes(2);
+      expect(jwtWrapperService.sign).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -309,9 +304,7 @@ describe('ApplicationTokenService', () => {
       jest
         .spyOn(applicationRepository, 'findOne')
         .mockResolvedValue(mockApplication as ApplicationEntity);
-      jest
-        .spyOn(jwtWrapperService, 'signAsyncOrThrow')
-        .mockResolvedValue(mockToken);
+      jest.spyOn(jwtWrapperService, 'sign').mockReturnValue(mockToken);
 
       const result = await service.renewApplicationTokens({
         workspaceId,

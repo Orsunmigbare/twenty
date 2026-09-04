@@ -8,8 +8,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { IconPlus } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconPlus } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -24,7 +23,7 @@ import { SettingsPageContainer } from '@/settings/components/SettingsPageContain
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { Select } from '@/ui/input/components/Select';
 import { TextInput } from '@/ui/input/components/TextInput';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { Checkbox, Toggle } from 'twenty-ui/input';
 
 const StyledComboInputContainer = styled.div`
@@ -279,7 +278,7 @@ export const SettingsAdminNewAiModel = () => {
 
   return (
     <form onSubmit={form.handleSubmit(handleSave)}>
-      <SettingsPageLayout
+      <SubMenuTopBarContainer
         title={t`New Model`}
         links={[
           {
@@ -540,7 +539,7 @@ export const SettingsAdminNewAiModel = () => {
             />
           </Section>
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     </form>
   );
 };

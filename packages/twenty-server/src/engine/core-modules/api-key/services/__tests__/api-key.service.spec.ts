@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { getDataSourceToken } from '@nestjs/typeorm';
+import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 
 import { IsNull } from 'typeorm';
 
@@ -10,11 +10,10 @@ import {
 } from 'src/engine/core-modules/api-key/exceptions/api-key.exception';
 import { ApiKeyRoleService } from 'src/engine/core-modules/api-key/services/api-key-role.service';
 import { ApiKeyService } from 'src/engine/core-modules/api-key/services/api-key.service';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { RoleTargetEntity } from 'src/engine/metadata-modules/role-target/role-target.entity';
 import { RoleTargetService } from 'src/engine/metadata-modules/role-target/services/role-target.service';
-import { getWorkspaceScopedRepositoryToken } from 'src/engine/twenty-orm/workspace-scoped-repository/get-workspace-scoped-repository-token.util';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 
 describe('ApiKeyService', () => {
@@ -68,7 +67,8 @@ describe('ApiKeyService', () => {
     };
 
     mockJwtWrapperService = {
-      signAsyncOrThrow: jest.fn(),
+      generateAppSecret: jest.fn(),
+      sign: jest.fn(),
     };
 
     mockApiKeyRoleService = {
@@ -89,7 +89,7 @@ describe('ApiKeyService', () => {
       providers: [
         ApiKeyService,
         {
-          provide: getWorkspaceScopedRepositoryToken(ApiKeyEntity),
+          provide: getRepositoryToken(ApiKeyEntity),
           useValue: mockApiKeyRepository,
         },
         {
@@ -101,7 +101,7 @@ describe('ApiKeyService', () => {
           useValue: mockRoleTargetService,
         },
         {
-          provide: getWorkspaceScopedRepositoryToken(RoleTargetEntity),
+          provide: getRepositoryToken(RoleTargetEntity),
           useValue: mockroleTargetRepository,
         },
         {
@@ -144,6 +144,7 @@ describe('ApiKeyService', () => {
       const expectedApiKeyFields = {
         name: 'New API Key',
         expiresAt: new Date('2025-12-31'),
+        workspaceId: mockWorkspaceId,
       };
 
       mockApiKeyRepository.save.mockResolvedValue(mockApiKey);
@@ -152,7 +153,6 @@ describe('ApiKeyService', () => {
       const result = await service.create(apiKeyData);
 
       expect(mockApiKeyRepository.save).toHaveBeenCalledWith(
-        mockWorkspaceId,
         expectedApiKeyFields,
       );
       expect(mockRoleTargetService.create).toHaveBeenCalledWith({
@@ -186,10 +186,7 @@ describe('ApiKeyService', () => {
 
       expect(mockApiKeyRepository.save).toHaveBeenCalled();
       expect(mockRoleTargetService.create).toHaveBeenCalled();
-      expect(mockApiKeyRepository.delete).toHaveBeenCalledWith(
-        mockWorkspaceId,
-        { id: mockApiKey.id },
-      );
+      expect(mockApiKeyRepository.delete).toHaveBeenCalledWith(mockApiKey.id);
     });
 
     it('should handle save failures gracefully', async () => {
@@ -215,10 +212,12 @@ describe('ApiKeyService', () => {
 
       const result = await service.findById(mockApiKeyId, mockWorkspaceId);
 
-      expect(mockApiKeyRepository.findOne).toHaveBeenCalledWith(
-        mockWorkspaceId,
-        { where: { id: mockApiKeyId } },
-      );
+      expect(mockApiKeyRepository.findOne).toHaveBeenCalledWith({
+        where: {
+          id: mockApiKeyId,
+          workspaceId: mockWorkspaceId,
+        },
+      });
       expect(result).toEqual(mockApiKey);
     });
 
@@ -239,7 +238,11 @@ describe('ApiKeyService', () => {
 
       const result = await service.findByWorkspaceId(mockWorkspaceId);
 
-      expect(mockApiKeyRepository.find).toHaveBeenCalledWith(mockWorkspaceId);
+      expect(mockApiKeyRepository.find).toHaveBeenCalledWith({
+        where: {
+          workspaceId: mockWorkspaceId,
+        },
+      });
       expect(result).toEqual(mockApiKeys);
     });
   });
@@ -252,8 +255,11 @@ describe('ApiKeyService', () => {
 
       const result = await service.findActiveByWorkspaceId(mockWorkspaceId);
 
-      expect(mockApiKeyRepository.find).toHaveBeenCalledWith(mockWorkspaceId, {
-        where: { revokedAt: IsNull() },
+      expect(mockApiKeyRepository.find).toHaveBeenCalledWith({
+        where: {
+          workspaceId: mockWorkspaceId,
+          revokedAt: IsNull(),
+        },
       });
       expect(result).toEqual(activeApiKeys);
     });
@@ -276,8 +282,7 @@ describe('ApiKeyService', () => {
       );
 
       expect(mockApiKeyRepository.update).toHaveBeenCalledWith(
-        mockWorkspaceId,
-        { id: mockApiKeyId },
+        mockApiKeyId,
         updateData,
       );
       expect(result).toEqual(updatedApiKey);
@@ -307,9 +312,10 @@ describe('ApiKeyService', () => {
       const result = await service.revoke(mockApiKeyId, mockWorkspaceId);
 
       expect(mockApiKeyRepository.update).toHaveBeenCalledWith(
-        mockWorkspaceId,
-        { id: mockApiKeyId },
-        expect.objectContaining({ revokedAt: expect.any(Date) }),
+        mockApiKeyId,
+        expect.objectContaining({
+          revokedAt: expect.any(Date),
+        }),
       );
       expect(result).toEqual(revokedApiKey);
     });
@@ -371,10 +377,12 @@ describe('ApiKeyService', () => {
   });
 
   describe('generateApiKeyToken', () => {
+    const mockSecret = 'mock-secret';
     const mockToken = 'mock-jwt-token';
 
     beforeEach(() => {
-      mockJwtWrapperService.signAsyncOrThrow.mockResolvedValue(mockToken);
+      mockJwtWrapperService.generateAppSecret.mockReturnValue(mockSecret);
+      mockJwtWrapperService.sign.mockReturnValue(mockToken);
     });
 
     it('should generate a JWT token for a valid API key', async () => {
@@ -387,13 +395,18 @@ describe('ApiKeyService', () => {
         expiresAt,
       );
 
-      expect(mockJwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(mockJwtWrapperService.generateAppSecret).toHaveBeenCalledWith(
+        JwtTokenTypeEnum.API_KEY,
+        mockWorkspaceId,
+      );
+      expect(mockJwtWrapperService.sign).toHaveBeenCalledWith(
         {
           sub: mockWorkspaceId,
           type: JwtTokenTypeEnum.API_KEY,
           workspaceId: mockWorkspaceId,
         },
         {
+          secret: mockSecret,
           expiresIn: expect.any(Number),
           jwtid: mockApiKeyId,
         },
@@ -405,7 +418,7 @@ describe('ApiKeyService', () => {
       const result = await service.generateApiKeyToken(mockWorkspaceId);
 
       expect(result).toBeUndefined();
-      expect(mockJwtWrapperService.signAsyncOrThrow).not.toHaveBeenCalled();
+      expect(mockJwtWrapperService.generateAppSecret).not.toHaveBeenCalled();
     });
 
     it('should use default expiration if no expiresAt provided', async () => {
@@ -413,7 +426,7 @@ describe('ApiKeyService', () => {
 
       await service.generateApiKeyToken(mockWorkspaceId, mockApiKeyId);
 
-      expect(mockJwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(mockJwtWrapperService.sign).toHaveBeenCalledWith(
         expect.any(Object),
         expect.objectContaining({
           expiresIn: '100y',
@@ -431,13 +444,14 @@ describe('ApiKeyService', () => {
         expiresAt,
       );
 
-      expect(mockJwtWrapperService.signAsyncOrThrow).toHaveBeenCalledWith(
+      expect(mockJwtWrapperService.sign).toHaveBeenCalledWith(
         {
           sub: mockWorkspaceId,
           type: JwtTokenTypeEnum.API_KEY,
           workspaceId: mockWorkspaceId,
         },
         expect.objectContaining({
+          secret: mockSecret,
           expiresIn: expect.any(Number),
           jwtid: mockApiKeyId,
         }),

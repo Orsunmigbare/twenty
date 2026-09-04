@@ -1,5 +1,5 @@
-import { isPlainObject } from 'twenty-shared/utils';
 import { type FunctionInput } from 'twenty-shared/workflow';
+import { isObject } from '@sniptt/guards';
 
 export const mergeDefaultFunctionInputAndFunctionInput = ({
   newInput,
@@ -16,12 +16,12 @@ export const mergeDefaultFunctionInputAndFunctionInput = ({
 
     if (!(key in oldInput)) {
       result[key] = newValue;
-    } else if (newValue === null && isPlainObject(oldValue)) {
+    } else if (newValue === null && isObject(oldValue)) {
       result[key] = null;
-    } else if (isPlainObject(newValue)) {
+    } else if (isObject(newValue)) {
       result[key] = mergeDefaultFunctionInputAndFunctionInput({
         newInput: newValue,
-        oldInput: isPlainObject(oldValue) ? oldValue : {},
+        oldInput: isObject(oldValue) ? oldValue : {},
       });
     } else {
       result[key] = oldValue;

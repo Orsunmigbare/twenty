@@ -1,6 +1,6 @@
 export enum PageFocusId {
   Settings = 'settings',
-  WorkspaceActivation = 'workspace-activation',
+  CreateWorkspace = 'create-workspace',
   SignInUp = 'sign-in-up',
   CreateProfile = 'create-profile',
   InviteTeam = 'invite-team',
@@ -8,5 +8,4 @@ export enum PageFocusId {
   PlanRequired = 'plan-required',
   RecordShowPage = 'record-show-page',
   RecordIndex = 'record-index',
-  PageLayoutPage = 'page-layout-page',
 }

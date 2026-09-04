@@ -76,10 +76,6 @@ export const createStandardCommandMenuItemFlatMetadata = ({
       resolvedObjectMetadataUniversalIdentifier,
     pageLayoutId: null,
     pageLayoutUniversalIdentifier: null,
-    isActive: true,
-    isSystemSideEffect: false,
-    overrides: null,
-    universalOverrides: null,
     createdAt: now,
     updatedAt: now,
   };

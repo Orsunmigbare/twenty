@@ -4,6 +4,7 @@ import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object
 
 export const getFindManyResponse200 = (
   item: Pick<FlatObjectMetadata, 'nameSingular' | 'namePlural'>,
+  fromMetadata = false,
 ) => {
   const schemaRef = `#/components/schemas/${capitalize(
     item.nameSingular,
@@ -33,15 +34,19 @@ export const getFindManyResponse200 = (
                 hasNextPage: { type: 'boolean' },
                 startCursor: {
                   type: 'string',
+                  format: 'uuid',
                 },
                 endCursor: {
                   type: 'string',
+                  format: 'uuid',
                 },
               },
             },
-            totalCount: {
-              type: 'integer',
-            },
+            ...(!fromMetadata && {
+              totalCount: {
+                type: 'integer',
+              },
+            }),
           },
         },
       },

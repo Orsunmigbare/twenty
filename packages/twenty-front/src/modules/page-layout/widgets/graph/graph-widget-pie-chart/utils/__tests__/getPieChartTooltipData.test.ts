@@ -26,19 +26,19 @@ describe('getPieChartTooltipData', () => {
 
   const mockEnrichedData: PieChartEnrichedData[] = [
     {
-      key: 'Product A',
+      id: 'Product A',
       value: 500,
       percentage: 50,
       colorScheme: mockColorScheme,
     },
     {
-      key: 'Product B',
+      id: 'Product B',
       value: 300,
       percentage: 30,
       colorScheme: { ...mockColorScheme, solid: '#solidB' },
     },
     {
-      key: 'Product C',
+      id: 'Product C',
       value: 200,
       percentage: 20,
       colorScheme: { ...mockColorScheme, solid: '#solidC' },
@@ -46,13 +46,11 @@ describe('getPieChartTooltipData', () => {
   ];
 
   const createMockDatum = (
-    key: string,
-    options?: { computedId?: string },
+    id: string,
   ): ComputedDatum<PieChartDataItemWithColor> =>
     ({
-      id: options?.computedId ?? key,
+      id,
       value: 0,
-      data: { key, value: 0 },
     }) as unknown as ComputedDatum<PieChartDataItemWithColor>;
 
   const defaultFormatOptions = {
@@ -150,21 +148,6 @@ describe('getPieChartTooltipData', () => {
       expect(result).toBeNull();
     });
 
-    it('should match by datum.data.key when computed id is namespaced per widget', () => {
-      const datum = createMockDatum('Product A', {
-        computedId: 'widget-xyz:Product A',
-      });
-
-      const result = getPieChartTooltipData({
-        datum,
-        enrichedData: mockEnrichedData,
-        formatOptions: defaultFormatOptions,
-      });
-
-      expect(result?.tooltipItem.key).toBe('Product A');
-      expect(result?.tooltipItem.value).toBe(500);
-    });
-
     it('should return null when enrichedData is empty', () => {
       const datum = createMockDatum('Product A');
 
@@ -182,7 +165,7 @@ describe('getPieChartTooltipData', () => {
     it('should handle item with zero value', () => {
       const enrichedDataWithZero: PieChartEnrichedData[] = [
         {
-          key: 'Zero Item',
+          id: 'Zero Item',
           value: 0,
           percentage: 0,
           colorScheme: mockColorScheme,
@@ -203,7 +186,7 @@ describe('getPieChartTooltipData', () => {
     it('should handle special characters in id', () => {
       const enrichedDataWithSpecialChars: PieChartEnrichedData[] = [
         {
-          key: 'Item & Special <chars>',
+          id: 'Item & Special <chars>',
           value: 100,
           percentage: 100,
           colorScheme: mockColorScheme,

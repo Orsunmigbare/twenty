@@ -1,7 +1,7 @@
 import { getObjectMetadataIdentifierFields } from '@/object-metadata/utils/getObjectMetadataIdentifierFields';
 import { ObjectRecordShowPageBreadcrumb } from '@/object-record/record-show/components/ObjectRecordShowPageBreadcrumb';
 import { useRecordShowPagePagination } from '@/object-record/record-show/hooks/useRecordShowPagePagination';
-import { PageCardHeader } from '@/ui/layout/page/components/PageCardHeader';
+import { PageHeader } from '@/ui/layout/page/components/PageHeader';
 
 export const RecordShowPageHeader = ({
   objectNameSingular,
@@ -21,8 +21,8 @@ export const RecordShowPageHeader = ({
     getObjectMetadataIdentifierFields({ objectMetadataItem });
 
   return (
-    <PageCardHeader
-      breadcrumb={
+    <PageHeader
+      title={
         <ObjectRecordShowPageBreadcrumb
           objectNameSingular={objectNameSingular}
           objectRecordId={objectRecordId}
@@ -30,7 +30,8 @@ export const RecordShowPageHeader = ({
           labelIdentifierFieldMetadataItem={labelIdentifierFieldMetadataItem}
         />
       }
-      actionButton={children}
-    />
+    >
+      {children}
+    </PageHeader>
   );
 };

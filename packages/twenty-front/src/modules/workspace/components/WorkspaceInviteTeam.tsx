@@ -20,7 +20,7 @@ import {
   IconUser,
   useIcons,
   type IconComponent,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { MOBILE_VIEWPORT, themeCssVariables } from 'twenty-ui/theme-constants';
 

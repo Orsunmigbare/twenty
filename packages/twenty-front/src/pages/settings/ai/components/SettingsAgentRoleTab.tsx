@@ -10,8 +10,7 @@ import { settingsDraftRoleFamilyState } from '@/settings/roles/states/settingsDr
 import { useSetAtomFamilyState } from '@/ui/utilities/state/jotai/hooks/useSetAtomFamilyState';
 import { isNonEmptyString } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
-import { IconPlus } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconPlus } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';

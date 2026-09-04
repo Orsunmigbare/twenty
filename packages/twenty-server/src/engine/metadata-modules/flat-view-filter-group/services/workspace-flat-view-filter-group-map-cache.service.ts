@@ -12,8 +12,6 @@ import { fromViewFilterGroupEntityToFlatViewFilterGroup } from 'src/engine/metad
 import { ViewFilterGroupEntity } from 'src/engine/metadata-modules/view-filter-group/entities/view-filter-group.entity';
 import { ViewFilterEntity } from 'src/engine/metadata-modules/view-filter/entities/view-filter.entity';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { regroupEntitiesByRelatedEntityId } from 'src/engine/workspace-cache/utils/regroup-entities-by-related-entity-id';
@@ -23,14 +21,14 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatViewFilterGroupMaps')
 export class WorkspaceFlatViewFilterGroupMapCacheService extends WorkspaceCacheProvider<FlatViewFilterGroupMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(ViewFilterGroupEntity)
-    private readonly viewFilterGroupRepository: WorkspaceScopedRepository<ViewFilterGroupEntity>,
+    @InjectRepository(ViewFilterGroupEntity)
+    private readonly viewFilterGroupRepository: Repository<ViewFilterGroupEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
-    @InjectWorkspaceScopedRepository(ViewFilterEntity)
-    private readonly viewFilterRepository: WorkspaceScopedRepository<ViewFilterEntity>,
-    @InjectWorkspaceScopedRepository(ViewEntity)
-    private readonly viewRepository: WorkspaceScopedRepository<ViewEntity>,
+    @InjectRepository(ViewFilterEntity)
+    private readonly viewFilterRepository: Repository<ViewFilterEntity>,
+    @InjectRepository(ViewEntity)
+    private readonly viewRepository: Repository<ViewEntity>,
   ) {
     super();
   }
@@ -38,7 +36,8 @@ export class WorkspaceFlatViewFilterGroupMapCacheService extends WorkspaceCacheP
   async computeForCache(workspaceId: string): Promise<FlatViewFilterGroupMaps> {
     const [viewFilterGroups, applications, viewFilters, views] =
       await Promise.all([
-        this.viewFilterGroupRepository.find(workspaceId, {
+        this.viewFilterGroupRepository.find({
+          where: { workspaceId },
           withDeleted: true,
         }),
         this.applicationRepository.find({
@@ -46,11 +45,13 @@ export class WorkspaceFlatViewFilterGroupMapCacheService extends WorkspaceCacheP
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),
-        this.viewFilterRepository.find(workspaceId, {
+        this.viewFilterRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier', 'viewFilterGroupId'],
           withDeleted: true,
         }),
-        this.viewRepository.find(workspaceId, {
+        this.viewRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),

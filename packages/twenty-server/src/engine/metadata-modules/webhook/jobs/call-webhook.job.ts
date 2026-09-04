@@ -2,8 +2,8 @@ import crypto from 'crypto';
 
 import { ensureAbsoluteUrl } from 'twenty-shared/utils';
 
-import { EventLogEmitterService } from 'src/engine/core-modules/event-logs/emit/event-log-emitter.service';
-import { WEBHOOK_RESPONSE_EVENT } from 'src/engine/core-modules/event-logs/emit/events/workspace-event/webhook/webhook-response';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
+import { WEBHOOK_RESPONSE_EVENT } from 'src/engine/core-modules/audit/utils/events/workspace-event/webhook/webhook-response';
 import { Process } from 'src/engine/core-modules/message-queue/decorators/process.decorator';
 import { Processor } from 'src/engine/core-modules/message-queue/decorators/processor.decorator';
 import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
@@ -15,7 +15,7 @@ import { type WebhookJobData } from 'src/engine/metadata-modules/webhook/types/w
 @Processor(MessageQueue.webhookQueue)
 export class CallWebhookJob {
   constructor(
-    private readonly eventLogEmitterService: EventLogEmitterService,
+    private readonly auditService: AuditService,
     private readonly metricsService: MetricsService,
     private readonly secureHttpClientService: SecureHttpClientService,
   ) {}
@@ -46,7 +46,7 @@ export class CallWebhookJob {
       webhookId: data.webhookId,
       eventName: data.eventName,
     };
-    const eventLogContext = this.eventLogEmitterService.createContext({
+    const auditService = this.auditService.createContext({
       workspaceId: data.workspaceId,
     });
 
@@ -89,13 +89,13 @@ export class CallWebhookJob {
 
       const success = response.status >= 200 && response.status < 300;
 
-      void eventLogContext.insertWorkspaceEvent(WEBHOOK_RESPONSE_EVENT, {
+      auditService.insertWorkspaceEvent(WEBHOOK_RESPONSE_EVENT, {
         status: response.status,
         success,
         ...commonPayload,
       });
 
-      void this.metricsService.incrementCounterForEvent({
+      this.metricsService.incrementCounter({
         key: MetricsKeys.JobWebhookCallCompleted,
         shouldStoreInCache: false,
       });
@@ -105,7 +105,7 @@ export class CallWebhookJob {
         err.message.includes('internal IP address') &&
         err.message.includes('is not allowed');
 
-      void eventLogContext.insertWorkspaceEvent(WEBHOOK_RESPONSE_EVENT, {
+      auditService.insertWorkspaceEvent(WEBHOOK_RESPONSE_EVENT, {
         success: false,
         ...commonPayload,
         ...(err.response && { status: err.response.status }),

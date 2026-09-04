@@ -21,13 +21,11 @@ import { getNavigationSubItemLeftAdornment } from '@/ui/navigation/navigation-dr
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 import { viewsSelector } from '@/views/states/selectors/viewsSelector';
-import { lastVisitedViewPerObjectMetadataItemState } from '@/navigation/states/lastVisitedViewPerObjectMetadataItemState';
 
 type NavigationMenuItemFolderSubItemProps = {
   navigationMenuItem: NavigationMenuItem;
   index: number;
   arrayLength: number;
-  selectedIndex: number;
   isDragging: boolean;
   rightOptions?: ReactNode;
   onClick?: () => void;
@@ -41,7 +39,6 @@ export const NavigationMenuItemFolderSubItem = ({
   navigationMenuItem,
   index,
   arrayLength,
-  selectedIndex,
   isDragging,
   rightOptions,
   onClick,
@@ -51,9 +48,6 @@ export const NavigationMenuItemFolderSubItem = ({
     useIsNavigationMenuItemEditHighlighted(navigationMenuItem);
   const objectMetadataItems = useAtomStateValue(objectMetadataItemsSelector);
   const views = useAtomStateValue(viewsSelector);
-  const lastVisitedViewPerObjectMetadataItem = useAtomStateValue(
-    lastVisitedViewPerObjectMetadataItemState,
-  );
   const navigate = useNavigate();
   const setLastClickedNavigationMenuItemId = useSetAtomState(
     lastClickedNavigationMenuItemIdState,
@@ -69,12 +63,11 @@ export const NavigationMenuItemFolderSubItem = ({
     objectMetadataItems,
     views,
   );
-  const computedLink = getNavigationMenuItemComputedLink({
-    item: navigationMenuItem,
+  const computedLink = getNavigationMenuItemComputedLink(
+    navigationMenuItem,
     objectMetadataItems,
     views,
-    lastVisitedViewPerObjectMetadataItem,
-  });
+  );
   const objectNameSingular = getNavigationMenuItemObjectNameSingular(
     navigationMenuItem,
     objectMetadataItems,
@@ -135,7 +128,7 @@ export const NavigationMenuItemFolderSubItem = ({
       subItemState={getNavigationSubItemLeftAdornment({
         index,
         arrayLength,
-        selectedIndex,
+        selectedIndex: isActive ? index : -1,
       })}
       rightOptions={rightOptions}
       isDragging={isDragging}

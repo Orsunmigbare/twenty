@@ -1,9 +1,4 @@
-import {
-  Brackets,
-  NotBrackets,
-  type ObjectLiteral,
-  type WhereExpressionBuilder,
-} from 'typeorm';
+import { Brackets, NotBrackets, type WhereExpressionBuilder } from 'typeorm';
 
 import { type ObjectRecordFilter } from 'src/engine/api/graphql/workspace-query-builder/interfaces/object-record.interface';
 
@@ -21,63 +16,39 @@ export class GraphqlQueryFilterConditionParser {
   constructor(
     flatObjectMetadata: FlatObjectMetadata,
     flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>,
-    flatObjectMetadataMaps?: FlatEntityMaps<FlatObjectMetadata>,
-    depth = 0,
   ) {
     this.flatObjectMetadata = flatObjectMetadata;
     this.queryFilterFieldParser = new GraphqlQueryFilterFieldParser(
       this.flatObjectMetadata,
       flatFieldMetadataMaps,
-      flatObjectMetadataMaps,
-      depth,
     );
   }
 
   public parse(
-    queryBuilder: WorkspaceSelectQueryBuilder<ObjectLiteral>,
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
+    queryBuilder: WorkspaceSelectQueryBuilder<any>,
     objectNameSingular: string,
     filter: Partial<ObjectRecordFilter>,
-  ): WorkspaceSelectQueryBuilder<ObjectLiteral> {
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
+  ): WorkspaceSelectQueryBuilder<any> {
     if (!filter || Object.keys(filter).length === 0) {
       return queryBuilder;
     }
 
     return queryBuilder.where(
       new Brackets((qb) => {
-        this.applyFilterEntriesToWhereBrackets(
-          qb,
-          queryBuilder,
-          objectNameSingular,
-          filter,
-        );
+        Object.entries(filter).forEach(([key, value], index) => {
+          this.parseKeyFilter(qb, objectNameSingular, key, value, index === 0);
+        });
       }),
     );
   }
 
-  public applyFilterEntriesToWhereBrackets(
-    innerQueryBuilder: WhereExpressionBuilder,
-    outerQueryBuilder: WorkspaceSelectQueryBuilder<ObjectLiteral>,
-    objectNameSingular: string,
-    filter: Partial<ObjectRecordFilter>,
-  ): void {
-    Object.entries(filter).forEach(([key, value], index) => {
-      this.parseKeyFilter(
-        innerQueryBuilder,
-        outerQueryBuilder,
-        objectNameSingular,
-        key,
-        value,
-        index === 0,
-      );
-    });
-  }
-
   private parseKeyFilter(
     queryBuilder: WhereExpressionBuilder,
-    outerQueryBuilder: WorkspaceSelectQueryBuilder<ObjectLiteral>,
     objectNameSingular: string,
     key: string,
-    // oxlint-disable-next-line typescript/no-explicit-any
+    // oxlint-disable-next-line @typescripttypescript/no-explicit-any
     value: any,
     isFirst = false,
   ): void {
@@ -90,7 +61,6 @@ export class GraphqlQueryFilterConditionParser {
                 ([subFilterkey, subFilterValue], index) => {
                   this.parseKeyFilter(
                     qb2,
-                    outerQueryBuilder,
                     objectNameSingular,
                     subFilterkey,
                     subFilterValue,
@@ -123,7 +93,6 @@ export class GraphqlQueryFilterConditionParser {
                 ([subFilterkey, subFilterValue], index) => {
                   this.parseKeyFilter(
                     qb2,
-                    outerQueryBuilder,
                     objectNameSingular,
                     subFilterkey,
                     subFilterValue,
@@ -155,7 +124,6 @@ export class GraphqlQueryFilterConditionParser {
             ([subFilterkey, subFilterValue], index) => {
               this.parseKeyFilter(
                 qb,
-                outerQueryBuilder,
                 objectNameSingular,
                 subFilterkey,
                 subFilterValue,
@@ -176,7 +144,6 @@ export class GraphqlQueryFilterConditionParser {
       default:
         this.queryFilterFieldParser.parse(
           queryBuilder,
-          outerQueryBuilder,
           objectNameSingular,
           key,
           value,

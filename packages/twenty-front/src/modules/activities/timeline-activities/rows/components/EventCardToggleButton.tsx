@@ -1,6 +1,6 @@
 import { styled } from '@linaria/react';
 import { IconButton } from 'twenty-ui/input';
-import { IconChevronDown, IconChevronUp } from 'twenty-ui/icon';
+import { IconChevronDown, IconChevronUp } from 'twenty-ui/display';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 type EventCardToggleButtonProps = {

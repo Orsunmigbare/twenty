@@ -22,15 +22,13 @@ export const commandMenuItemsSelector = createAtomSelector<
       ]),
     );
 
-    return commandMenuItems
-      .filter((item) => item.isActive)
-      .map((item) => ({
-        ...item,
-        frontComponent: isDefined(item.frontComponentId)
-          ? (frontComponentsById.get(item.frontComponentId) ??
-            item.frontComponent ??
-            null)
-          : null,
-      })) as CommandMenuItemFieldsFragment[];
+    return commandMenuItems.map((item) => ({
+      ...item,
+      frontComponent: isDefined(item.frontComponentId)
+        ? (frontComponentsById.get(item.frontComponentId) ??
+          item.frontComponent ??
+          null)
+        : null,
+    })) as CommandMenuItemFieldsFragment[];
   },
 });

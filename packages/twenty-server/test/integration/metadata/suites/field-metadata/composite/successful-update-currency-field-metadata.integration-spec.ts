@@ -62,7 +62,10 @@ const SUCCESSFUL_TEST_CASES: EachTestingContext<{
     title: 'currency field default value with empty values',
     context: {
       input: {
-        defaultValue: null,
+        defaultValue: {
+          amountMicros: null,
+          currencyCode: "''",
+        },
       },
     },
   },

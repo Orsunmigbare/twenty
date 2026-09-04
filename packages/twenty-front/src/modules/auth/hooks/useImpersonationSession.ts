@@ -1,9 +1,8 @@
-import { useStore } from 'jotai';
 import { useCallback } from 'react';
+import { useStore } from 'jotai';
 
 import { useAuth } from '@/auth/hooks/useAuth';
 import { tokenPairState } from '@/auth/states/tokenPairState';
-import { clearSessionLocalStorageKeys } from '@/auth/utils/clearSessionLocalStorageKeys';
 import { type AuthTokenPair } from '~/generated-metadata/graphql';
 
 const IMPERSONATION_SESSION_KEY = 'impersonation_original_session';
@@ -41,14 +40,7 @@ export const useImpersonationSession = () => {
         );
       }
 
-      try {
-        await getAuthTokensFromLoginToken(loginToken);
-      } catch (error) {
-        sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
-        throw error;
-      }
-
-      clearSessionLocalStorageKeys();
+      await getAuthTokensFromLoginToken(loginToken);
       reloadWithSession(targetPath);
     },
     [store, getAuthTokensFromLoginToken],
@@ -77,7 +69,6 @@ export const useImpersonationSession = () => {
 
     sessionStorage.removeItem(IMPERSONATION_SESSION_KEY);
     store.set(tokenPairState.atom, session.tokenPair);
-    clearSessionLocalStorageKeys();
     reloadWithSession(session.returnPath);
   }, [store, signOut]);
 

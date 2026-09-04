@@ -10,7 +10,7 @@ import {
   IconMoon,
   IconSun,
   IconSunMoon,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 
 export const useColorScheme = () => {
   const [currentWorkspaceMember, setCurrentWorkspaceMember] = useAtomState(

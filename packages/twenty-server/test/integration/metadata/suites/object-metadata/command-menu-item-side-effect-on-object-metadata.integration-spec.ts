@@ -25,7 +25,6 @@ const COMMAND_MENU_ITEM_GQL_FIELDS = `
   engineComponentKey
   label
   icon
-  isActive
   payload {
     ... on PathCommandMenuItemPayload {
       path
@@ -156,11 +155,14 @@ describe('Command menu item side effect on object metadata', () => {
     });
 
     expect(
-      findNavigationCommandMenuItemForObject(itemsAfterDelete, deletedObjectId),
+      findNavigationCommandMenuItemForObject(
+        itemsAfterDelete,
+        deletedObjectId,
+      ),
     ).toBeUndefined();
   });
 
-  it('should deactivate the navigation command menu item when a custom object is disabled', async () => {
+  it('should delete the navigation command menu item when a custom object is disabled', async () => {
     const {
       data: { createOneObject },
     } = await createOneObjectMetadata({
@@ -184,7 +186,7 @@ describe('Command menu item side effect on object metadata', () => {
         itemsBeforeDisable,
         createdObjectMetadataId,
       ),
-    ).toEqual(expect.objectContaining({ isActive: true }));
+    ).toBeDefined();
 
     await updateOneObjectMetadata({
       expectToFail: false,
@@ -207,10 +209,10 @@ describe('Command menu item side effect on object metadata', () => {
         itemsAfterDisable,
         createdObjectMetadataId,
       ),
-    ).toEqual(expect.objectContaining({ isActive: false }));
+    ).toBeUndefined();
   });
 
-  it('should reactivate the navigation command menu item when a disabled object is re-enabled', async () => {
+  it('should recreate the navigation command menu item when a disabled object is re-enabled', async () => {
     const {
       data: { createOneObject },
     } = await createOneObjectMetadata({
@@ -242,7 +244,7 @@ describe('Command menu item side effect on object metadata', () => {
         itemsWhileDisabled,
         createdObjectMetadataId,
       ),
-    ).toEqual(expect.objectContaining({ isActive: false }));
+    ).toBeUndefined();
 
     await updateOneObjectMetadata({
       expectToFail: false,
@@ -270,7 +272,6 @@ describe('Command menu item side effect on object metadata', () => {
         label: `Go to ${createObjectInput.labelPlural}`,
         icon: createObjectInput.icon,
         engineComponentKey: EngineComponentKey.NAVIGATION,
-        isActive: true,
       }),
     );
   });

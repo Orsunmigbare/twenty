@@ -5,7 +5,7 @@ import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { useContext } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { IconBrandX, IconWorld } from 'twenty-ui/icon';
+import { IconBrandX, IconWorld } from 'twenty-ui/display';
 import { Checkbox } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
@@ -69,10 +69,7 @@ export const SettingsAgentModelCapabilities = ({
     return null;
   }
 
-  const showNativeWebSearch = nativeCapabilities.webSearch;
-  const showNativeTwitterSearch = nativeCapabilities.twitterSearch;
-
-  if (!showNativeWebSearch && !showNativeTwitterSearch) {
+  if (!nativeCapabilities.webSearch && !nativeCapabilities.twitterSearch) {
     return null;
   }
 
@@ -94,7 +91,7 @@ export const SettingsAgentModelCapabilities = ({
   };
 
   const capabilities = [
-    ...(showNativeWebSearch
+    ...(nativeCapabilities.webSearch
       ? [
           {
             key: 'webSearch' as const,
@@ -104,7 +101,7 @@ export const SettingsAgentModelCapabilities = ({
           },
         ]
       : []),
-    ...(showNativeTwitterSearch
+    ...(nativeCapabilities.twitterSearch
       ? [
           {
             key: 'twitterSearch' as const,

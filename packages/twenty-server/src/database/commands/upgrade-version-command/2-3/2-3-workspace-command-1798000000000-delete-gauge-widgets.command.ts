@@ -1,11 +1,12 @@
 import { Command } from 'nest-commander';
 import { isDefined } from 'twenty-shared/utils';
 
-import { ProvisionedWorkspaceCommandRunner } from 'src/database/commands/command-runners/provisioned-workspace.command-runner';
+import { ActiveOrSuspendedWorkspaceCommandRunner } from 'src/database/commands/command-runners/active-or-suspended-workspace.command-runner';
 import { WorkspaceIteratorService } from 'src/database/commands/command-runners/workspace-iterator.service';
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { RegisteredWorkspaceCommand } from 'src/engine/core-modules/upgrade/decorators/registered-workspace-command.decorator';
+import { WidgetConfigurationType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-configuration-type.type';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
@@ -15,7 +16,7 @@ import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspa
   description:
     'Delete all GAUGE_CHART page layout widgets — gauge support has been removed',
 })
-export class DeleteGaugeWidgetsCommand extends ProvisionedWorkspaceCommandRunner {
+export class DeleteGaugeWidgetsCommand extends ActiveOrSuspendedWorkspaceCommandRunner {
   constructor(
     protected readonly workspaceIteratorService: WorkspaceIteratorService,
     private readonly applicationService: ApplicationService,
@@ -58,8 +59,8 @@ export class DeleteGaugeWidgetsCommand extends ProvisionedWorkspaceCommandRunner
 
     const gaugeWidgets = widgets.filter(
       (widget) =>
-        (widget.universalConfiguration?.configurationType as string) ===
-        'GAUGE_CHART',
+        widget.universalConfiguration?.configurationType ===
+        WidgetConfigurationType.GAUGE_CHART,
     );
 
     if (gaugeWidgets.length === 0) {
@@ -82,7 +83,7 @@ export class DeleteGaugeWidgetsCommand extends ProvisionedWorkspaceCommandRunner
       );
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
         {
           allFlatEntityOperationByMetadataName: {
             pageLayoutWidget: {

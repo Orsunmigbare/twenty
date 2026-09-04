@@ -27,7 +27,6 @@ import {
   BigFloatFilterType,
   BooleanFilterType,
   DateFilterType,
-  DateTimeFilterType,
   FloatFilterType,
   RawJsonFilterType,
   StringFilterType,
@@ -164,7 +163,7 @@ export class TypeMapperService {
     >([
       [FieldMetadataType.UUID, UUIDFilterType],
       [FieldMetadataType.TEXT, StringFilterType],
-      [FieldMetadataType.DATE_TIME, DateTimeFilterType],
+      [FieldMetadataType.DATE_TIME, GraphQLISODateTime],
       [FieldMetadataType.DATE, DateFilterType],
       [FieldMetadataType.BOOLEAN, BooleanFilterType],
       [

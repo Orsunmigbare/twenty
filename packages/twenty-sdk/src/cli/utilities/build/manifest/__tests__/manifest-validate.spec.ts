@@ -2,14 +2,8 @@ import {
   type ApplicationManifest,
   type FieldManifest,
   type Manifest,
-  type PageLayoutTabManifest,
-  type PageLayoutWidgetManifest,
 } from 'twenty-shared/application';
-import {
-  AggregateOperations,
-  FieldMetadataType,
-  RelationType,
-} from 'twenty-shared/types';
+import { FieldMetadataType, RelationType } from 'twenty-shared/types';
 import { manifestValidate } from '@/cli/utilities/build/manifest/manifest-validate';
 
 const validApplication: ApplicationManifest = {
@@ -37,13 +31,11 @@ const validManifest: Manifest = {
   frontComponents: [],
   fields: [],
   logicFunctions: [],
-  permissionFlags: [],
   roles: [],
   skills: [],
   agents: [],
   publicAssets: [],
   views: [],
-  viewFields: [],
   navigationMenuItems: [],
   pageLayouts: [],
   pageLayoutTabs: [],
@@ -155,6 +147,9 @@ describe('manifestValidate', () => {
       expect(result.errors).toContain(
         'Duplicate universal identifiers: 550e8400-e29b-41d4-a716-446655440001',
       );
+      expect(result.warnings).toContain('No object defined');
+      expect(result.warnings).toContain('No logic function defined');
+      expect(result.warnings).toContain('No front component defined');
     });
 
     it('should fail when extension field ID conflicts with object field ID', () => {
@@ -195,37 +190,9 @@ describe('manifestValidate', () => {
       expect(result.errors).toContain(
         'Duplicate universal identifiers: 550e8400-e29b-41d4-a716-446655440001',
       );
-    });
-
-    it('should not flag a connection provider referencing a logic function via onConnectLogicFunction as a duplicate', () => {
-      const logicFunctionId = '550e8400-e29b-41d4-a716-446655440040';
-
-      const logicFunction = {
-        universalIdentifier: logicFunctionId,
-        name: 'onConnect',
-        sourceHandlerPath: 'src/logic-functions/on-connect.ts',
-        builtHandlerPath: 'dist/on-connect.js',
-        builtHandlerChecksum: '00000000-0000-4000-8000-000000000000',
-        handlerName: 'handler',
-      } as unknown as Manifest['logicFunctions'][number];
-
-      const connectionProvider = {
-        universalIdentifier: '550e8400-e29b-41d4-a716-446655440041',
-        name: 'slack',
-        displayName: 'Slack',
-        type: 'oauth',
-        oauth: {},
-        onConnectLogicFunction: { universalIdentifier: logicFunctionId },
-      } as unknown as NonNullable<Manifest['connectionProviders']>[number];
-
-      const result = manifestValidate({
-        ...validManifest,
-        logicFunctions: [logicFunction],
-        connectionProviders: [connectionProvider],
-      });
-
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.warnings).not.toContain('No object defined');
+      expect(result.warnings).toContain('No logic function defined');
+      expect(result.warnings).toContain('No front component defined');
     });
   });
 
@@ -529,105 +496,6 @@ describe('manifestValidate', () => {
       );
 
       expect(versionErrors).toHaveLength(1);
-    });
-  });
-
-  describe('graph widget validation', () => {
-    const makeGraphWidgetTab = (
-      configuration: PageLayoutWidgetManifest['configuration'],
-    ): PageLayoutTabManifest => ({
-      universalIdentifier: 'b0a5f0f2-6c2e-4d1c-9d0b-2f8a4c3e1a01',
-      title: 'Dashboard',
-      position: 0,
-      widgets: [
-        {
-          universalIdentifier: 'b0a5f0f2-6c2e-4d1c-9d0b-2f8a4c3e1a02',
-          title: 'Total opportunities',
-          type: 'GRAPH',
-          configuration,
-        },
-      ],
-    });
-
-    it('should pass when a graph widget has aggregateFieldMetadataUniversalIdentifier', () => {
-      const result = manifestValidate({
-        ...validManifest,
-        pageLayoutTabs: [
-          makeGraphWidgetTab({
-            configurationType: 'AGGREGATE_CHART',
-            aggregateFieldMetadataUniversalIdentifier:
-              'b0a5f0f2-6c2e-4d1c-9d0b-2f8a4c3e1a03',
-            aggregateOperation: AggregateOperations.COUNT,
-          }),
-        ],
-      });
-
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('should error when a graph widget is missing the aggregate field identifier', () => {
-      const result = manifestValidate({
-        ...validManifest,
-        pageLayoutTabs: [
-          makeGraphWidgetTab({
-            configurationType: 'AGGREGATE_CHART',
-            aggregateFieldMetadataUniversalIdentifier: null,
-            aggregateOperation: AggregateOperations.COUNT,
-          }),
-        ],
-      });
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContainEqual(
-        expect.stringContaining(
-          'is missing aggregateFieldMetadataUniversalIdentifier',
-        ),
-      );
-    });
-
-    it('should hint at the correct key when the raw aggregateFieldMetadataId was used', () => {
-      const configurationWithRawKey = {
-        configurationType: 'AGGREGATE_CHART',
-        aggregateFieldMetadataId: 'b0a5f0f2-6c2e-4d1c-9d0b-2f8a4c3e1a03',
-        aggregateOperation: AggregateOperations.COUNT,
-      } as unknown as PageLayoutWidgetManifest['configuration'];
-
-      const result = manifestValidate({
-        ...validManifest,
-        pageLayoutTabs: [makeGraphWidgetTab(configurationWithRawKey)],
-      });
-
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContainEqual(
-        expect.stringContaining(
-          'not "aggregateFieldMetadataId"',
-        ),
-      );
-    });
-
-    it('should ignore non-graph widgets that have no aggregate field', () => {
-      const result = manifestValidate({
-        ...validManifest,
-        pageLayoutTabs: [
-          makeGraphWidgetTab({ configurationType: 'TIMELINE' }),
-        ],
-      });
-
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('should not crash on a widget with a missing configuration', () => {
-      const nullConfiguration =
-        null as unknown as PageLayoutWidgetManifest['configuration'];
-
-      const result = manifestValidate({
-        ...validManifest,
-        pageLayoutTabs: [makeGraphWidgetTab(nullConfiguration)],
-      });
-
-      expect(result.isValid).toBe(true);
     });
   });
 });

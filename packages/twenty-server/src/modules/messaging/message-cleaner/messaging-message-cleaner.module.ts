@@ -17,9 +17,10 @@ import { MessagingMessageCleanerService } from 'src/modules/messaging/message-cl
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([WorkspaceEntity, MessageChannelEntity]),
+    TypeOrmModule.forFeature([WorkspaceEntity]),
     FeatureFlagModule,
     MessagingCommonModule,
+    TypeOrmModule.forFeature([MessageChannelEntity]),
     WorkspaceIteratorModule,
   ],
   providers: [

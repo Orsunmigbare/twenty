@@ -13,7 +13,9 @@ import {
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 
 @WorkspaceQueryHook(`workspaceMember.createOne`)
-export class WorkspaceMemberCreateOnePreQueryHook implements WorkspacePreQueryHookInstance {
+export class WorkspaceMemberCreateOnePreQueryHook
+  implements WorkspacePreQueryHookInstance
+{
   constructor() {}
 
   async execute(

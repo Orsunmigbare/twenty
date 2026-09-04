@@ -1,14 +1,14 @@
+import { SettingsPath } from 'twenty-shared/types';
+import { SettingsSectionSkeletonLoader } from '@/settings/components/SettingsSectionSkeletonLoader';
 import { SettingsAccountsBlocklistSection } from '@/settings/accounts/components/SettingsAccountsBlocklistSection';
 import { SettingsAccountsConnectedAccountsListCard } from '@/settings/accounts/components/SettingsAccountsConnectedAccountsListCard';
 import { SettingsAccountsSettingsSection } from '@/settings/accounts/components/SettingsAccountsSettingsSection';
 import { useMyConnectedAccounts } from '@/settings/accounts/hooks/useMyConnectedAccounts';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
-import { SettingsSectionSkeletonLoader } from '@/settings/components/SettingsSectionSkeletonLoader';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useLingui } from '@lingui/react/macro';
-import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
 
 export const SettingsAccounts = () => {
@@ -17,7 +17,7 @@ export const SettingsAccounts = () => {
   const { accounts: allAccounts, loading } = useMyConnectedAccounts();
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       title={t`Account`}
       links={[
         {
@@ -46,6 +46,6 @@ export const SettingsAccounts = () => {
           </>
         )}
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

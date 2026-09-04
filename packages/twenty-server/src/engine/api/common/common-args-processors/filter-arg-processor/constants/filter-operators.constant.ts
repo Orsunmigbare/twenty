@@ -65,10 +65,6 @@ export const MULTI_SELECT_FILTER_OPERATORS: FilterOperator[] = [
 export const ENUM_FILTER_OPERATORS: FilterOperator[] = [
   'eq',
   'neq',
-  'gt',
-  'gte',
-  'lt',
-  'lte',
   'in',
   'containsAny',
   'is',

@@ -50,21 +50,17 @@ export const turnSortsIntoOrderBy = (
         );
 
         if (isDefined(relatedObjectMetadata)) {
-          return getOrderByForRelationField({
-            field: correspondingField,
-            relatedObjectMetadataItem: relatedObjectMetadata,
-            orderByDirection: direction,
-          });
+          return getOrderByForRelationField(
+            correspondingField,
+            relatedObjectMetadata,
+            direction,
+          );
         }
         // Fallback if related object not found - sort by FK
         return [{ [`${correspondingField.name}Id`]: direction }];
       }
 
-      return getOrderByForFieldMetadataType({
-        field: correspondingField,
-        orderByDirection: direction,
-        primaryCompositeSubField: sort.subFieldName,
-      });
+      return getOrderByForFieldMetadataType(correspondingField, direction);
     })
     .filter(isDefined);
 

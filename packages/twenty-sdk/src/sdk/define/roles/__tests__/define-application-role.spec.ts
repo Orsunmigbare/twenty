@@ -1,4 +1,4 @@
-import { SystemPermissionFlag, defineApplicationRole } from '@/sdk/define';
+import { defineApplicationRole } from '@/sdk/define';
 
 describe('defineApplicationRole', () => {
   const validConfig = {
@@ -32,16 +32,16 @@ describe('defineApplicationRole', () => {
     expect(result.config?.canReadAllObjectRecords).toBe(true);
   });
 
-  it('should accept permissionFlagUniversalIdentifiers', () => {
+  it('should accept permissionFlags', () => {
     const config = {
       ...validConfig,
-      permissionFlagUniversalIdentifiers: [SystemPermissionFlag.UPLOAD_FILE],
+      permissionFlags: ['UPLOAD_FILE'],
     };
 
-    const result = defineApplicationRole(config);
+    const result = defineApplicationRole(config as any);
 
     expect(result.success).toBe(true);
-    expect(result.config?.permissionFlagUniversalIdentifiers).toHaveLength(1);
+    expect(result.config?.permissionFlags).toHaveLength(1);
   });
 
   it('should return error when universalIdentifier is missing', () => {

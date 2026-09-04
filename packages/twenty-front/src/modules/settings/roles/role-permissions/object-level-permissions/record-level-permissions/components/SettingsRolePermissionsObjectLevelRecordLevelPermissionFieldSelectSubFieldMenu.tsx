@@ -5,12 +5,12 @@ import {
   FieldMetadataType,
 } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { IconChevronLeft, useIcons } from 'twenty-ui/icon';
+import { IconChevronLeft, useIcons } from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
 
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { useAdvancedFilterFieldSelectDropdown } from '@/object-record/advanced-filter/hooks/useAdvancedFilterFieldSelectDropdown';
-import { useApplyAdvancedFilterCompositeSubField } from '@/object-record/advanced-filter/hooks/useApplyAdvancedFilterCompositeSubField';
+import { useSelectFieldUsedInAdvancedFilterDropdown } from '@/object-record/advanced-filter/hooks/useSelectFieldUsedInAdvancedFilterDropdown';
 import { fieldMetadataItemUsedInDropdownComponentSelector } from '@/object-record/object-filter-dropdown/states/fieldMetadataItemUsedInDropdownComponentSelector';
 import { objectFilterDropdownIsSelectingCompositeFieldComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownIsSelectingCompositeFieldComponentState';
 import { objectFilterDropdownSubMenuFieldTypeComponentState } from '@/object-record/object-filter-dropdown/states/objectFilterDropdownSubMenuFieldTypeComponentState';
@@ -61,8 +61,8 @@ export const SettingsRolePermissionsObjectLevelRecordLevelPermissionFieldSelectS
     const { closeAdvancedFilterFieldSelectDropdown } =
       useAdvancedFilterFieldSelectDropdown(recordFilterId);
 
-    const { applyAdvancedFilterCompositeSubField } =
-      useApplyAdvancedFilterCompositeSubField();
+    const { selectFieldUsedInAdvancedFilterDropdown } =
+      useSelectFieldUsedInAdvancedFilterDropdown();
 
     const handleSelectFilter = (
       selectedFieldMetadataItem: FieldMetadataItem | null | undefined,
@@ -72,10 +72,10 @@ export const SettingsRolePermissionsObjectLevelRecordLevelPermissionFieldSelectS
         return;
       }
 
-      applyAdvancedFilterCompositeSubField({
-        sourceFieldMetadataItem: selectedFieldMetadataItem,
-        subFieldName: subFieldName ?? null,
+      selectFieldUsedInAdvancedFilterDropdown({
+        fieldMetadataItemId: selectedFieldMetadataItem.id,
         recordFilterId,
+        subFieldName,
       });
 
       closeAdvancedFilterFieldSelectDropdown();

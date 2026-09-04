@@ -28,13 +28,12 @@ const createMockMailbox = (
 
 const CONNECTED_ACCOUNT: Pick<
   ConnectedAccountEntity,
-  'id' | 'provider' | 'connectionParameters' | 'handle' | 'workspaceId'
+  'id' | 'provider' | 'connectionParameters' | 'handle'
 > = {
   id: 'account-1',
   provider: ConnectedAccountProvider.IMAP_SMTP_CALDAV,
   connectionParameters: {},
   handle: 'test@example.com',
-  workspaceId: 'workspace-1',
 };
 
 const MESSAGE_CHANNEL: Pick<MessageChannelEntity, 'messageFolderImportPolicy'> =

@@ -16,6 +16,7 @@ import { useMutation } from '@apollo/client/react';
 import {
   type Agent,
   type ObjectPermission,
+  type PermissionFlagType,
   AssignRoleToAgentDocument,
   CreateOneRoleDocument,
   UpsertObjectPermissionsDocument,
@@ -25,7 +26,7 @@ import {
 type UseWorkflowAiAgentPermissionActionsParams = {
   readonly: boolean;
   objectPermissions: ObjectPermission[];
-  permissionFlagKeys: string[];
+  permissionFlagKeys: PermissionFlagType[];
   refetchAgentAndRoles: () => Promise<{ refetchedAgent?: Agent }>;
 };
 
@@ -66,7 +67,7 @@ export const useWorkflowAiAgentPermissionActions = ({
   const permissionFlagLabelMap = useMemo(
     () =>
       [...settingsPermissionsConfig, ...actionPermissionsConfig].reduce<
-        Partial<Record<string, string>>
+        Partial<Record<PermissionFlagType, string>>
       >((acc, permission) => {
         acc[permission.key] = permission.name;
         return acc;
@@ -295,7 +296,9 @@ export const useWorkflowAiAgentPermissionActions = ({
     }
   };
 
-  const handleAddPermissionFlag = async (permissionFlagKey: string) => {
+  const handleAddPermissionFlag = async (
+    permissionFlagKey: PermissionFlagType,
+  ) => {
     if (readonly) {
       return;
     }
@@ -320,7 +323,9 @@ export const useWorkflowAiAgentPermissionActions = ({
     setWorkflowAiAgentPermissionsSelectedObjectId(undefined);
   };
 
-  const handleDeletePermissionFlag = async (permissionFlagKey: string) => {
+  const handleDeletePermissionFlag = async (
+    permissionFlagKey: PermissionFlagType,
+  ) => {
     if (!isDefined(roleId) || readonly) {
       return;
     }

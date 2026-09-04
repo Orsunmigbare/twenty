@@ -62,10 +62,9 @@ export class ResetPasswordService {
       }),
     );
 
-    const targetWorkspaceId = await this.resolveTargetWorkspaceId(
-      user.id,
-      workspaceId,
-    );
+    const targetWorkspaceId =
+      workspaceId ??
+      (await this.findFirstPasswordAuthEnabledWorkspaceIdOrThrow(user.id));
 
     const expiresIn = this.twentyConfigService.get(
       'PASSWORD_RESET_TOKEN_EXPIRES_IN',
@@ -123,31 +122,6 @@ export class ResetPasswordService {
       passwordResetToken: plainResetToken,
       passwordResetTokenExpiresAt: expiresAt,
     };
-  }
-
-  private async resolveTargetWorkspaceId(
-    userId: string,
-    workspaceId?: string,
-  ): Promise<string> {
-    if (!isDefined(workspaceId)) {
-      return this.findFirstPasswordAuthEnabledWorkspaceIdOrThrow(userId);
-    }
-
-    const requestedWorkspace = await this.workspaceRepository.findOne({
-      where: {
-        id: workspaceId,
-        isPasswordAuthEnabled: true,
-        workspaceUsers: {
-          user: {
-            id: userId,
-          },
-        },
-      },
-    });
-
-    return isDefined(requestedWorkspace)
-      ? requestedWorkspace.id
-      : this.findFirstPasswordAuthEnabledWorkspaceIdOrThrow(userId);
   }
 
   async sendEmailPasswordResetLink({

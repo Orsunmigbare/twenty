@@ -9,7 +9,7 @@ describe('isRecordReadOnly', () => {
       },
       isRecordDeleted: false,
       objectMetadataItem: {
-        isUIEditable: true,
+        isUIReadOnly: false,
         isRemote: false,
       },
     });
@@ -25,7 +25,7 @@ describe('isRecordReadOnly', () => {
       },
       isRecordDeleted: false,
       objectMetadataItem: {
-        isUIEditable: true,
+        isUIReadOnly: false,
         isRemote: false,
       },
     });
@@ -41,7 +41,7 @@ describe('isRecordReadOnly', () => {
       },
       isRecordDeleted: true,
       objectMetadataItem: {
-        isUIEditable: true,
+        isUIReadOnly: false,
         isRemote: false,
       },
     });
@@ -57,7 +57,7 @@ describe('isRecordReadOnly', () => {
       },
       isRecordDeleted: true,
       objectMetadataItem: {
-        isUIEditable: false,
+        isUIReadOnly: true,
         isRemote: false,
       },
     });
@@ -73,7 +73,7 @@ describe('isRecordReadOnly', () => {
       },
       isRecordDeleted: false,
       objectMetadataItem: {
-        isUIEditable: true,
+        isUIReadOnly: false,
         isRemote: true,
       },
     });

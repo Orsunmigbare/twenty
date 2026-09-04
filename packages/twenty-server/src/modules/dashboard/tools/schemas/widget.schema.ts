@@ -2,14 +2,12 @@ import { isNumber } from '@sniptt/guards';
 import {
   AggregateOperations,
   ObjectRecordGroupByDateGranularity,
-  ViewFilterOperand,
 } from 'twenty-shared/types';
 import { z } from 'zod';
 
 import { AxisNameDisplay } from 'src/engine/metadata-modules/page-layout-widget/enums/axis-name-display.enum';
 import { BarChartGroupMode } from 'src/engine/metadata-modules/page-layout-widget/enums/bar-chart-group-mode.enum';
 import { BarChartLayout } from 'src/engine/metadata-modules/page-layout-widget/enums/bar-chart-layout.enum';
-import { ChartNumberFormat } from 'src/engine/metadata-modules/page-layout-widget/enums/chart-number-format.enum';
 import { GraphOrderBy } from 'src/engine/metadata-modules/page-layout-widget/enums/graph-order-by.enum';
 import { WidgetConfigurationType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-configuration-type.type';
 import { WidgetType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-type.enum';
@@ -66,11 +64,6 @@ const AXIS_NAME_DISPLAY_OPTIONS = Object.values(AxisNameDisplay) as [
   ...AxisNameDisplay[],
 ];
 
-const CHART_NUMBER_FORMAT_OPTIONS = Object.values(ChartNumberFormat) as [
-  ChartNumberFormat,
-  ...ChartNumberFormat[],
-];
-
 const BAR_CHART_GROUP_MODE_OPTIONS = Object.values(BarChartGroupMode) as [
   BarChartGroupMode,
   ...BarChartGroupMode[],
@@ -85,83 +78,6 @@ const AGGREGATE_OPERATION_OPTIONS = Object.values(AggregateOperations) as [
   AggregateOperations,
   ...AggregateOperations[],
 ];
-
-const FILTER_OPERAND_OPTIONS = Object.values(ViewFilterOperand) as [
-  ViewFilterOperand,
-  ...ViewFilterOperand[],
-];
-
-const chartRecordFilterSchema = z.object({
-  fieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe(
-      'Field UUID to filter on (must belong to the widget object). Provide this or fieldName.',
-    ),
-  fieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to filter on (resolved to a UUID against the widget object). Alternative to fieldMetadataId.',
-    ),
-  operand: z
-    .enum(FILTER_OPERAND_OPTIONS)
-    .describe(
-      'Filter operator. Valid operators per field type — TEXT/EMAILS/FULL_NAME/ARRAY/PHONES: CONTAINS, DOES_NOT_CONTAIN, IS_EMPTY, IS_NOT_EMPTY. NUMBER/CURRENCY/RATING: GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, IS, IS_NOT, IS_EMPTY, IS_NOT_EMPTY. DATE/DATE_TIME: IS, IS_RELATIVE, IS_IN_PAST, IS_IN_FUTURE, IS_TODAY, IS_BEFORE, IS_AFTER, IS_EMPTY, IS_NOT_EMPTY. SELECT: IS, IS_NOT, IS_EMPTY, IS_NOT_EMPTY. MULTI_SELECT: CONTAINS, DOES_NOT_CONTAIN, IS_EMPTY, IS_NOT_EMPTY. RELATION: IS, IS_NOT, IS_EMPTY, IS_NOT_EMPTY. BOOLEAN: IS.',
-    ),
-  value: z
-    .string()
-    .optional()
-    .describe(
-      'Filter value as a string. TEXT: plain string. NUMBER/CURRENCY: numeric string (CURRENCY value is the major unit, e.g. "1000"). BOOLEAN: "true" or "false". SELECT/MULTI_SELECT/RELATION: JSON array string of option values or record UUIDs, e.g. \'["OPTION_1","OPTION_2"]\'. Relative dates (operand IS_RELATIVE): "DIRECTION_AMOUNT_UNIT" where DIRECTION is PAST|THIS|NEXT and UNIT is DAY|WEEK|MONTH|QUARTER|YEAR — e.g. "PAST_7_DAY", "THIS_1_MONTH", "NEXT_3_WEEK" (use THIS_1_<UNIT> for the current period). Absolute dates (IS/IS_BEFORE/IS_AFTER): ISO date string. Omit for IS_EMPTY/IS_NOT_EMPTY/IS_TODAY/IS_IN_PAST/IS_IN_FUTURE.',
-    ),
-  subFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Required for composite fields — e.g. "amountMicros" or "currencyCode" for CURRENCY, "addressCity" for ADDRESS, "firstName"/"lastName" for FULL_NAME.',
-    ),
-  recordFilterGroupId: z
-    .string()
-    .optional()
-    .describe(
-      'ID of the record filter group this rule belongs to (for AND/OR grouping). Must match an id in recordFilterGroups. Omit when recordFilterGroups is not used.',
-    ),
-});
-
-const chartRecordFilterGroupSchema = z.object({
-  id: z
-    .string()
-    .describe(
-      'Unique id for this filter group, referenced by recordFilterGroupId on filter rules.',
-    ),
-  logicalOperator: z
-    .enum(['AND', 'OR'])
-    .describe('How rules within this group are combined.'),
-  parentRecordFilterGroupId: z
-    .string()
-    .optional()
-    .describe('Parent group id, for nested grouping.'),
-});
-
-export const chartFilterSchema = z
-  .object({
-    recordFilters: z
-      .array(chartRecordFilterSchema)
-      .optional()
-      .describe(
-        'Filter rules applied to the records feeding this chart. Multiple rules with no recordFilterGroups are combined with AND.',
-      ),
-    recordFilterGroups: z
-      .array(chartRecordFilterGroupSchema)
-      .optional()
-      .describe(
-        'Optional groups to combine filter rules with AND/OR logic. Omit for a simple list of ANDed rules.',
-      ),
-  })
-  .describe(
-    'Filter restricting which records are included in this chart. All filtered fields must belong to the widget object.',
-  );
 
 const displayDataLabelSchema = z.boolean().optional();
 const displayLegendSchema = z.boolean().optional();
@@ -192,16 +108,7 @@ type RangeMinMaxFields = {
 };
 
 const ratioAggregateConfigSchema = z.object({
-  fieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe('Field UUID. Provide this or fieldName.'),
-  fieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name (resolved to a UUID). Alternative to fieldMetadataId.',
-    ),
+  fieldMetadataId: z.uuid(),
   optionValue: z.string(),
 });
 
@@ -292,31 +199,17 @@ const aggregateChartConfigSchemaBase = z.object({
   configurationType: z.literal(WidgetConfigurationType.AGGREGATE_CHART),
   aggregateFieldMetadataId: z
     .uuid()
-    .optional()
     .describe(
-      'Field UUID to aggregate (must be from the widget object). Provide this or aggregateFieldName.',
-    ),
-  aggregateFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to aggregate (resolved to a UUID against the widget object). Alternative to aggregateFieldMetadataId.',
+      'Field UUID to aggregate (must be from the widget objectMetadataId)',
     ),
   aggregateOperation: z
     .enum(AGGREGATE_OPERATION_OPTIONS)
     .describe('Aggregation operation: COUNT, SUM, AVG, MIN, MAX, etc.'),
   label: z.string().optional(),
   displayDataLabel: displayDataLabelSchema,
-  numberFormat: z
-    .enum(CHART_NUMBER_FORMAT_OPTIONS)
-    .optional()
-    .describe(
-      'Display format for the value: SHORT abbreviates large numbers (1.3m), FULL shows the complete number (1,300,090)',
-    ),
   prefix: z.string().optional(),
   suffix: z.string().optional(),
   ratioAggregateConfig: ratioAggregateConfigSchema.optional(),
-  filter: chartFilterSchema.optional(),
 });
 
 const aggregateChartConfigSchema = aggregateChartConfigSchemaBase.extend({
@@ -329,47 +222,23 @@ const aggregateChartConfigSchemaWithoutDefaults =
 // Graph configuration schema for BAR charts
 const barChartConfigSchemaCore = z.object({
   configurationType: z.literal(WidgetConfigurationType.BAR_CHART),
-  aggregateFieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe('Field UUID to aggregate. Provide this or aggregateFieldName.'),
-  aggregateFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to aggregate (resolved to a UUID). Alternative to aggregateFieldMetadataId.',
-    ),
+  aggregateFieldMetadataId: z.uuid().describe('Field UUID to aggregate'),
   aggregateOperation: z.enum(AGGREGATE_OPERATION_OPTIONS),
   primaryAxisGroupByFieldMetadataId: z
     .uuid()
-    .optional()
-    .describe(
-      'Field UUID to group by on primary axis. Provide this or primaryAxisGroupByFieldName.',
-    ),
-  primaryAxisGroupByFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to group by on primary axis (resolved to a UUID). Alternative to primaryAxisGroupByFieldMetadataId.',
-    ),
+    .describe('Field UUID to group by on primary axis'),
   primaryAxisGroupBySubFieldName: z
     .string()
     .optional()
     .describe(
-      'Optional for relation fields: omit it to group by the related record itself, labelled with its display name; provide it (e.g. "name", "address.addressCity") to group by that attribute instead. REQUIRED for composite fields (e.g. "addressCity").',
+      'REQUIRED for relation fields (e.g. "name", "address.addressCity") and composite fields (e.g. "addressCity"). Without this, relation fields group by raw UUID which is not useful.',
     ),
   secondaryAxisGroupByFieldMetadataId: z.uuid().optional(),
-  secondaryAxisGroupByFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to group by on secondary axis (resolved to a UUID). Alternative to secondaryAxisGroupByFieldMetadataId.',
-    ),
   secondaryAxisGroupBySubFieldName: z
     .string()
     .optional()
     .describe(
-      'Optional for relation fields: omit it to group by the related record itself, labelled with its display name; provide it (e.g. "name", "stage") to group by that attribute instead. REQUIRED for composite fields (e.g. "addressCity").',
+      'REQUIRED for relation fields (e.g. "name", "stage") and composite fields (e.g. "addressCity"). Without this, relation fields group by raw UUID which is not useful.',
     ),
   primaryAxisOrderBy: z.enum(GRAPH_ORDER_BY_OPTIONS).optional(),
   primaryAxisManualSortOrder: z.array(z.string()).optional(),
@@ -401,7 +270,6 @@ const barChartConfigSchemaCore = z.object({
   layout: z
     .enum(BAR_CHART_LAYOUT_OPTIONS)
     .describe('Layout orientation for bar charts'),
-  filter: chartFilterSchema.optional(),
 });
 
 const barChartConfigSchemaWithoutDefaults = withRangeMinMaxRefinement(
@@ -420,47 +288,21 @@ const barChartConfigSchema = withRangeMinMaxRefinement(
 // Graph configuration schema for LINE charts
 const lineChartConfigSchemaCore = z.object({
   configurationType: z.literal(WidgetConfigurationType.LINE_CHART),
-  aggregateFieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe('Field UUID to aggregate. Provide this or aggregateFieldName.'),
-  aggregateFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to aggregate (resolved to a UUID). Alternative to aggregateFieldMetadataId.',
-    ),
+  aggregateFieldMetadataId: z.uuid(),
   aggregateOperation: z.enum(AGGREGATE_OPERATION_OPTIONS),
-  primaryAxisGroupByFieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe(
-      'Field UUID to group by on primary axis. Provide this or primaryAxisGroupByFieldName.',
-    ),
-  primaryAxisGroupByFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to group by on primary axis (resolved to a UUID). Alternative to primaryAxisGroupByFieldMetadataId.',
-    ),
+  primaryAxisGroupByFieldMetadataId: z.uuid(),
   primaryAxisGroupBySubFieldName: z
     .string()
     .optional()
     .describe(
-      'Optional for relation fields: omit it to group by the related record itself, labelled with its display name; provide it (e.g. "name", "address.addressCity") to group by that attribute instead. REQUIRED for composite fields (e.g. "addressCity").',
+      'REQUIRED for relation fields (e.g. "name", "address.addressCity") and composite fields (e.g. "addressCity"). Without this, relation fields group by raw UUID which is not useful.',
     ),
   secondaryAxisGroupByFieldMetadataId: z.uuid().optional(),
-  secondaryAxisGroupByFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to group by on secondary axis (resolved to a UUID). Alternative to secondaryAxisGroupByFieldMetadataId.',
-    ),
   secondaryAxisGroupBySubFieldName: z
     .string()
     .optional()
     .describe(
-      'Optional for relation fields: omit it to group by the related record itself, labelled with its display name; provide it (e.g. "name", "stage") to group by that attribute instead. REQUIRED for composite fields (e.g. "addressCity").',
+      'REQUIRED for relation fields (e.g. "name", "stage") and composite fields (e.g. "addressCity"). Without this, relation fields group by raw UUID which is not useful.',
     ),
   primaryAxisOrderBy: z.enum(GRAPH_ORDER_BY_OPTIONS).optional(),
   primaryAxisManualSortOrder: z.array(z.string()).optional(),
@@ -486,7 +328,6 @@ const lineChartConfigSchemaCore = z.object({
   isCumulative: z.boolean().optional().describe('Show running totals'),
   rangeMin: z.number().optional().describe('Y axis minimum value'),
   rangeMax: z.number().optional().describe('Y axis maximum value'),
-  filter: chartFilterSchema.optional(),
 });
 
 const lineChartConfigSchemaWithoutDefaults = withRangeMinMaxRefinement(
@@ -505,32 +346,14 @@ const lineChartConfigSchema = withRangeMinMaxRefinement(
 // Graph configuration schema for PIE charts
 const pieChartConfigSchemaCore = z.object({
   configurationType: z.literal(WidgetConfigurationType.PIE_CHART),
-  aggregateFieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe('Field UUID to aggregate. Provide this or aggregateFieldName.'),
-  aggregateFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to aggregate (resolved to a UUID). Alternative to aggregateFieldMetadataId.',
-    ),
+  aggregateFieldMetadataId: z.uuid(),
   aggregateOperation: z.enum(AGGREGATE_OPERATION_OPTIONS),
-  groupByFieldMetadataId: z
-    .uuid()
-    .optional()
-    .describe('Field UUID to slice by. Provide this or groupByFieldName.'),
-  groupByFieldName: z
-    .string()
-    .optional()
-    .describe(
-      'Field name to slice by (resolved to a UUID). Alternative to groupByFieldMetadataId.',
-    ),
+  groupByFieldMetadataId: z.uuid().describe('Field UUID to slice by'),
   groupBySubFieldName: z
     .string()
     .optional()
     .describe(
-      'Optional for relation fields: omit it to group by the related record itself, labelled with its display name; provide it (e.g. "name", "stage") to group by that attribute instead. REQUIRED for composite fields (e.g. "addressCity").',
+      'REQUIRED for relation fields (e.g. "name", "stage") and composite fields (e.g. "addressCity"). Without this, relation fields group by raw UUID which is not useful.',
     ),
   orderBy: z.enum(GRAPH_ORDER_BY_OPTIONS).optional(),
   manualSortOrder: z.array(z.string()).optional(),
@@ -543,7 +366,6 @@ const pieChartConfigSchemaCore = z.object({
   displayLegend: displayLegendSchema,
   showCenterMetric: showCenterMetricSchema,
   hideEmptyCategory: hideEmptyCategorySchema,
-  filter: chartFilterSchema.optional(),
 });
 
 const pieChartConfigSchemaWithoutDefaults = withManualSortRefinement(
@@ -567,12 +389,6 @@ const recordTableConfigSchema = z.object({
     .describe(
       'UUID of the dedicated view created for this widget. Must be created with create_view before creating the widget. Never reuse a record index view.',
     ),
-  recordLimit: z
-    .number()
-    .int()
-    .min(1)
-    .optional()
-    .describe('Maximum number of records displayed in the table widget.'),
 });
 
 // Iframe configuration

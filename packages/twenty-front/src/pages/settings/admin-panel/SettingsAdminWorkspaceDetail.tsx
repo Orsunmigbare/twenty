@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom';
 
 import { useMutation, useQuery } from '@apollo/client/react';
 import { t } from '@lingui/core/macro';
-import { isNonEmptyString } from '@sniptt/guards';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 
@@ -17,12 +16,12 @@ import { SettingsAdminWorkspaceContent } from '@/settings/admin-panel/components
 import { SettingsSectionSkeletonLoader } from '@/settings/components/SettingsSectionSkeletonLoader';
 import { GET_ADMIN_WORKSPACE_CHAT_THREADS } from '@/settings/admin-panel/graphql/queries/getAdminWorkspaceChatThreads';
 import { WORKSPACE_LOOKUP_ADMIN_PANEL } from '@/settings/admin-panel/graphql/queries/workspaceLookupAdminPanel';
-import { useAdminUpdateFeatureFlag } from '@/settings/admin-panel/hooks/useAdminUpdateFeatureFlag';
+import { useFeatureFlagState } from '@/settings/admin-panel/hooks/useFeatureFlagState';
 import { useHandleImpersonate } from '@/settings/admin-panel/hooks/useHandleImpersonate';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import { SettingsSkeletonLoader } from '@/settings/components/SettingsSkeletonLoader';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { Table } from '@/ui/layout/table/components/Table';
@@ -30,24 +29,22 @@ import { TableBody } from '@/ui/layout/table/components/TableBody';
 import { TableCell } from '@/ui/layout/table/components/TableCell';
 import { TableHeader } from '@/ui/layout/table/components/TableHeader';
 import { TableRow } from '@/ui/layout/table/components/TableRow';
-import { DEFAULT_WORKSPACE_LOGO } from '@/ui/navigation/navigation-drawer/constants/DefaultWorkspaceLogo';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
-import { Avatar } from 'twenty-ui/data-display';
 import {
+  Avatar,
+  H2Title,
   IconCreditCard,
   IconEyeShare,
   IconFlag,
   IconMessage,
+  OverflowingTextWithTooltip,
   IconSettings2,
   IconUsers,
-} from 'twenty-ui/icon';
-import { Card, OverflowingTextWithTooltip } from 'twenty-ui/surfaces';
-import { H2Title } from 'twenty-ui/typography';
+} from 'twenty-ui/display';
 import { Button, Toggle } from 'twenty-ui/input';
-import { Section } from 'twenty-ui/layout';
+import { Card, Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
 import {
   type FeatureFlagKey,
   type GetAdminWorkspaceChatThreadsQuery,
@@ -81,13 +78,10 @@ export const SettingsAdminWorkspaceDetail = () => {
   const isBillingEnabled = billing?.isBillingEnabled ?? false;
   const canManageFeatureFlags = useAtomStateValue(canManageFeatureFlagsState);
   const { enqueueErrorSnackBar } = useSnackBar();
-  const { updateFeatureFlagState } = useAdminUpdateFeatureFlag();
+  const { updateFeatureFlagState } = useFeatureFlagState();
   const { handleImpersonate, impersonatingUserId } = useHandleImpersonate();
   const [updateFeatureFlag] = useMutation(UpdateWorkspaceFeatureFlagDocument, {
     client: apolloAdminClient,
-    refetchQueries: [
-      { query: WORKSPACE_LOOKUP_ADMIN_PANEL, variables: { workspaceId } },
-    ],
   });
 
   const { data: workspaceData, loading: isLoadingWorkspace } =
@@ -198,25 +192,13 @@ export const SettingsAdminWorkspaceDetail = () => {
   ];
 
   const workspaceName = workspace?.name || workspaceId || '';
-  const workspaceLogo = isNonEmptyString(workspace?.logo)
-    ? workspace.logo
-    : DEFAULT_WORKSPACE_LOGO;
 
   if (isLoadingWorkspace) {
     return <SettingsSkeletonLoader />;
   }
 
   return (
-    <SettingsPageLayout
-      title={workspaceName}
-      icon={
-        <Avatar
-          avatarUrl={getAbsoluteImageUrl(workspaceLogo)}
-          placeholder={workspaceName}
-          placeholderColorSeed={workspace?.id}
-          size="md"
-        />
-      }
+    <SubMenuTopBarContainer
       links={[
         {
           children: t`Other`,
@@ -282,7 +264,7 @@ export const SettingsAdminWorkspaceDetail = () => {
                         overflow="hidden"
                       >
                         <Avatar
-                          avatarUrl={getAbsoluteImageUrl(user.avatarUrl)}
+                          avatarUrl={user.avatarUrl}
                           placeholder={
                             `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
                             user.email
@@ -300,22 +282,20 @@ export const SettingsAdminWorkspaceDetail = () => {
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell align="right">
-                        {workspace.allowImpersonation &&
-                          isDefined(currentUser?.id) &&
-                          userId !== currentUser.id && (
-                            <Button
-                              Icon={IconEyeShare}
-                              variant="secondary"
-                              size="small"
-                              title={t`Impersonate`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleImpersonate(userId, workspaceId!);
-                              }}
-                              disabled={impersonatingUserId === userId}
-                            />
-                          )}
+                        {workspace.allowImpersonation && (
+                          <Button
+                            Icon={IconEyeShare}
+                            variant="secondary"
+                            size="small"
+                            title={t`Impersonate`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleImpersonate(userId, workspaceId!);
+                            }}
+                            disabled={impersonatingUserId === userId}
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -428,6 +408,6 @@ export const SettingsAdminWorkspaceDetail = () => {
           </Section>
         )}
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

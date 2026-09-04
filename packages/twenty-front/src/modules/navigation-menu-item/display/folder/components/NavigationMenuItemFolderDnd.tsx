@@ -10,7 +10,7 @@ import {
   IconHeartOff,
   IconPlus,
   useIcons,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { useIsMobile } from 'twenty-ui/utilities';
@@ -116,7 +116,7 @@ export const NavigationMenuItemFolderDnd = ({
     ? NavigationSections.FAVORITES
     : NavigationSections.WORKSPACE;
 
-  const { isOpen, handleToggle, hasActiveChild, activeChildIndex } =
+  const { isOpen, handleToggle, hasActiveChild } =
     useNavigationMenuItemFolderOpenState({
       folderId,
       folderChildrenNavigationMenuItems: navigationMenuItems,
@@ -351,7 +351,6 @@ export const NavigationMenuItemFolderDnd = ({
                     navigationMenuItem={navigationMenuItem}
                     index={index}
                     arrayLength={folderContentLength}
-                    selectedIndex={activeChildIndex}
                     isDragging={isDragging}
                     rightOptions={
                       isEditInPlace ? (
@@ -378,13 +377,12 @@ export const NavigationMenuItemFolderDnd = ({
               droppableId={folderContentDroppableId}
               index={navigationMenuItems.length}
               disabled={dropDisabled}
-              collisionPriority={FOLDER_HEADER_SLOT_COLLISION_PRIORITY}
             >
               <NavigationItemDropTarget
                 folderId={folderId}
                 index={navigationMenuItems.length}
                 sectionId={sectionId}
-                compact={isEditInPlace ? false : isCompact}
+                compact={isCompact}
                 dropTargetIdOverride={getDndKitDropTargetId(
                   folderContentDroppableId,
                   navigationMenuItems.length,

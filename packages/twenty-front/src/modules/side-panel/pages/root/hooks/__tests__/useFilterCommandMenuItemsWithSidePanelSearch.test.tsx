@@ -34,7 +34,6 @@ const buildMockItem = (
   availabilityType: CommandMenuItemAvailabilityType.GLOBAL,
   availabilityObjectMetadataId: null,
   payload: null,
-  isActive: true,
   ...overrides,
 });
 

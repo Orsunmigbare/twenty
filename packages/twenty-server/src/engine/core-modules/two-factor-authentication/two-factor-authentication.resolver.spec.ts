@@ -1,5 +1,6 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { getWorkspaceScopedRepositoryToken } from 'src/engine/twenty-orm/workspace-scoped-repository/get-workspace-scoped-repository-token.util';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import {
   AuthException,
   AuthExceptionCode,
@@ -104,9 +105,7 @@ describe('TwoFactorAuthenticationResolver', () => {
           useFactory: createMockWorkspaceDomainsService,
         },
         {
-          provide: getWorkspaceScopedRepositoryToken(
-            TwoFactorAuthenticationMethodEntity,
-          ),
+          provide: getRepositoryToken(TwoFactorAuthenticationMethodEntity),
           useFactory: createMockRepository,
         },
       ],
@@ -120,7 +119,7 @@ describe('TwoFactorAuthenticationResolver', () => {
     userService = module.get(UserService);
     workspaceDomainsService = module.get(WorkspaceDomainsService);
     repository = module.get(
-      getWorkspaceScopedRepositoryToken(TwoFactorAuthenticationMethodEntity),
+      getRepositoryToken(TwoFactorAuthenticationMethodEntity),
     );
   });
 
@@ -289,13 +288,15 @@ describe('TwoFactorAuthenticationResolver', () => {
       );
 
       expect(result).toEqual({ success: true });
-      expect(repository.findOne).toHaveBeenCalledWith(mockWorkspace.id, {
-        where: { id: mockInput.twoFactorAuthenticationMethodId },
+      expect(repository.findOne).toHaveBeenCalledWith({
+        where: {
+          id: mockInput.twoFactorAuthenticationMethodId,
+        },
         relations: ['userWorkspace'],
       });
-      expect(repository.delete).toHaveBeenCalledWith(mockWorkspace.id, {
-        id: mockInput.twoFactorAuthenticationMethodId,
-      });
+      expect(repository.delete).toHaveBeenCalledWith(
+        mockInput.twoFactorAuthenticationMethodId,
+      );
     });
 
     it('should throw INVALID_INPUT when method is not found', async () => {
@@ -325,6 +326,31 @@ describe('TwoFactorAuthenticationResolver', () => {
       };
 
       repository.findOne.mockResolvedValue(wrongUserMethod);
+
+      await expect(
+        resolver.deleteTwoFactorAuthenticationMethod(
+          mockInput,
+          mockWorkspace,
+          mockUser,
+        ),
+      ).rejects.toThrow(
+        new AuthException(
+          'You can only delete your own two-factor authentication methods',
+          AuthExceptionCode.FORBIDDEN_EXCEPTION,
+        ),
+      );
+    });
+
+    it('should throw FORBIDDEN_EXCEPTION when workspace does not match', async () => {
+      const wrongWorkspaceMethod = {
+        ...mockTwoFactorMethod,
+        userWorkspace: {
+          userId: mockUser.id,
+          workspaceId: 'different-workspace-id',
+        },
+      };
+
+      repository.findOne.mockResolvedValue(wrongWorkspaceMethod);
 
       await expect(
         resolver.deleteTwoFactorAuthenticationMethod(

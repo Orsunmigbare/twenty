@@ -1,5 +1,4 @@
 import { type FieldManifest } from 'twenty-shared/application';
-import { getFieldDefaultValueWarnings } from '@/sdk/define/fields/get-field-default-value-warnings';
 import { validateFields } from '@/sdk/define/fields/validate-fields';
 
 import { type DefineEntity } from '@/sdk/define/common/types/define-entity.type';
@@ -16,11 +15,8 @@ export const defineField: DefineEntity<FieldManifest> = (config) => {
 
   errors.push(...fieldErrors);
 
-  const warnings = getFieldDefaultValueWarnings([config]);
-
   return createValidationResult({
     config,
     errors,
-    warnings,
   });
 };

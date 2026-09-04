@@ -8,6 +8,10 @@ export const GRAPH_WIDGET_SIZES: Partial<
     default: { w: 2, h: 2 },
     minimum: { w: 2, h: 2 },
   },
+  [WidgetConfigurationType.GAUGE_CHART]: {
+    default: { w: 3, h: 4 },
+    minimum: { w: 3, h: 4 },
+  },
   [WidgetConfigurationType.PIE_CHART]: {
     default: { w: 4, h: 4 },
     minimum: { w: 3, h: 4 },

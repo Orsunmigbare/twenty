@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -15,33 +12,21 @@ import {
 
 const MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .messageChannelMessageAssociationMessageFolderRecordPage.tabs.home
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab12-4012-8012-a5c4a6121201',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .messageChannelMessageAssociationMessageFolderRecordPage.tabs.home
-            .widgets.fields.universalIdentifier,
+        universalIdentifier: '20202020-ac12-4012-8012-a5c4a6121211',
         ...WIDGET_PROPS.fields,
       },
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .messageChannelMessageAssociationMessageFolderRecordPage.tabs.timeline
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab12-4012-8012-a5c4a6121202',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .messageChannelMessageAssociationMessageFolderRecordPage.tabs
-            .timeline.widgets.timeline.universalIdentifier,
+        universalIdentifier: '20202020-ac12-4012-8012-a5c4a6121221',
         ...WIDGET_PROPS.timeline,
       },
     },
@@ -55,10 +40,7 @@ export const STANDARD_MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER_PAGE_LA
     objectUniversalIdentifier:
       STANDARD_OBJECTS.messageChannelMessageAssociationMessageFolder
         .universalIdentifier,
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .messageChannelMessageAssociationMessageFolderRecordPage
-        .universalIdentifier,
+    universalIdentifier: '20202020-a112-4012-8012-a5c4a6120001',
     defaultTabUniversalIdentifier: null,
     tabs: MESSAGE_CHANNEL_MESSAGE_ASSOCIATION_MESSAGE_FOLDER_PAGE_TABS,
   } as const satisfies StandardPageLayoutConfig;

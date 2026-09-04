@@ -30,7 +30,9 @@ export const handleWorkflowVersionStepException = (
 };
 
 @Catch(WorkflowVersionStepException)
-export class WorkflowVersionStepGraphqlApiExceptionFilter implements ExceptionFilter {
+export class WorkflowVersionStepGraphqlApiExceptionFilter
+  implements ExceptionFilter
+{
   catch(exception: WorkflowVersionStepException) {
     handleWorkflowVersionStepException(exception);
   }

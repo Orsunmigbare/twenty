@@ -11,9 +11,11 @@ import {
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
 import { type AuthToken } from 'src/engine/core-modules/auth/dto/auth-token.dto';
-import { type AuthContext } from 'src/engine/core-modules/auth/types/auth-context.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
-import { type WorkspaceAgnosticTokenJwtPayload } from 'src/engine/core-modules/auth/types/workspace-agnostic-token-jwt-payload.type';
+import {
+  type AuthContext,
+  JwtTokenTypeEnum,
+  type WorkspaceAgnosticTokenJwtPayload,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
@@ -58,7 +60,11 @@ export class WorkspaceAgnosticTokenService {
     };
 
     return {
-      token: await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
+      token: this.jwtWrapperService.sign(jwtPayload, {
+        secret: this.jwtWrapperService.generateAppSecret(
+          JwtTokenTypeEnum.WORKSPACE_AGNOSTIC,
+          user.id,
+        ),
         expiresIn,
       }),
       expiresAt,
@@ -67,17 +73,15 @@ export class WorkspaceAgnosticTokenService {
 
   async validateToken(token: string): Promise<AuthContext> {
     try {
-      await this.jwtWrapperService.verifyJwtToken(token);
-
       const decoded =
         this.jwtWrapperService.decode<WorkspaceAgnosticTokenJwtPayload>(token);
 
-      if (decoded.type !== JwtTokenTypeEnum.WORKSPACE_AGNOSTIC) {
-        throw new AuthException(
-          'Expected a workspace-agnostic token',
-          AuthExceptionCode.INVALID_JWT_TOKEN_TYPE,
-        );
-      }
+      this.jwtWrapperService.verify(token, {
+        secret: this.jwtWrapperService.generateAppSecret(
+          JwtTokenTypeEnum.WORKSPACE_AGNOSTIC,
+          decoded.userId,
+        ),
+      });
 
       const user = await this.userRepository.findOne({
         where: { id: decoded.sub },

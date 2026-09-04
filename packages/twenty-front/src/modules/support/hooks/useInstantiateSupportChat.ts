@@ -6,14 +6,6 @@ import { isNonEmptyString } from '@sniptt/guards';
 import { useCallback, useEffect, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { type User, type WorkspaceMember } from '~/generated-metadata/graphql';
-import { scheduleIdleCallback } from '~/utils/scheduleIdleCallback';
-
-// Front chat is non-critical UI, so we load its ~2 s bundle during an idle
-// period rather than letting it compete with metadata loading and first
-// render during boot. The timeout caps the wait so the launcher (and any
-// unread-reply badge) still appears promptly, and it doubles as the plain
-// delay on browsers without requestIdleCallback (Safari/iOS).
-const FRONT_CHAT_IDLE_LOAD_TIMEOUT_MS = 2000;
 
 const insertScript = ({
   src,
@@ -85,16 +77,13 @@ export const useInstantiateSupportChat = () => {
       isDefined(currentWorkspaceMember) &&
       !isFrontChatLoaded
     ) {
-      return scheduleIdleCallback(
-        () => {
-          configureFront(
-            supportChat.supportFrontChatId as string,
-            currentUser,
-            currentWorkspaceMember,
-          );
-        },
-        { timeout: FRONT_CHAT_IDLE_LOAD_TIMEOUT_MS },
-      );
+      setTimeout(() => {
+        configureFront(
+          supportChat.supportFrontChatId as string,
+          currentUser,
+          currentWorkspaceMember,
+        );
+      }, 500);
     }
   }, [
     configureFront,

@@ -28,11 +28,14 @@ export const fromRoleConfigToRoleManifest = (
         ),
       }),
     ),
-    rowLevelPermissionPredicateGroups:
-      roleConfig.rowLevelPermissionPredicateGroups ?? [],
-    rowLevelPermissionPredicates:
-      roleConfig.rowLevelPermissionPredicates ?? [],
-    permissionFlagUniversalIdentifiers:
-      roleConfig.permissionFlagUniversalIdentifiers ?? [],
+    permissionFlags: (roleConfig.permissionFlags ?? []).map(
+      (permissionFlag) => ({
+        universalIdentifier: uuidv5(
+          `${roleConfig.universalIdentifier}:${permissionFlag}`,
+          ROLE_UNIVERSAL_IDENTIFIER_NAMESPACE,
+        ),
+        flag: permissionFlag,
+      }),
+    ),
   };
 };

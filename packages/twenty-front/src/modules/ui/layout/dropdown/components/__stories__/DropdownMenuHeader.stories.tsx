@@ -5,8 +5,12 @@ import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
 import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components/DropdownMenuHeader/internal/DropdownMenuHeaderLeftComponent';
 import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/DropdownMenuItemsContainer';
-import { Avatar } from 'twenty-ui/data-display';
-import { IconChevronLeft, IconChevronRight, IconPlus } from 'twenty-ui/icon';
+import {
+  Avatar,
+  IconChevronLeft,
+  IconChevronRight,
+  IconPlus,
+} from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
 import { AVATAR_URL_MOCK, ComponentDecorator } from 'twenty-ui/testing';
 

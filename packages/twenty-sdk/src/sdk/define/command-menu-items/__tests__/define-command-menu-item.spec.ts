@@ -64,8 +64,5 @@ describe('defineCommandMenuItem', () => {
     expect(result.success).toBe(true);
     expect(result.config.icon).toBe('IconRocket');
     expect(result.config.isPinned).toBe(true);
-    expect(result.warnings).toContain(
-      'CommandMenuItem icon will be ignored in favor of application icon, you should remove it',
-    );
   });
 });

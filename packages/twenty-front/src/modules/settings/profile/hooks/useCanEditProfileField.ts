@@ -2,8 +2,8 @@ import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState
 import { currentUserWorkspaceState } from '@/auth/states/currentUserWorkspaceState';
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { countAvailableWorkspaces } from '@/auth/utils/availableWorkspacesUtils';
-import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { PermissionFlagType } from '~/generated-metadata/graphql';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 
 export type EditableProfileField =
   | 'email'
@@ -17,10 +17,7 @@ export const useCanEditProfileField = (field: EditableProfileField) => {
   const availableWorkspaces = useAtomStateValue(availableWorkspacesState);
 
   if (!currentWorkspace || !currentUserWorkspace) {
-    return {
-      canEdit: false,
-      isBlockedByWorkspaceLimit: false,
-    };
+    return { canEdit: false };
   }
 
   const editableFields = currentWorkspace.editableProfileFields ?? [];
@@ -34,14 +31,10 @@ export const useCanEditProfileField = (field: EditableProfileField) => {
   const requiresSingleWorkspace = field === 'email';
   const isSingleWorkspaceUser =
     countAvailableWorkspaces(availableWorkspaces) <= 1;
-  const isBlockedByWorkspaceLimit =
-    requiresSingleWorkspace && !isSingleWorkspaceUser;
+  const meetsWorkspaceLimit = !requiresSingleWorkspace || isSingleWorkspaceUser;
 
   return {
     canEdit:
-      workspaceAllowsField &&
-      hasProfilePermission &&
-      !isBlockedByWorkspaceLimit,
-    isBlockedByWorkspaceLimit,
+      workspaceAllowsField && hasProfilePermission && meetsWorkspaceLimit,
   };
 };

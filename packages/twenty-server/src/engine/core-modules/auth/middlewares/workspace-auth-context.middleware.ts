@@ -28,7 +28,7 @@ export class WorkspaceAuthContextMiddleware implements NestMiddleware {
 
     applyWorkspaceSentryContext(authContext);
 
-    void withWorkspaceAuthContext(authContext, () => {
+    withWorkspaceAuthContext(authContext, () => {
       next();
     });
   }

@@ -24,7 +24,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Calendar Channel Event Associations",
     "viewFields": [
@@ -100,7 +99,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Connected Accounts",
     "viewFields": [
@@ -188,7 +186,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Employment History Record Page Fields",
     "viewFields": [
@@ -264,7 +261,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Task Targets",
     "viewFields": [
@@ -352,7 +348,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Companies",
     "viewFields": [
@@ -476,7 +471,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All People",
     "viewFields": [
@@ -624,7 +618,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Opportunities",
     "viewFields": [
@@ -724,7 +717,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Notes",
     "viewFields": [
@@ -812,7 +804,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Tasks",
     "viewFields": [
@@ -936,7 +927,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Workflows",
     "viewFields": [
@@ -1036,7 +1026,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Versions",
     "viewFields": [
@@ -1124,7 +1113,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Runs",
     "viewFields": [
@@ -1188,7 +1176,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Dashboards",
     "viewFields": [
@@ -1264,7 +1251,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Timeline Activities",
     "viewFields": [
@@ -1436,7 +1422,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": "501e9e6f-e1c3-49fa-80c5-50ce232121fa",
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Calendar events",
     "viewFields": [
@@ -1560,7 +1545,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Messages",
     "viewFields": [
@@ -1672,7 +1656,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Threads",
     "viewFields": [
@@ -1748,7 +1731,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Workspace Members",
     "viewFields": [
@@ -1824,7 +1806,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Employment Histories",
     "viewFields": [
@@ -1912,7 +1893,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Calendar Channels",
     "viewFields": [
@@ -2012,7 +1992,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Attachments",
     "viewFields": [
@@ -2172,7 +2151,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Calendar event participants",
     "viewFields": [
@@ -2296,7 +2274,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Pet Record Page Fields",
     "viewFields": [
@@ -2372,7 +2349,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Blocklists",
     "viewFields": [
@@ -2436,7 +2412,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Pet Care Agreements",
     "viewFields": [
@@ -2524,7 +2499,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Folders",
     "viewFields": [
@@ -2612,7 +2586,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Channel Message Association Message Folders",
     "viewFields": [
@@ -2676,7 +2649,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Survey results",
     "viewFields": [
@@ -2764,7 +2736,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Participants",
     "viewFields": [
@@ -2876,7 +2847,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Channels",
     "viewFields": [
@@ -2988,7 +2958,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Workflow Automated Triggers",
     "viewFields": [
@@ -3052,7 +3021,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Message Channel Message Associations",
     "viewFields": [
@@ -3140,7 +3108,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Rocket Record Page Fields",
     "viewFields": [
@@ -3216,7 +3183,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Survey result Record Page Fields",
     "viewFields": [
@@ -3292,7 +3258,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Rockets",
     "viewFields": [
@@ -3380,7 +3345,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Note Targets",
     "viewFields": [
@@ -3468,7 +3432,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Pet Care Agreement Record Page Fields",
     "viewFields": [
@@ -3544,7 +3507,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "All Pets",
     "viewFields": [
@@ -3632,7 +3594,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "By Status",
     "viewFields": [
@@ -3751,7 +3712,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "By Stage",
     "viewFields": [
@@ -3902,7 +3862,6 @@ export const mockedViews: ViewWithRelations[] =
     "calendarFieldMetadataId": null,
     "calendarLayout": null,
     "visibility": "WORKSPACE",
-    "isActive": true,
     "createdByUserWorkspaceId": null,
     "name": "Assigned to Me",
     "viewFields": [

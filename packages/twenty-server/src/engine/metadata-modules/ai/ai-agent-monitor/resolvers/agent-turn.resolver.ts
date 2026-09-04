@@ -1,8 +1,10 @@
 import { Logger, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query } from '@nestjs/graphql';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { msg } from '@lingui/core/macro';
 import { PermissionFlagType } from 'twenty-shared/constants';
+import { Repository } from 'typeorm';
 
 import { MetadataResolver } from 'src/engine/api/graphql/graphql-config/decorators/metadata-resolver.decorator';
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
@@ -20,35 +22,28 @@ import { AgentTurnEntity } from 'src/engine/metadata-modules/ai/ai-agent-executi
 import { AgentTurnEvaluationDTO } from 'src/engine/metadata-modules/ai/ai-agent-monitor/dtos/agent-turn-evaluation.dto';
 import { RunEvaluationInputJob } from 'src/engine/metadata-modules/ai/ai-agent-monitor/jobs/run-evaluation-input.job';
 import { AgentTurnGraderService } from 'src/engine/metadata-modules/ai/ai-agent-monitor/services/agent-turn-grader.service';
-import { AgentService } from 'src/engine/metadata-modules/ai/ai-agent/agent.service';
 import { AgentChatThreadEntity } from 'src/engine/metadata-modules/ai/ai-chat/entities/agent-chat-thread.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
-@UseGuards(
-  WorkspaceAuthGuard,
-  SettingsPermissionGuard(PermissionFlagType.AI_SETTINGS),
-)
+
+@UseGuards(WorkspaceAuthGuard, SettingsPermissionGuard(PermissionFlagType.AI))
 @MetadataResolver()
 export class AgentTurnResolver {
   private readonly logger = new Logger(AgentTurnResolver.name);
 
   constructor(
-    @InjectWorkspaceScopedRepository(AgentTurnEntity)
-    private readonly turnRepository: WorkspaceScopedRepository<AgentTurnEntity>,
-    @InjectWorkspaceScopedRepository(AgentChatThreadEntity)
-    private readonly threadRepository: WorkspaceScopedRepository<AgentChatThreadEntity>,
+    @InjectRepository(AgentTurnEntity)
+    private readonly turnRepository: Repository<AgentTurnEntity>,
+    @InjectRepository(AgentChatThreadEntity)
+    private readonly threadRepository: Repository<AgentChatThreadEntity>,
     @InjectMessageQueue(MessageQueue.aiQueue)
     private readonly messageQueueService: MessageQueueService,
     private readonly graderService: AgentTurnGraderService,
-    private readonly agentService: AgentService,
   ) {}
 
   @Query(() => [AgentTurnDTO])
   async agentTurns(
     @Args('agentId', { type: () => UUIDScalarType }) agentId: string,
-    @AuthWorkspace() { id: workspaceId }: WorkspaceEntity,
   ): Promise<AgentTurnEntity[]> {
-    return this.turnRepository.find(workspaceId, {
+    return this.turnRepository.find({
       where: { agentId },
       relations: ['evaluations', 'messages', 'messages.parts'],
       order: { createdAt: 'DESC' },
@@ -58,9 +53,10 @@ export class AgentTurnResolver {
   @Mutation(() => AgentTurnEvaluationDTO)
   async evaluateAgentTurn(
     @Args('turnId', { type: () => UUIDScalarType }) turnId: string,
-    @AuthWorkspace() { id: workspaceId }: WorkspaceEntity,
   ): Promise<AgentTurnEvaluationDTO> {
-    return this.graderService.evaluateTurn({ turnId, workspaceId });
+    const evaluation = await this.graderService.evaluateTurn(turnId);
+
+    return evaluation;
   }
 
   @Mutation(() => AgentTurnDTO)
@@ -70,25 +66,21 @@ export class AgentTurnResolver {
     @AuthWorkspace() workspace: WorkspaceEntity,
     @AuthUserWorkspaceId() userWorkspaceId: string,
   ): Promise<AgentTurnEntity> {
-    // Resolver-level ownership check: throws if the agent doesn't belong
-    // to the caller's workspace. Defense in depth: the job also re-fetches
-    // the agent through a workspace-scoped repository.
-    await this.agentService.findOneAgentById({
-      id: agentId,
-      workspaceId: workspace.id,
-    });
-
-    const savedThread = await this.threadRepository.save(workspace.id, {
+    const thread = this.threadRepository.create({
       userWorkspaceId,
+      workspaceId: workspace.id,
       title: `Eval: ${input.substring(0, 50)}...`,
     });
+    const savedThread = await this.threadRepository.save(thread);
 
-    const savedTurn = await this.turnRepository.save(workspace.id, {
+    const turn = this.turnRepository.create({
       threadId: savedThread.id,
       agentId,
+      workspaceId: workspace.id,
     });
+    const savedTurn = await this.turnRepository.save(turn);
 
-    await this.messageQueueService.add<{
+    this.messageQueueService.add<{
       turnId: string;
       threadId: string;
       agentId: string;
@@ -102,7 +94,7 @@ export class AgentTurnResolver {
       workspaceId: workspace.id,
     });
 
-    const turnWithRelations = await this.turnRepository.findOne(workspace.id, {
+    const turnWithRelations = await this.turnRepository.findOne({
       where: { id: savedTurn.id },
       relations: ['evaluations', 'messages', 'messages.parts'],
     });

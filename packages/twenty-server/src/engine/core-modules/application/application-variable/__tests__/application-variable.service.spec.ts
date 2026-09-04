@@ -10,7 +10,6 @@ import {
 } from 'src/engine/core-modules/application/application-variable/application-variable.exception';
 import { ApplicationVariableEntityService } from 'src/engine/core-modules/application/application-variable/application-variable.service';
 import { SECRET_APPLICATION_VARIABLE_MASK } from 'src/engine/core-modules/application/application-variable/constants/secret-application-variable-mask.constant';
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
 import { SecretEncryptionService } from 'src/engine/core-modules/secret-encryption/secret-encryption.service';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 
@@ -40,23 +39,17 @@ describe('ApplicationVariableEntityService', () => {
         {
           provide: SecretEncryptionService,
           useValue: {
-            encryptVersioned: jest.fn(
-              (value: string, opts?: { workspaceId?: string }) =>
-                `enc:v2:deadbeef:${value}|${opts?.workspaceId ?? 'instance'}`,
+            encrypt: jest.fn((value: string) => `encrypted_${value}`),
+            decrypt: jest.fn((value: string) =>
+              value.replace('encrypted_', ''),
             ),
-            decryptVersionedOrThrow: jest.fn(
-              (value: string, _opts?: { workspaceId?: string }) =>
-                value.replace(/^enc:v2:[0-9a-f]+:/, '').replace(/\|.*$/, ''),
-            ),
-            decryptAndMaskVersioned: jest.fn(
+            decryptAndMask: jest.fn(
               ({
                 value: _value,
                 mask: _mask,
-                workspaceId: _workspaceId,
               }: {
                 value: string;
                 mask: string;
-                workspaceId?: string;
               }) => '********',
             ),
           },
@@ -83,7 +76,7 @@ describe('ApplicationVariableEntityService', () => {
   });
 
   describe('update', () => {
-    it('should encrypt value with workspaceId-scoped envelope when variable is secret', async () => {
+    it('should encrypt value when variable is secret', async () => {
       const existingVariable = {
         id: '1',
         key: 'API_KEY',
@@ -97,18 +90,17 @@ describe('ApplicationVariableEntityService', () => {
 
       await service.update({
         key: 'API_KEY',
-        plainTextValue: 'new-secret-value' as PlaintextString,
+        plainTextValue: 'new-secret-value',
         applicationId: mockApplicationId,
         workspaceId: mockWorkspaceId,
       });
 
-      expect(secretEncryptionService.encryptVersioned).toHaveBeenCalledWith(
+      expect(secretEncryptionService.encrypt).toHaveBeenCalledWith(
         'new-secret-value',
-        { workspaceId: mockWorkspaceId },
       );
       expect(repository.update).toHaveBeenCalledWith(
         { key: 'API_KEY', applicationId: mockApplicationId },
-        { value: `enc:v2:deadbeef:new-secret-value|${mockWorkspaceId}` },
+        { value: 'encrypted_new-secret-value' },
       );
       expect(workspaceCacheService.invalidateAndRecompute).toHaveBeenCalledWith(
         mockWorkspaceId,
@@ -116,7 +108,7 @@ describe('ApplicationVariableEntityService', () => {
       );
     });
 
-    it('should encrypt value even when variable is not secret', async () => {
+    it('should not encrypt value when variable is not secret', async () => {
       const existingVariable = {
         id: '1',
         key: 'PUBLIC_URL',
@@ -130,18 +122,15 @@ describe('ApplicationVariableEntityService', () => {
 
       await service.update({
         key: 'PUBLIC_URL',
-        plainTextValue: 'https://new-url.com' as PlaintextString,
+        plainTextValue: 'https://new-url.com',
         applicationId: mockApplicationId,
         workspaceId: mockWorkspaceId,
       });
 
-      expect(secretEncryptionService.encryptVersioned).toHaveBeenCalledWith(
-        'https://new-url.com',
-        { workspaceId: mockWorkspaceId },
-      );
+      expect(secretEncryptionService.encrypt).not.toHaveBeenCalled();
       expect(repository.update).toHaveBeenCalledWith(
         { key: 'PUBLIC_URL', applicationId: mockApplicationId },
-        { value: `enc:v2:deadbeef:https://new-url.com|${mockWorkspaceId}` },
+        { value: 'https://new-url.com' },
       );
     });
 
@@ -151,7 +140,7 @@ describe('ApplicationVariableEntityService', () => {
       await expect(
         service.update({
           key: 'NON_EXISTENT',
-          plainTextValue: 'some-value' as PlaintextString,
+          plainTextValue: 'some-value',
           applicationId: mockApplicationId,
           workspaceId: mockWorkspaceId,
         }),
@@ -160,7 +149,7 @@ describe('ApplicationVariableEntityService', () => {
       await expect(
         service.update({
           key: 'NON_EXISTENT',
-          plainTextValue: 'some-value' as PlaintextString,
+          plainTextValue: 'some-value',
           applicationId: mockApplicationId,
           workspaceId: mockWorkspaceId,
         }),
@@ -178,35 +167,28 @@ describe('ApplicationVariableEntityService', () => {
         value: 'https://example.com',
         isSecret: false,
         applicationId: mockApplicationId,
-        workspaceId: mockWorkspaceId,
       } as ApplicationVariableEntity;
 
       const result = service.getDisplayValue(variable);
 
       expect(result).toBe('https://example.com');
-      expect(
-        secretEncryptionService.decryptAndMaskVersioned,
-      ).not.toHaveBeenCalled();
+      expect(secretEncryptionService.decryptAndMask).not.toHaveBeenCalled();
     });
 
-    it('should call decryptAndMaskVersioned with the row workspaceId for secret variables', () => {
+    it('should call decryptAndMask for secret variables', () => {
       const variable = {
         id: '1',
         key: 'SECRET_KEY',
-        value: 'enc:v2:deadbeef:secret|workspace-123',
+        value: 'encrypted_value',
         isSecret: true,
         applicationId: mockApplicationId,
-        workspaceId: mockWorkspaceId,
       } as ApplicationVariableEntity;
 
       service.getDisplayValue(variable);
 
-      expect(
-        secretEncryptionService.decryptAndMaskVersioned,
-      ).toHaveBeenCalledWith({
-        value: 'enc:v2:deadbeef:secret|workspace-123',
+      expect(secretEncryptionService.decryptAndMask).toHaveBeenCalledWith({
+        value: 'encrypted_value',
         mask: SECRET_APPLICATION_VARIABLE_MASK,
-        workspaceId: mockWorkspaceId,
       });
     });
   });

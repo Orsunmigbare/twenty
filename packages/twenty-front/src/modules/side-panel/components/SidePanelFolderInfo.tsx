@@ -1,15 +1,12 @@
 import { styled } from '@linaria/react';
 import { useLingui } from '@lingui/react/macro';
 import { NavigationMenuItemType } from 'twenty-shared/types';
-import { isDefined } from 'twenty-shared/utils';
-import { TintedIconTile } from 'twenty-ui/data-display';
-import { useIcons } from 'twenty-ui/icon';
+import { TintedIconTile, useIcons } from 'twenty-ui/display';
 
 import { FOLDER_ICON_DEFAULT } from '@/navigation-menu-item/common/constants/FolderIconDefault';
 import { selectedNavigationMenuItemIdInEditModeState } from '@/navigation-menu-item/common/states/selectedNavigationMenuItemIdInEditModeState';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
-import { useNavigationMenuItemEditSectionItems } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditSectionItems';
-import { useNavigationMenuItemTitleEdit } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemTitleEdit';
+import { useNavigationMenuItemSectionItems } from '@/navigation-menu-item/display/hooks/useNavigationMenuItemSectionItems';
+import { useUpdateFolderInDraft } from '@/navigation-menu-item/edit/folder/hooks/useUpdateFolderInDraft';
 import { SidePanelPageInfoLayout } from '@/side-panel/components/SidePanelPageInfoLayout';
 import { sidePanelPageInfoState } from '@/side-panel/states/sidePanelPageInfoState';
 import { sidePanelShouldFocusTitleInputComponentState } from '@/side-panel/states/sidePanelShouldFocusTitleInputComponentState';
@@ -34,8 +31,8 @@ export const SidePanelFolderInfo = () => {
   const selectedNavigationMenuItemIdInEditMode = useAtomStateValue(
     selectedNavigationMenuItemIdInEditModeState,
   );
-  const items = useNavigationMenuItemEditSectionItems();
-  const { updateItem } = useNavigationMenuItemEditController();
+  const items = useNavigationMenuItemSectionItems();
+  const { updateFolderInDraft } = useUpdateFolderInDraft();
 
   const defaultLabel = t`New folder`;
   const placeholder = t`Folder name`;
@@ -48,18 +45,23 @@ export const SidePanelFolderInfo = () => {
       )
     : undefined;
 
-  const { value, handleChange, handleSave } = useNavigationMenuItemTitleEdit({
-    itemId: selectedItem?.id ?? null,
-    itemName: selectedItem?.name ?? defaultLabel,
-    defaultLabel,
-    persistName: (name) => {
-      if (isDefined(selectedItem)) {
-        void updateItem(selectedItem.id, { name });
-      }
-    },
-  });
+  if (!selectedItem) return null;
 
-  if (!isDefined(selectedItem)) return null;
+  const itemId = selectedItem.id;
+  const itemName = selectedItem.name ?? defaultLabel;
+
+  const handleChange = (text: string) => {
+    updateFolderInDraft(itemId, { name: text });
+  };
+
+  const handleSave = () => {
+    const trimmed = itemName.trim();
+    const finalName = trimmed.length > 0 ? trimmed : defaultLabel;
+
+    if (finalName !== itemName) {
+      updateFolderInDraft(itemId, { name: finalName });
+    }
+  };
 
   const selectedIconKey = selectedItem.icon ?? FOLDER_ICON_DEFAULT;
   const FolderIconComponent = getIcon(selectedIconKey);
@@ -71,7 +73,7 @@ export const SidePanelFolderInfo = () => {
           dropdownId="side-panel-folder-icon-picker"
           selectedIconKey={selectedIconKey}
           onChange={({ iconKey }) =>
-            void updateItem(selectedItem.id, { icon: iconKey })
+            updateFolderInDraft(itemId, { icon: iconKey })
           }
           clickableComponent={
             <StyledClickableIconWrapper>
@@ -85,9 +87,9 @@ export const SidePanelFolderInfo = () => {
       }
       title={
         <TitleInput
-          instanceId={`folder-name-${selectedItem.id}`}
+          instanceId={`folder-name-${itemId}`}
           sizeVariant="sm"
-          value={value}
+          value={itemName}
           onChange={handleChange}
           placeholder={placeholder}
           onEnter={handleSave}

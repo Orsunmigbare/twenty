@@ -12,7 +12,6 @@ export const UPDATE_PAGE_LAYOUT_WITH_TABS_AND_WIDGETS = gql`
       name
       type
       objectMetadataId
-      universalIdentifier
       defaultTabToFocusOnMobileAndSidePanelId
       createdAt
       updatedAt

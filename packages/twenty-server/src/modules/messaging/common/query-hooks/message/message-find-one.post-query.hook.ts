@@ -2,19 +2,22 @@ import { type WorkspacePostQueryHookInstance } from 'src/engine/api/graphql/work
 
 import { WorkspaceQueryHook } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/decorators/workspace-query-hook.decorator';
 import { WorkspaceQueryHookType } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-hook/types/workspace-query-hook.type';
+import { isApiKeyAuthContext } from 'src/engine/core-modules/auth/guards/is-api-key-auth-context.guard';
+import { isApplicationAuthContext } from 'src/engine/core-modules/auth/guards/is-application-auth-context.guard';
 import { isUserAuthContext } from 'src/engine/core-modules/auth/guards/is-user-auth-context.guard';
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 import { ForbiddenError } from 'src/engine/core-modules/graphql/utils/graphql-errors.util';
+import { TWENTY_STANDARD_APPLICATION } from 'src/engine/workspace-manager/twenty-standard-application/constants/twenty-standard-applications';
 import { ApplyMessagesVisibilityRestrictionsService } from 'src/modules/messaging/common/query-hooks/message/apply-messages-visibility-restrictions.service';
 import { type MessageWorkspaceEntity } from 'src/modules/messaging/common/standard-objects/message.workspace-entity';
-import { isApiKeyAuthContext } from 'src/engine/core-modules/auth/guards/is-api-key-auth-context.guard';
-import { isApplicationAuthContext } from 'src/engine/core-modules/auth/guards/is-application-auth-context.guard';
 
 @WorkspaceQueryHook({
   key: `message.findOne`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class MessageFindOnePostQueryHook implements WorkspacePostQueryHookInstance {
+export class MessageFindOnePostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly applyMessagesVisibilityRestrictionsService: ApplyMessagesVisibilityRestrictionsService,
   ) {}
@@ -24,15 +27,17 @@ export class MessageFindOnePostQueryHook implements WorkspacePostQueryHookInstan
     _objectName: string,
     payload: MessageWorkspaceEntity[],
   ): Promise<void> {
-    // TODO: this check should be removed
+    const isTwentyStandardApplication =
+      isApplicationAuthContext(authContext) &&
+      authContext.application.universalIdentifier ===
+        TWENTY_STANDARD_APPLICATION.universalIdentifier;
+
     if (
       !isUserAuthContext(authContext) &&
       !isApiKeyAuthContext(authContext) &&
-      !isApplicationAuthContext(authContext)
+      !isTwentyStandardApplication
     ) {
-      throw new ForbiddenError(
-        'Authentication error, auth context should be user, apiKey or application',
-      );
+      throw new ForbiddenError('Authentication is required');
     }
 
     const workspace = authContext.workspace;

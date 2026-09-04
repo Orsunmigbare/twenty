@@ -6,7 +6,7 @@ type IsObjectMetadataReadOnlyParams = {
   objectPermissions?: ObjectPermission;
   objectMetadataItem?: Pick<
     EnrichedObjectMetadataItem,
-    'isUIEditable' | 'isRemote' | 'applicationId'
+    'isUIReadOnly' | 'isRemote' | 'applicationId'
   >;
 };
 
@@ -18,6 +18,6 @@ export const isObjectMetadataReadOnly = ({
     (isDefined(objectPermissions) &&
       !objectPermissions.canUpdateObjectRecords) ||
     (isDefined(objectMetadataItem) &&
-      (!objectMetadataItem.isUIEditable || objectMetadataItem.isRemote))
+      (objectMetadataItem.isUIReadOnly || objectMetadataItem.isRemote))
   );
 };

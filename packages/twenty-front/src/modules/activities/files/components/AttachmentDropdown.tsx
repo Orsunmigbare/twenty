@@ -9,7 +9,7 @@ import {
   IconDownload,
   IconPencil,
   IconTrash,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
 

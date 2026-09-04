@@ -1,5 +1,5 @@
 import { styled } from '@linaria/react';
-import { IconChevronLeft } from 'twenty-ui/icon';
+import { IconChevronLeft } from 'twenty-ui/display';
 import { IconButton } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 

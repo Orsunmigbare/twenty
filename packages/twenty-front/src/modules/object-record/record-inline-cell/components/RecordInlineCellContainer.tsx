@@ -13,7 +13,7 @@ import {
   AppTooltip,
   OverflowingTextWithTooltip,
   TooltipDelay,
-} from 'twenty-ui/surfaces';
+} from 'twenty-ui/display';
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { useRecordInlineCellContext } from './RecordInlineCellContext';
 
@@ -45,7 +45,6 @@ const StyledValueContainer = styled.div<{ readonly: boolean }>`
   display: flex;
   min-width: 0;
   position: relative;
-  user-select: text;
   width: 100%;
 `;
 

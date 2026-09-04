@@ -85,16 +85,14 @@ describe('AiBillingService', () => {
         {
           provide: BillingUsageService,
           useValue: {
-            decrementAvailableCreditsInCache: jest
-              .fn()
-              .mockResolvedValue(undefined),
+            decrementAvailableCredits: jest.fn().mockResolvedValue(undefined),
           },
         },
         {
           provide: WorkspaceCacheService,
           useValue: {
             getOrRecompute: jest.fn().mockResolvedValue({
-              currentBillingSubscription: {
+              billingSubscription: {
                 currentPeriodStart: new Date('2026-04-01T00:00:00Z'),
               },
             }),
@@ -145,7 +143,7 @@ describe('AiBillingService', () => {
       expect(costInDollars).toBeCloseTo(0.00675);
     });
 
-    it('should not double-count cached and cache-creation tokens for Anthropic', () => {
+    it('should not subtract cached tokens from input for Anthropic', () => {
       mockAiModelRegistryService.getEffectiveModelConfig.mockReturnValue(
         anthropicModelConfig as ReturnType<
           AiModelRegistryService['getEffectiveModelConfig']
@@ -156,15 +154,13 @@ describe('AiBillingService', () => {
         'claude-sonnet-4-5-20250929',
         {
           usage: {
-            // @ai-sdk/anthropic reports inputTokens as the FULL prompt:
-            // noCache(400) + cacheRead(600) + cacheCreation(200) = 1200
-            inputTokens: 1200,
+            inputTokens: 400,
             outputTokens: 500,
-            totalTokens: 1700,
+            totalTokens: 900,
             inputTokenDetails: {
               noCacheTokens: 400,
               cacheReadTokens: 600,
-              cacheWriteTokens: 200,
+              cacheWriteTokens: 0,
             },
             outputTokenDetails: { textTokens: 500, reasoningTokens: 0 },
           },
@@ -172,8 +168,7 @@ describe('AiBillingService', () => {
         },
       );
 
-      // inputTokens already includes cached + cache-creation, so the
-      // full-rate portion is 1200 - 600 - 200 = 400
+      // Anthropic: inputTokens already excludes cached
       // inputCost = (400/1M * 3.0) = 0.0012
       // cachedCost = (600/1M * 0.3) = 0.00018
       // cacheCreationCost = (200/1M * 3.75) = 0.00075
@@ -293,13 +288,12 @@ describe('AiBillingService', () => {
         'claude-sonnet-4-5-20250929',
         {
           usage: {
-            // Full prompt size = noCache(150k) + cacheRead(100k) = 250k
-            inputTokens: 250_000,
+            inputTokens: 150_000,
             outputTokens: 1000,
             totalTokens: 251_000,
             cachedInputTokens: 100_000,
             inputTokenDetails: {
-              noCacheTokens: 150_000,
+              noCacheTokens: 0,
               cacheReadTokens: 100_000,
               cacheWriteTokens: 0,
             },
@@ -308,8 +302,8 @@ describe('AiBillingService', () => {
         },
       );
 
-      // Total input = 250k > 200k threshold -> long context rates
-      // full-rate portion = 250k - 100k - 0 = 150k
+      // Anthropic: total input = 150k + 100k + 0 = 250k > 200k threshold
+      // Uses long context rates
       // inputCost = (150_000/1M * 6.0) = 0.9
       // cachedCost = (100_000/1M * 0.6) = 0.06
       // outputCost = (1000/1M * 22.5) = 0.0225
@@ -356,8 +350,8 @@ describe('AiBillingService', () => {
   });
 
   describe('calculateAndBillUsage', () => {
-    it('should calculate cost and emit billing event when model exists', async () => {
-      await service.calculateAndBillUsage(
+    it('should calculate cost and emit billing event when model exists', () => {
+      service.calculateAndBillUsage(
         'gpt-4o',
         { usage: mockTokenUsage },
         'workspace-1',

@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -15,15 +12,11 @@ import {
 
 const WORKFLOW_PAGE_TABS = {
   flow: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.workflowRecordPage.tabs.flow
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab06-4006-8006-a0bcf10a6601',
     ...TAB_PROPS.flow,
     widgets: {
       workflow: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.workflowRecordPage.tabs
-            .flow.widgets.workflow.universalIdentifier,
+        universalIdentifier: '20202020-ac06-4006-8006-a0bcf10a6611',
         ...WIDGET_PROPS.workflow,
       },
     },
@@ -34,9 +27,7 @@ export const STANDARD_WORKFLOW_PAGE_LAYOUT_CONFIG = {
   name: 'Default Workflow Layout',
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier: STANDARD_OBJECTS.workflow.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.workflowRecordPage
-      .universalIdentifier,
+  universalIdentifier: '20202020-a106-4006-8006-a0bcf10aa006',
   defaultTabUniversalIdentifier: null,
   tabs: WORKFLOW_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

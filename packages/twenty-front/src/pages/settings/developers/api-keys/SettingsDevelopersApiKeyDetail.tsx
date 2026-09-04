@@ -17,12 +17,11 @@ import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { SettingsTextInput } from '@/ui/input/components/SettingsTextInput';
 import { ConfirmationModal } from '@/ui/layout/modal/components/ConfirmationModal';
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { IconRepeat, IconTrash } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconRepeat, IconTrash } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -32,11 +31,10 @@ import {
   CreateApiKeyDocument,
   GenerateApiKeyTokenDocument,
   GetApiKeyDocument,
-  GetApiKeyRolesDocument,
+  GetRolesDocument,
   RevokeApiKeyDocument,
 } from '~/generated-metadata/graphql';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
-import { SETTINGS_API_WEBHOOKS_TABS } from '~/pages/settings/api-webhooks/constants/SettingsApiWebhooksTabs';
 
 const StyledInfo = styled.span`
   color: ${themeCssVariables.font.color.light};
@@ -100,11 +98,9 @@ export const SettingsDevelopersApiKeyDetail = () => {
     }
   }, [apiKeyData]);
 
-  const { data: rolesData, loading: rolesLoading } = useQuery(
-    GetApiKeyRolesDocument,
-  );
+  const { data: rolesData, loading: rolesLoading } = useQuery(GetRolesDocument);
 
-  const roles = rolesData?.getApiKeyRoles ?? [];
+  const roles = rolesData?.getRoles ?? [];
 
   const apiKey = apiKeyData?.apiKey;
   const [apiKeyName, setApiKeyName] = useState('');
@@ -148,13 +144,7 @@ export const SettingsDevelopersApiKeyDetail = () => {
         },
       });
       if (redirect) {
-        navigate(
-          SettingsPath.ApiWebhooks,
-          undefined,
-          undefined,
-          undefined,
-          SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.API,
-        );
+        navigate(SettingsPath.ApiWebhooks);
       }
     } catch {
       enqueueErrorSnackBar({ message: t`Error deleting api key.` });
@@ -250,21 +240,16 @@ export const SettingsDevelopersApiKeyDetail = () => {
   return (
     <>
       {isDefined(apiKey) && (
-        <SettingsPageLayout
+        <SubMenuTopBarContainer
           title={apiKey.name || t`Unnamed API Key`}
           links={[
             {
               children: t`Workspace`,
-              href: getSettingsPath(SettingsPath.General),
+              href: getSettingsPath(SettingsPath.Workspace),
             },
             {
-              children: t`MCP & APIs`,
-              href: getSettingsPath(
-                SettingsPath.ApiWebhooks,
-                undefined,
-                undefined,
-                SETTINGS_API_WEBHOOKS_TABS.TABS_IDS.API,
-              ),
+              children: t`APIs & Webhooks`,
+              href: getSettingsPath(SettingsPath.ApiWebhooks),
             },
             { children: apiKey.name || t`Unnamed API Key` },
           ]}
@@ -345,7 +330,7 @@ export const SettingsDevelopersApiKeyDetail = () => {
               />
             </Section>
           </SettingsPageContainer>
-        </SettingsPageLayout>
+        </SubMenuTopBarContainer>
       )}
       <ConfirmationModal
         confirmationPlaceholder={confirmationValue}

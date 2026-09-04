@@ -16,10 +16,10 @@ export const getOrderByFieldForObjectMetadataItem = (
     getLabelIdentifierFieldMetadataItem(objectMetadataItem);
 
   if (isDefined(labelIdentifierFieldMetadata)) {
-    return getOrderByForFieldMetadataType({
-      field: labelIdentifierFieldMetadata,
-      orderByDirection: orderBy,
-    });
+    return getOrderByForFieldMetadataType(
+      labelIdentifierFieldMetadata,
+      orderBy,
+    );
   } else {
     return [
       {

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { isDefined } from 'twenty-shared/utils';
-import { ILike, IsNull } from 'typeorm';
+import { ILike, IsNull, Repository } from 'typeorm';
 
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { type CreateAgentInput } from 'src/engine/metadata-modules/ai/ai-agent/dtos/create-agent.input';
@@ -11,8 +12,6 @@ import { fromUpdateAgentInputToFlatAgentToUpdate } from 'src/engine/metadata-mod
 import { FlatAgentWithRoleId } from 'src/engine/metadata-modules/flat-agent/types/flat-agent.type';
 import { findFlatEntityByIdInFlatEntityMapsOrThrow } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps-or-throw.util';
 import { findFlatEntityByIdInFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-id-in-flat-entity-maps.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 import { WorkspaceMigrationBuilderException } from 'src/engine/workspace-manager/workspace-migration/exceptions/workspace-migration-builder-exception';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
@@ -27,8 +26,8 @@ import { AgentEntity } from './entities/agent.entity';
 @Injectable()
 export class AgentService {
   constructor(
-    @InjectWorkspaceScopedRepository(AgentEntity)
-    private readonly agentRepository: WorkspaceScopedRepository<AgentEntity>,
+    @InjectRepository(AgentEntity)
+    private readonly agentRepository: Repository<AgentEntity>,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
     private readonly applicationService: ApplicationService,
     private readonly workspaceCacheService: WorkspaceCacheService,
@@ -60,8 +59,8 @@ export class AgentService {
     workspaceId: string;
     name: string;
   }): Promise<AgentEntity> {
-    const agent = await this.agentRepository.findOne(workspaceId, {
-      where: { name },
+    const agent = await this.agentRepository.findOne({
+      where: { name, workspaceId },
     });
 
     if (!agent) {
@@ -378,14 +377,15 @@ export class AgentService {
   ): Promise<AgentEntity[]> {
     const queryLower = query.toLowerCase();
 
-    return this.agentRepository.find(workspaceId, {
+    return this.agentRepository.find({
       where: [
-        { deletedAt: IsNull(), name: ILike(`%${queryLower}%`) },
+        { workspaceId, deletedAt: IsNull(), name: ILike(`%${queryLower}%`) },
         {
+          workspaceId,
           deletedAt: IsNull(),
           description: ILike(`%${queryLower}%`),
         },
-        { deletedAt: IsNull(), label: ILike(`%${queryLower}%`) },
+        { workspaceId, deletedAt: IsNull(), label: ILike(`%${queryLower}%`) },
       ],
       take: options.limit,
       order: { name: 'ASC' },

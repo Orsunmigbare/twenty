@@ -7,8 +7,7 @@ import { DropdownMenuItemsContainer } from '@/ui/layout/dropdown/components/Drop
 import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { useOpenDropdown } from '@/ui/layout/dropdown/hooks/useOpenDropdown';
 import { styled } from '@linaria/react';
-import { t } from '@lingui/core/macro';
-import { IconChevronLeft } from 'twenty-ui/icon';
+import { IconChevronLeft } from 'twenty-ui/display';
 import { IconButton } from 'twenty-ui/input';
 import { MenuItem } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -55,7 +54,6 @@ export const SidePanelBackButton = () => {
             size="small"
             variant="tertiary"
             onClick={goBackFromSidePanel}
-            ariaLabel={t`Back`}
           />
         </StyledNavigationIcon>
       }

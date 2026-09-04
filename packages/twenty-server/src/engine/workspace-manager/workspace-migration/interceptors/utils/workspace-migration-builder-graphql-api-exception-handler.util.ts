@@ -1,8 +1,6 @@
 import { ALL_METADATA_NAME } from 'twenty-shared/metadata';
 import { isDefined } from 'twenty-shared/utils';
 
-import { plural } from 'pluralize';
-
 import {
   BaseGraphQLError,
   ErrorCode,
@@ -25,7 +23,7 @@ export const workspaceMigrationBuilderGraphqlApiExceptionHandler = (
         return [];
       }
 
-      return [`${count} ${count === 1 ? metadataName : plural(metadataName)}`];
+      return [`${count} ${metadataName}${count > 1 ? 's' : ''}`];
     })
     .join(', ')}`;
 

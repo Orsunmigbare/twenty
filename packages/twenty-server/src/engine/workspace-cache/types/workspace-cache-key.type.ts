@@ -8,9 +8,8 @@ import { type ResolverNameMapEntry } from 'src/engine/api/graphql/direct-executi
 import { type FlatApiKey } from 'src/engine/core-modules/api-key/types/flat-api-key.type';
 import { type ApplicationVariableCacheMaps } from 'src/engine/core-modules/application/application-variable/types/application-variable-cache-maps.type';
 import { type FlatApplicationCacheMaps } from 'src/engine/core-modules/application/types/flat-application-cache-maps.type';
-import { type CurrentBillingSubscription } from 'src/engine/core-modules/billing/types/flat-billing-subscription.type';
+import { type FlatBillingSubscription } from 'src/engine/core-modules/billing/types/flat-billing-subscription.type';
 import { type FlatWorkspaceMemberMaps } from 'src/engine/core-modules/user/types/flat-workspace-member-maps.type';
-import { type WorkflowAutomatedTriggerMaps } from 'src/engine/core-modules/workflow/types/workflow-automated-trigger-maps.type';
 import { type FlatRoleTargetByAgentIdMaps } from 'src/engine/metadata-modules/flat-agent/types/flat-role-target-by-agent-id-maps.type';
 import { type AllFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/all-flat-entity-maps.type';
 import { type UserWorkspaceRoleMap } from 'src/engine/metadata-modules/role-target/types/user-workspace-role-map';
@@ -28,7 +27,6 @@ export const WORKSPACE_CACHE_KEYS_V2 = {
   flatViewFilterMaps: 'flat-maps:view-filter',
   flatViewFilterGroupMaps: 'flat-maps:view-filter-group',
   flatViewSortMaps: 'flat-maps:view-sort',
-  flatSearchFieldMetadataMaps: 'flat-maps:search-field-metadata',
   flatLogicFunctionMaps: 'flat-maps:logic-function',
   featureFlagsMap: 'feature-flag:feature-flags-map',
   rolesPermissions: 'metadata:permissions:roles-permissions',
@@ -37,8 +35,7 @@ export const WORKSPACE_CACHE_KEYS_V2 = {
   flatApplicationMaps: 'flat-maps:flatApplicationMaps',
   flatRoleMaps: 'flat-maps:role',
   flatRoleTargetMaps: 'flat-maps:role-target',
-  flatRolePermissionFlagMaps: 'flat-maps:role-permission-flag',
-  flatPermissionFlagMaps: 'flat-maps:permission-flag-catalog',
+  flatPermissionFlagMaps: 'flat-maps:permission-flag',
   flatObjectPermissionMaps: 'flat-maps:object-permission',
   flatFieldPermissionMaps: 'flat-maps:field-permission',
   ORMEntityMetadatas: 'orm:entity-metadatas',
@@ -62,8 +59,7 @@ export const WORKSPACE_CACHE_KEYS_V2 = {
   apiKeyMap: 'cache:api-key-map',
   applicationVariableMaps: 'cache:application-variable',
   graphQLResolverNameMap: 'direct-execution:graphql-resolver-name-map',
-  currentBillingSubscription: 'billing:subscription',
-  workflowAutomatedTriggerMaps: 'cache:workflow-automated-trigger',
+  billingSubscription: 'billing:subscription',
 } as const satisfies Record<WorkspaceCacheKeyName, string>;
 
 export type AdditionalCacheDataMaps = {
@@ -80,8 +76,7 @@ export type AdditionalCacheDataMaps = {
   flatWorkspaceMemberMaps: FlatWorkspaceMemberMaps;
   applicationVariableMaps: ApplicationVariableCacheMaps;
   graphQLResolverNameMap: Record<string, ResolverNameMapEntry>;
-  currentBillingSubscription: CurrentBillingSubscription;
-  workflowAutomatedTriggerMaps: WorkflowAutomatedTriggerMaps;
+  billingSubscription: FlatBillingSubscription;
 };
 
 export type WorkspaceCacheDataMap = AllFlatEntityMaps<true> &
@@ -92,9 +87,3 @@ export type WorkspaceCacheKeyName = keyof WorkspaceCacheDataMap;
 export type WorkspaceCacheResult<K extends WorkspaceCacheKeyName[]> = {
   [P in K[number]]: WorkspaceCacheDataMap[P];
 };
-
-export type WorkspaceCacheResultWithHashes<K extends WorkspaceCacheKeyName[]> =
-  {
-    data: WorkspaceCacheResult<K>;
-    hashes: { [P in K[number]]: string };
-  };

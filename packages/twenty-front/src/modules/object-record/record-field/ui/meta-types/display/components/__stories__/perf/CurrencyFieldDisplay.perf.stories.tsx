@@ -58,7 +58,7 @@ export const Bazillions: Story = {
 
 export const Performance = getProfilingStory({
   componentName: 'CurrencyFieldDisplay',
-  averageThresholdInMs: 0.4,
+  averageThresholdInMs: 0.2,
   numberOfRuns: 50,
   numberOfTestsPerRun: 100,
 });

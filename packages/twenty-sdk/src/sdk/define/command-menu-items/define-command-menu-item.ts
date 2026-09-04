@@ -6,7 +6,6 @@ export const defineCommandMenuItem: DefineEntity<CommandMenuItemConfig> = (
   config,
 ) => {
   const errors: string[] = [];
-  const warnings: string[] = [];
 
   if (!config.universalIdentifier) {
     errors.push('CommandMenuItem must have a universalIdentifier');
@@ -22,11 +21,5 @@ export const defineCommandMenuItem: DefineEntity<CommandMenuItemConfig> = (
     );
   }
 
-  if (config.icon) {
-    warnings.push(
-      'CommandMenuItem icon will be ignored in favor of application icon, you should remove it',
-    );
-  }
-
-  return createValidationResult({ config, errors, warnings });
+  return createValidationResult({ config, errors });
 };

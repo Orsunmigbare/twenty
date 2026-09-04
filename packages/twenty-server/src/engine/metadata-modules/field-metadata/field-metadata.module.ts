@@ -10,11 +10,8 @@ import { NestjsQueryTypeOrmModule } from '@ptc-org/nestjs-query-typeorm';
 import { TypeORMModule } from 'src/database/typeorm/typeorm.module';
 import { ActorModule } from 'src/engine/core-modules/actor/actor.module';
 import { ApplicationModule } from 'src/engine/core-modules/application/application.module';
-import { ApplicationTranslationModule } from 'src/engine/core-modules/application/application-translation/application-translation.module';
-import { TokenModule } from 'src/engine/core-modules/auth/token/token.module';
 import { FeatureFlagModule } from 'src/engine/core-modules/feature-flag/feature-flag.module';
 import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
-import { FieldMetadataController } from 'src/engine/metadata-modules/field-metadata/controllers/field-metadata.controller';
 import { FieldMetadataDTO } from 'src/engine/metadata-modules/field-metadata/dtos/field-metadata.dto';
 import { FieldMetadataResolver } from 'src/engine/metadata-modules/field-metadata/field-metadata.resolver';
 import { FieldMetadataGraphqlApiExceptionInterceptor } from 'src/engine/metadata-modules/field-metadata/interceptors/field-metadata-graphql-api-exception.interceptor';
@@ -30,6 +27,7 @@ import { ViewFieldModule } from 'src/engine/metadata-modules/view-field/view-fie
 import { ViewFilterModule } from 'src/engine/metadata-modules/view-filter/view-filter.module';
 import { ViewGroupModule } from 'src/engine/metadata-modules/view-group/view-group.module';
 import { ViewModule } from 'src/engine/metadata-modules/view/view.module';
+import { WorkspaceMetadataVersionModule } from 'src/engine/metadata-modules/workspace-metadata-version/workspace-metadata-version.module';
 import { WorkspaceCacheStorageModule } from 'src/engine/workspace-cache-storage/workspace-cache-storage.module';
 import { WorkspaceMigrationModule } from 'src/engine/workspace-manager/workspace-migration/workspace-migration.module';
 import { WorkspaceCacheModule } from 'src/engine/workspace-cache/workspace-cache.module';
@@ -41,18 +39,13 @@ import { UpdateFieldInput } from './dtos/update-field.input';
 
 @Module({
   imports: [
-    ApplicationModule,
-    ApplicationTranslationModule,
-    TokenModule,
-    WorkspaceCacheStorageModule,
-    FeatureFlagModule,
-    WorkspaceManyOrAllFlatEntityMapsCacheModule,
     NestjsQueryGraphQLModule.forFeature({
       imports: [
         NestjsQueryTypeOrmModule.forFeature([
           FieldMetadataEntity,
           ObjectMetadataEntity,
         ]),
+        WorkspaceMetadataVersionModule,
         WorkspaceCacheStorageModule,
         ObjectMetadataModule,
         TypeORMModule,
@@ -95,7 +88,6 @@ import { UpdateFieldInput } from './dtos/update-field.input';
       ],
     }),
   ],
-  controllers: [FieldMetadataController],
   providers: [
     FieldMetadataService,
     FieldMetadataResolver,

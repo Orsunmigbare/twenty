@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { UpgradeHealthEnum } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { PROVISIONED_WORKSPACE_ACTIVATION_STATUSES } from 'twenty-shared/workspace';
+import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
@@ -11,8 +11,6 @@ import { UpgradeSequenceReaderService } from 'src/engine/core-modules/upgrade/se
 import { UpgradeStatusCacheService } from 'src/engine/core-modules/upgrade/services/upgrade-status-cache.service';
 import { type UpgradeMigrationStatus } from 'src/engine/core-modules/upgrade/upgrade-migration.entity';
 import { extractVersionFromCommandName } from 'src/engine/core-modules/upgrade/utils/extract-version-from-command-name.util';
-
-import { activationStatusIn } from 'src/database/commands/command-runners/utils/activation-status-in.util';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { In, Repository } from 'typeorm';
 
@@ -47,7 +45,6 @@ export type InstanceAndAllWorkspacesUpgradeStatus = {
   instanceUpgradeStatus: InstanceUpgradeStatus;
   workspacesBehind: WorkspaceUpgradeRef[];
   workspacesFailed: WorkspaceUpgradeRef[];
-  upToDateWorkspaceCount: number;
   computedAt: Date;
 };
 
@@ -94,16 +91,14 @@ export class UpgradeStatusService {
           step.kind === 'fast-instance' || step.kind === 'slow-instance',
       );
 
-    return await this.buildCursorStatus(
-      migration,
-      lastInstanceStep?.name ?? null,
-    );
+    return this.buildCursorStatus(migration, lastInstanceStep?.name ?? null);
   }
 
   async getWorkspaceStatuses(
     filterWorkspaceIds?: string[],
   ): Promise<WorkspaceUpgradeStatus[]> {
-    const workspaces = await this.loadProvisionedWorkspaces(filterWorkspaceIds);
+    const workspaces =
+      await this.loadActiveOrSuspendedWorkspaces(filterWorkspaceIds);
 
     if (filterWorkspaceIds) {
       const foundIds = new Set(workspaces.map((workspace) => workspace.id));
@@ -111,7 +106,7 @@ export class UpgradeStatusService {
       for (const requestedId of filterWorkspaceIds) {
         if (!foundIds.has(requestedId)) {
           this.logger.warn(
-            `Workspace ${requestedId} not found or not provisioned`,
+            `Workspace ${requestedId} not found or not active/suspended`,
           );
         }
       }
@@ -127,64 +122,14 @@ export class UpgradeStatusService {
     const lastStepName =
       sequence.length > 0 ? sequence[sequence.length - 1].name : null;
 
-    return Promise.all(
-      workspaces.map(async (workspace) => ({
-        ...(await this.buildCursorStatus(
-          cursors.get(workspace.id) ?? null,
-          lastStepName,
-        )),
-        workspaceId: workspace.id,
-        displayName: workspace.displayName ?? null,
-      })),
-    );
-  }
-
-  async getWorkspaceCompletedVersion(
-    workspaceId: string,
-  ): Promise<string | null> {
-    const cursors =
-      await this.upgradeMigrationService.getWorkspaceLastAttemptedCommandName([
-        workspaceId,
-      ]);
-    const cursor = cursors.get(workspaceId);
-
-    if (!isDefined(cursor)) {
-      return null;
-    }
-
-    const sequence = this.upgradeSequenceReaderService.getUpgradeSequence();
-    const cursorIndex = sequence.findIndex((step) => step.name === cursor.name);
-
-    if (cursorIndex === -1) {
-      return null;
-    }
-
-    const cursorVersion = extractVersionFromCommandName(cursor.name);
-
-    if (!isDefined(cursorVersion)) {
-      return null;
-    }
-
-    const isLastStepOfItsVersion =
-      cursorIndex === sequence.length - 1 ||
-      extractVersionFromCommandName(sequence[cursorIndex + 1].name) !==
-        cursorVersion;
-
-    if (cursor.status === 'completed' && isLastStepOfItsVersion) {
-      return cursorVersion;
-    }
-
-    for (let stepIndex = cursorIndex - 1; stepIndex >= 0; stepIndex--) {
-      const stepVersion = extractVersionFromCommandName(
-        sequence[stepIndex].name,
-      );
-
-      if (stepVersion !== cursorVersion) {
-        return stepVersion;
-      }
-    }
-
-    return null;
+    return workspaces.map((workspace) => ({
+      ...this.buildCursorStatus(
+        cursors.get(workspace.id) ?? null,
+        lastStepName,
+      ),
+      workspaceId: workspace.id,
+      displayName: workspace.displayName ?? null,
+    }));
   }
 
   async getInstanceAndAllWorkspacesStatus(): Promise<InstanceAndAllWorkspacesUpgradeStatus> {
@@ -194,17 +139,12 @@ export class UpgradeStatusService {
       return this.refreshInstanceAndAllWorkspacesStatus();
     }
 
-    const [
-      instanceUpgradeStatus,
-      behindWorkspaceIds,
-      failedWorkspaceIds,
-      upToDateWorkspaceCount,
-    ] = await Promise.all([
-      this.getInstanceStatus(),
-      this.upgradeStatusCacheService.getBehindWorkspaceIds(),
-      this.upgradeStatusCacheService.getFailedWorkspaceIds(),
-      this.upgradeStatusCacheService.getUpToDateWorkspaceCount(),
-    ]);
+    const [instanceUpgradeStatus, behindWorkspaceIds, failedWorkspaceIds] =
+      await Promise.all([
+        this.getInstanceStatus(),
+        this.upgradeStatusCacheService.getBehindWorkspaceIds(),
+        this.upgradeStatusCacheService.getFailedWorkspaceIds(),
+      ]);
 
     const workspaceNamesById = await this.loadWorkspaceNamesById([
       ...behindWorkspaceIds,
@@ -221,7 +161,6 @@ export class UpgradeStatusService {
         failedWorkspaceIds,
         workspaceNamesById,
       ),
-      upToDateWorkspaceCount,
       computedAt,
     };
   }
@@ -236,7 +175,6 @@ export class UpgradeStatusService {
 
     const workspacesBehind: WorkspaceUpgradeRef[] = [];
     const workspacesFailed: WorkspaceUpgradeRef[] = [];
-    let upToDateWorkspaceCount = 0;
 
     for (const workspaceStatus of workspaceStatuses) {
       const workspaceRef: WorkspaceUpgradeRef = {
@@ -248,8 +186,6 @@ export class UpgradeStatusService {
         workspacesBehind.push(workspaceRef);
       } else if (workspaceStatus.health === UpgradeHealthEnum.FAILED) {
         workspacesFailed.push(workspaceRef);
-      } else if (workspaceStatus.health === UpgradeHealthEnum.UP_TO_DATE) {
-        upToDateWorkspaceCount++;
       }
     }
 
@@ -258,7 +194,6 @@ export class UpgradeStatusService {
     await this.upgradeStatusCacheService.write({
       behindWorkspaceIds: workspacesBehind.map((workspace) => workspace.id),
       failedWorkspaceIds: workspacesFailed.map((workspace) => workspace.id),
-      upToDateWorkspaceCount,
       computedAt,
     });
 
@@ -266,7 +201,6 @@ export class UpgradeStatusService {
       instanceUpgradeStatus,
       workspacesBehind,
       workspacesFailed,
-      upToDateWorkspaceCount,
       computedAt,
     };
   }
@@ -275,10 +209,10 @@ export class UpgradeStatusService {
     await this.upgradeStatusCacheService.invalidate();
   }
 
-  private async buildCursorStatus(
+  private buildCursorStatus(
     migration: LatestUpgradeCommand | null,
     lastExpectedCommandName: string | null,
-  ): Promise<InstanceUpgradeStatus> {
+  ): InstanceUpgradeStatus {
     if (!migration) {
       return {
         inferredVersion: null,
@@ -290,9 +224,7 @@ export class UpgradeStatusService {
     const health = deriveHealth(migration, lastExpectedCommandName);
 
     return {
-      inferredVersion: await this.upgradeMigrationService.getInferredVersion(
-        migration.name,
-      ),
+      inferredVersion: extractVersionFromCommandName(migration.name),
       health,
       latestCommand: {
         name: migration.name,
@@ -304,7 +236,7 @@ export class UpgradeStatusService {
     };
   }
 
-  private async loadProvisionedWorkspaces(
+  private async loadActiveOrSuspendedWorkspaces(
     workspaceIds?: string[],
   ): Promise<Pick<WorkspaceEntity, 'id' | 'displayName'>[]> {
     return this.workspaceRepository.find({
@@ -313,9 +245,10 @@ export class UpgradeStatusService {
         ...(workspaceIds && workspaceIds.length > 0
           ? { id: In(workspaceIds) }
           : {}),
-        activationStatus: activationStatusIn(
-          PROVISIONED_WORKSPACE_ACTIVATION_STATUSES,
-        ),
+        activationStatus: In([
+          WorkspaceActivationStatus.ACTIVE,
+          WorkspaceActivationStatus.SUSPENDED,
+        ]),
       },
       order: { id: 'ASC' },
     });

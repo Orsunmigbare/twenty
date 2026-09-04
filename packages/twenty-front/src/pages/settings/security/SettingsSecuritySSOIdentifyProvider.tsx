@@ -7,7 +7,7 @@ import { type SettingSecurityNewSSOIdentityFormValues } from '@/settings/securit
 import { sSOIdentityProviderDefaultValues } from '@/settings/security/utils/sSOIdentityProviderDefaultValues';
 import { SSOIdentitiesProvidersParamsSchema } from '@/settings/security/validation-schemas/SSOIdentityProviderSchema';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from '@lingui/core/macro';
@@ -63,7 +63,7 @@ export const SettingsSecuritySSOIdentifyProvider = () => {
         // oxlint-disable-next-line react/jsx-props-no-spreading
         {...form}
       >
-        <SettingsPageLayout
+        <SubMenuTopBarContainer
           title={t`New SSO Configuration`}
           actionButton={
             <SaveAndCancelButtons
@@ -74,7 +74,7 @@ export const SettingsSecuritySSOIdentifyProvider = () => {
           links={[
             {
               children: <Trans>Workspace</Trans>,
-              href: getSettingsPath(SettingsPath.General),
+              href: getSettingsPath(SettingsPath.Workspace),
             },
             {
               children: <Trans>Security</Trans>,
@@ -84,7 +84,7 @@ export const SettingsSecuritySSOIdentifyProvider = () => {
           ]}
         >
           <SettingsSSOIdentitiesProvidersForm />
-        </SettingsPageLayout>
+        </SubMenuTopBarContainer>
       </FormProvider>
     </form>
   );

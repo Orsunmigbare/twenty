@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -21,7 +20,6 @@ import {
   MessageChannelType,
   MessageChannelVisibility,
   MessageFolderImportPolicy,
-  WebhookSubscriptionStatus,
 } from 'twenty-shared/types';
 
 import { ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
@@ -49,11 +47,6 @@ registerEnumType(MessageChannelPendingGroupEmailsAction, {
 });
 
 @Entity({ name: 'messageChannel', schema: 'core' })
-@Index('IDX_MESSAGE_CHANNEL_WORKSPACE_ID_SYNC_ENABLED_SYNC_STAGE', [
-  'workspaceId',
-  'isSyncEnabled',
-  'syncStage',
-])
 export class MessageChannelEntity extends WorkspaceRelatedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -139,22 +132,6 @@ export class MessageChannelEntity extends WorkspaceRelatedEntity {
 
   @Column({ type: 'timestamptz', nullable: true })
   throttleRetryAfter: Date | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  webhookSubscriptionExternalId: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  webhookSubscriptionClientState: string | null;
-
-  @Column({
-    type: 'enum',
-    enum: WebhookSubscriptionStatus,
-    nullable: true,
-  })
-  webhookSubscriptionStatus: WebhookSubscriptionStatus | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  webhookSubscriptionExpiresAt: Date | null;
 
   @Column({ type: 'uuid', nullable: false })
   connectedAccountId: string;

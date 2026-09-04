@@ -8,8 +8,7 @@ import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTab
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
-import { IconPlayerPlay } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconPlayerPlay } from 'twenty-ui/display';
 import { Button, CoreEditorHeader } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 
@@ -24,13 +23,11 @@ export const SettingsLogicFunctionCodeEditorTab = ({
   handleExecute,
   onChange,
   isTesting = false,
-  applicationVariableKeys,
 }: {
   files: File[];
   handleExecute: () => void;
   onChange: (value: string) => void;
   isTesting?: boolean;
-  applicationVariableKeys?: string[];
 }) => {
   const activeTabId = useAtomComponentStateValue(
     activeTabIdComponentState,
@@ -71,7 +68,6 @@ export const SettingsLogicFunctionCodeEditorTab = ({
           files={files}
           currentFilePath={activeTabId}
           onChange={(newCodeValue: string) => onChange(newCodeValue)}
-          applicationVariableKeys={applicationVariableKeys}
         />
       )}
     </Section>

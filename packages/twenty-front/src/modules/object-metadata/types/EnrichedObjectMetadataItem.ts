@@ -1,7 +1,6 @@
 import { type Object as GeneratedObject } from '~/generated-metadata/graphql';
 
 import { type IndexMetadataItem } from '@/object-metadata/types/IndexMetadataItem';
-import { type SearchFieldMetadataItem } from '@/object-metadata/types/SearchFieldMetadataItem';
 import { type FieldMetadataItem } from './FieldMetadataItem';
 
 export type EnrichedObjectMetadataItem = Omit<
@@ -13,9 +12,6 @@ export type EnrichedObjectMetadataItem = Omit<
   | 'labelIdentifierFieldMetadataId'
   | 'fieldsList'
   | 'indexMetadataList'
-  | 'searchFieldMetadataList'
-  // Deprecated GraphQL field kept server-side for one release; no longer queried
-  | 'isUIReadOnly'
 > & {
   __typename?: string;
   applicationId?: string;
@@ -24,5 +20,4 @@ export type EnrichedObjectMetadataItem = Omit<
   updatableFields: FieldMetadataItem[];
   labelIdentifierFieldMetadataId: string;
   indexMetadatas: IndexMetadataItem[];
-  searchFieldMetadatas: SearchFieldMetadataItem[];
 };

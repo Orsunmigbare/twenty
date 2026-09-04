@@ -10,15 +10,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
-
 @InputType()
 export class UpdateApplicationRegistrationVariablePayload {
-  @Field(() => String, { nullable: true })
+  @Field({ nullable: true })
   @IsString()
   @MaxLength(10000)
   @IsOptional()
-  value?: PlaintextString;
+  value?: string;
 
   @Field({ nullable: true })
   @IsOptional()

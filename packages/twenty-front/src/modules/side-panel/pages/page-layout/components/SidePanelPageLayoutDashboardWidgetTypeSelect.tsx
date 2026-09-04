@@ -32,7 +32,7 @@ import {
   IconChartPie,
   IconFrame,
   IconTable,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { type FrontComponent, WidgetType } from '~/generated-metadata/graphql';
 
 export const SidePanelPageLayoutDashboardWidgetTypeSelect = () => {
@@ -100,9 +100,7 @@ export const SidePanelPageLayoutDashboardWidgetTypeSelect = () => {
     frontComponents: FrontComponent[];
   }>(FIND_MANY_FRONT_COMPONENTS);
 
-  const frontComponents = (frontComponentsData?.frontComponents ?? []).filter(
-    (frontComponent) => !frontComponent.isHeadless,
-  );
+  const frontComponents = frontComponentsData?.frontComponents ?? [];
 
   const frontComponentsWithSelectItemId = frontComponents.map(
     (frontComponent) => ({

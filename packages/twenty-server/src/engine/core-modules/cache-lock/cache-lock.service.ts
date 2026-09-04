@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  CacheLockException,
-  CacheLockExceptionCode,
-} from 'src/engine/core-modules/cache-lock/exceptions/cache-lock.exception';
 import { InjectCacheStorage } from 'src/engine/core-modules/cache-storage/decorators/cache-storage.decorator';
 import { CacheStorageNamespace } from 'src/engine/core-modules/cache-storage/types/cache-storage-namespace.enum';
 import { CacheStorageService } from 'src/engine/core-modules/cache-storage/services/cache-storage.service';
@@ -54,9 +50,6 @@ export class CacheLockService {
       await this.delay(ms);
     }
 
-    throw new CacheLockException(
-      `Failed to acquire lock for key: ${key}`,
-      CacheLockExceptionCode.LOCK_ACQUISITION_TIMEOUT,
-    );
+    throw new Error(`Failed to acquire lock for key: ${key}`);
   }
 }

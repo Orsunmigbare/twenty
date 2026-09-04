@@ -27,11 +27,11 @@ export class AwsSesClientProvider {
         'AWS_SES_SESSION_TOKEN',
       );
 
-      if (accessKeyId && secretAccessKey) {
+      if (accessKeyId && secretAccessKey && sessionToken) {
         config.credentials = {
           accessKeyId,
           secretAccessKey,
-          ...(sessionToken ? { sessionToken } : {}),
+          sessionToken,
         };
       }
 

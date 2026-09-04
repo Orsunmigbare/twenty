@@ -7,7 +7,7 @@ import { styled } from '@linaria/react';
 import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRightCollapse,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { LightIconButton } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 

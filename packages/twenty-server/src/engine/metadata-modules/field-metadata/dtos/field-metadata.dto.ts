@@ -32,7 +32,7 @@ import {
 
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 import { IsValidMetadataName } from 'src/engine/decorators/metadata/is-valid-metadata-name.decorator';
-import { type FieldMetadataOverrides } from 'src/engine/metadata-modules/field-metadata/types/field-metadata-overrides.type';
+import { FieldStandardOverridesDTO } from 'src/engine/metadata-modules/field-metadata/dtos/field-standard-overrides.dto';
 import { type FieldMetadataDefaultOption } from 'src/engine/metadata-modules/field-metadata/dtos/options.input';
 import { ObjectMetadataDTO } from 'src/engine/metadata-modules/object-metadata/dtos/object-metadata.dto';
 import { transformEnumValue } from 'src/engine/utils/transform-enum-value';
@@ -44,7 +44,7 @@ registerEnumType(FieldMetadataType, {
 
 @ObjectType('Field')
 @Authorize({
-  // oxlint-disable-next-line typescript/no-explicit-any
+  // oxlint-disable-next-line @typescripttypescript/no-explicit-any
   authorize: (context: any) => ({
     workspaceId: { eq: context?.req?.workspace?.id },
   }),
@@ -94,8 +94,14 @@ export class FieldMetadataDTO<T extends FieldMetadataType = FieldMetadataType> {
   @Field({ nullable: true })
   icon?: string;
 
-  @HideField()
-  overrides?: FieldMetadataOverrides | null;
+  @IsOptional()
+  @Field(() => FieldStandardOverridesDTO, { nullable: true })
+  standardOverrides?: FieldStandardOverridesDTO;
+
+  @IsBoolean()
+  @IsOptional()
+  @FilterableField({ nullable: true })
+  isCustom?: boolean;
 
   @IsBoolean()
   @IsOptional()
@@ -110,17 +116,6 @@ export class FieldMetadataDTO<T extends FieldMetadataType = FieldMetadataType> {
   @IsBoolean()
   @IsOptional()
   @FilterableField({ nullable: true })
-  isUIEditable?: boolean;
-
-  // Deprecated alias kept for one release: stays filterable so the GraphQL
-  // input types (CreateFieldInput, UpdateFieldInput, FieldFilter) keep their
-  // isUIReadOnly member and external API consumers are not broken.
-  @IsBoolean()
-  @IsOptional()
-  @FilterableField({
-    nullable: true,
-    deprecationReason: 'Use isUIEditable',
-  })
   isUIReadOnly?: boolean;
 
   @IsBoolean()

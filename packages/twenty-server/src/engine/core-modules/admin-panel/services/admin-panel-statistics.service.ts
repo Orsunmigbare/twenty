@@ -67,25 +67,23 @@ export class AdminPanelStatisticsService {
     const signedAvatarUrlByUserId =
       await this.buildSignedAvatarUrlByUserId(users);
 
-    return Promise.all(
-      users.map(async (user) => {
-        const displayWorkspace = user.userWorkspaces[0]?.workspace;
+    return users.map((user) => {
+      const displayWorkspace = user.userWorkspaces[0]?.workspace;
 
-        return {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName ?? undefined,
-          lastName: user.lastName ?? undefined,
-          createdAt: user.createdAt,
-          avatarUrl: signedAvatarUrlByUserId.get(user.id) ?? null,
-          workspaceName: displayWorkspace?.displayName ?? null,
-          workspaceId: displayWorkspace?.id ?? null,
-          workspaceLogo: displayWorkspace
-            ? await this.fileUrlService.signWorkspaceLogoUrl(displayWorkspace)
-            : null,
-        };
-      }),
-    );
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined,
+        createdAt: user.createdAt,
+        avatarUrl: signedAvatarUrlByUserId.get(user.id) ?? null,
+        workspaceName: displayWorkspace?.displayName ?? null,
+        workspaceId: displayWorkspace?.id ?? null,
+        workspaceLogo: displayWorkspace
+          ? this.fileUrlService.signWorkspaceLogoUrl(displayWorkspace)
+          : null,
+      };
+    });
   }
 
   async getTopWorkspaces(
@@ -130,18 +128,16 @@ export class AdminPanelStatisticsService {
       totalUsers: number;
     }> = await queryBuilder.getRawMany();
 
-    return Promise.all(
-      rows.map(async (row) => ({
+    return rows.map((row) => ({
+      id: row.id,
+      logoUrl: this.fileUrlService.signWorkspaceLogoUrl({
         id: row.id,
-        logoUrl: await this.fileUrlService.signWorkspaceLogoUrl({
-          id: row.id,
-          logoFileId: row.logoFileId,
-        }),
-        name: row.name ?? '',
-        subdomain: row.subdomain ?? '',
-        totalUsers: row.totalUsers,
-      })),
-    );
+        logoFileId: row.logoFileId,
+      }),
+      name: row.name ?? '',
+      subdomain: row.subdomain ?? '',
+      totalUsers: row.totalUsers,
+    }));
   }
 
   private async buildSignedAvatarUrlByUserId(

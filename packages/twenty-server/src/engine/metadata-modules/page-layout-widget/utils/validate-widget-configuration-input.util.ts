@@ -4,6 +4,7 @@ import { AggregateChartConfigurationDTO } from 'src/engine/metadata-modules/page
 import { BarChartConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/bar-chart-configuration.dto';
 import { FieldConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/field-configuration.dto';
 import { FrontComponentConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/front-component-configuration.dto';
+import { GaugeChartConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/gauge-chart-configuration.dto';
 import { IframeConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/iframe-configuration.dto';
 import { LineChartConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/line-chart-configuration.dto';
 import { PieChartConfigurationDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/pie-chart-configuration.dto';
@@ -94,6 +95,12 @@ export const validateWidgetConfigurationInput = ({
     case WidgetConfigurationType.AGGREGATE_CHART:
       errors = validateWidgetConfigurationByDto(
         AggregateChartConfigurationDTO,
+        configuration,
+      );
+      break;
+    case WidgetConfigurationType.GAUGE_CHART:
+      errors = validateWidgetConfigurationByDto(
+        GaugeChartConfigurationDTO,
         configuration,
       );
       break;

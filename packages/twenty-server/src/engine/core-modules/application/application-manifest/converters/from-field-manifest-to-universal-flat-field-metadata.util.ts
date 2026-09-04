@@ -8,10 +8,8 @@ import {
   ApplicationException,
   ApplicationExceptionCode,
 } from 'src/engine/core-modules/application/application.exception';
-import { type CompositeFieldMetadataType } from 'src/engine/metadata-modules/field-metadata/types/composite-field-metadata-type.type';
 import { generateDefaultValue } from 'src/engine/metadata-modules/field-metadata/utils/generate-default-value';
-import { isCompositeFieldMetadataType } from 'src/engine/metadata-modules/field-metadata/utils/is-composite-field-metadata-type.util';
-import { nullifyEmptyCompositeDefaultValue } from 'src/engine/metadata-modules/flat-field-metadata/utils/nullify-empty-composite-default-value.util';
+import { PARTIAL_SYSTEM_FLAT_FIELD_METADATAS } from 'src/engine/metadata-modules/object-metadata/constants/partial-system-flat-field-metadatas.constant';
 import { isMorphOrRelationFieldMetadataType } from 'src/engine/utils/is-morph-or-relation-field-metadata-type.util';
 import { type UniversalFlatFieldMetadata } from 'src/engine/workspace-manager/workspace-migration/universal-flat-entity/types/universal-flat-field-metadata.type';
 
@@ -67,15 +65,6 @@ export const fromFieldManifestToUniversalFlatFieldMetadata = ({
     relationTargetObjectMetadataUniversalIdentifier,
   } = getRelationTargetUniversalIdentifiers(fieldManifest);
 
-  const rawDefaultValue =
-    fieldManifest.defaultValue ?? generateDefaultValue(fieldManifest.type);
-  const defaultValue = isCompositeFieldMetadataType(fieldManifest.type)
-    ? nullifyEmptyCompositeDefaultValue({
-        defaultValue: rawDefaultValue,
-        fieldType: fieldManifest.type as CompositeFieldMetadataType,
-      })
-    : rawDefaultValue;
-
   return {
     universalIdentifier: fieldManifest.universalIdentifier,
     applicationUniversalIdentifier,
@@ -84,14 +73,15 @@ export const fromFieldManifestToUniversalFlatFieldMetadata = ({
     label: fieldManifest.label,
     description: fieldManifest.description ?? null,
     icon: fieldManifest.icon ?? null,
-    overrides: null,
+    standardOverrides: null,
     options: fieldManifest.options ?? null,
-    defaultValue,
+    defaultValue:
+      fieldManifest.defaultValue ?? generateDefaultValue(fieldManifest.type),
     universalSettings: fieldManifest.universalSettings ?? null,
+    isCustom: true,
     isActive: true,
-    isSystem: false,
-    isSystemSideEffect: false,
-    isUIEditable: fieldManifest.isUIEditable ?? true,
+    isSystem: fieldManifest.name in PARTIAL_SYSTEM_FLAT_FIELD_METADATAS,
+    isUIReadOnly: false,
     isNullable: fieldManifest.isNullable ?? true,
     isUnique: fieldManifest.isUnique ?? false,
     isLabelSyncedWithName: false,
@@ -107,10 +97,8 @@ export const fromFieldManifestToUniversalFlatFieldMetadata = ({
     fieldPermissionUniversalIdentifiers: [],
     kanbanAggregateOperationViewUniversalIdentifiers: [],
     calendarViewUniversalIdentifiers: [],
-    calendarEndViewUniversalIdentifiers: [],
     mainGroupByFieldMetadataViewUniversalIdentifiers: [],
     viewSortUniversalIdentifiers: [],
-    searchFieldMetadataUniversalIdentifiers: [],
     createdAt: now,
     updatedAt: now,
   };

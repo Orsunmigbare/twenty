@@ -2,14 +2,12 @@ import { SettingsPageContainer } from '@/settings/components/SettingsPageContain
 import { SettingsRolesQueryEffect } from '@/settings/roles/components/SettingsRolesQueryEffect';
 import { SettingsRolePermissionsObjectLevelObjectPicker } from '@/settings/roles/role-permissions/object-level-permissions/components/SettingsRolePermissionsObjectLevelObjectPicker';
 import { settingsDraftRoleFamilyState } from '@/settings/roles/states/settingsDraftRoleFamilyState';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
-import { SettingsWizardStepBar } from '@/settings/components/layout/SettingsWizardStepBar';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { t } from '@lingui/core/macro';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { useQuery } from '@apollo/client/react';
 import { FindOneAgentDocument } from '~/generated-metadata/graphql';
 
@@ -39,7 +37,7 @@ export const SettingsRoleAddObjectLevel = () => {
       ? [
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
             children: t`AI`,
@@ -58,7 +56,7 @@ export const SettingsRoleAddObjectLevel = () => {
       : [
           {
             children: t`Workspace`,
-            href: getSettingsPath(SettingsPath.General),
+            href: getSettingsPath(SettingsPath.Workspace),
           },
           {
             children: t`Members`,
@@ -75,24 +73,17 @@ export const SettingsRoleAddObjectLevel = () => {
           },
         ];
 
-  const headerTitle =
-    fromAgentId && isDefined(agent)
-      ? agent.label
-      : (settingsDraftRole.label ?? '');
-
   return (
     <>
       <SettingsRolesQueryEffect />
-      <SettingsPageLayout
-        title={headerTitle}
-        titleColor={themeCssVariables.font.color.tertiary}
+      <SubMenuTopBarContainer
+        title={t`1. Select an object`}
         links={breadcrumbLinks}
-        secondaryBar={<SettingsWizardStepBar label={t`1. Select an object`} />}
       >
         <SettingsPageContainer>
           <SettingsRolePermissionsObjectLevelObjectPicker roleId={roleId} />
         </SettingsPageContainer>
-      </SettingsPageLayout>
+      </SubMenuTopBarContainer>
     </>
   );
 };

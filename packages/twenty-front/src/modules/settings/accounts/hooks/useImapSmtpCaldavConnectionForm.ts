@@ -2,30 +2,26 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { currentWorkspaceMemberState } from '@/auth/states/currentWorkspaceMemberState';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 
-import { useMutation } from '@apollo/client/react';
 import { t } from '@lingui/core/macro';
 import { SettingsPath } from 'twenty-shared/types';
+import { useMutation } from '@apollo/client/react';
 import {
-  type ConnectionParametersInput,
-  EmailConnectionSecurity,
+  type ConnectionParameters,
   SaveImapSmtpCaldavAccountDocument,
 } from '~/generated-metadata/graphql';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
-import { type ImapSmtpCaldavAccountInput } from '@/accounts/types/ImapSmtpCaldavAccountInput';
-import {
-  isProtocolConfigured,
-  isProtocolConfiguredForUpdate,
-} from '@/settings/accounts/utils/isProtocolConfigured';
+import { type ImapSmtpCaldavAccount } from '@/accounts/types/ImapSmtpCaldavAccount';
+import { ACCOUNT_PROTOCOLS } from '@/settings/accounts/constants/AccountProtocols';
 import {
   connectionImapSmtpCalDav,
-  connectionImapSmtpCalDavUpdate,
+  isProtocolConfigured,
 } from '@/settings/accounts/validation-schemas/connectionImapSmtpCalDav';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
-import { isNonEmptyString } from '@sniptt/guards';
-import { ACCOUNT_TYPES } from 'twenty-shared/constants';
 import { isDefined } from 'twenty-shared/utils';
 import { useConnectedImapSmtpCaldavAccount } from './useConnectedImapSmtpCaldavAccount';
 
@@ -35,47 +31,28 @@ type UseConnectionFormProps = {
 };
 
 export type ConnectionFormData = {
-  name: string;
   handle: string;
-} & ImapSmtpCaldavAccountInput;
-
-const DEFAULT_PROTOCOL_VALUES: Record<string, ConnectionParametersInput> = {
-  IMAP: {
-    host: '',
-    port: 993,
-    password: '',
-    connectionSecurity: EmailConnectionSecurity.SSL_TLS,
-  },
-  SMTP: {
-    host: '',
-    username: '',
-    port: 587,
-    password: '',
-    connectionSecurity: EmailConnectionSecurity.STARTTLS,
-  },
-  CALDAV: {
-    host: '',
-    port: 443,
-    password: '',
-    connectionSecurity: EmailConnectionSecurity.SSL_TLS,
-  },
-};
+} & ImapSmtpCaldavAccount;
 
 export const useImapSmtpCaldavConnectionForm = ({
   isEditing = false,
   connectedAccountId,
 }: UseConnectionFormProps = {}) => {
   const navigate = useNavigateSettings();
+  const currentWorkspaceMember = useAtomStateValue(currentWorkspaceMemberState);
+
+  const defaultProtocolValues: Record<string, ConnectionParameters> = {
+    IMAP: { host: '', port: 993, password: '', secure: true },
+    SMTP: { host: '', username: '', port: 587, password: '', secure: true },
+    CALDAV: { host: '', port: 443, password: '', secure: true },
+  };
 
   const formMethods = useForm<ConnectionFormData>({
     mode: 'onSubmit',
-    resolver: zodResolver(
-      isEditing ? connectionImapSmtpCalDavUpdate : connectionImapSmtpCalDav,
-    ),
+    resolver: zodResolver(connectionImapSmtpCalDav),
     defaultValues: {
-      name: '',
       handle: '',
-      ...DEFAULT_PROTOCOL_VALUES,
+      ...defaultProtocolValues,
     },
   });
 
@@ -91,18 +68,17 @@ export const useImapSmtpCaldavConnectionForm = ({
   useEffect(() => {
     if (isDefined(connectedAccount)) {
       reset({
-        name: connectedAccount.connectionParameters?.name || '',
         handle: connectedAccount.handle || '',
         IMAP: {
-          ...DEFAULT_PROTOCOL_VALUES.IMAP,
+          ...defaultProtocolValues.IMAP,
           ...connectedAccount.connectionParameters?.IMAP,
         },
         SMTP: {
-          ...DEFAULT_PROTOCOL_VALUES.SMTP,
+          ...defaultProtocolValues.SMTP,
           ...connectedAccount.connectionParameters?.SMTP,
         },
         CALDAV: {
-          ...DEFAULT_PROTOCOL_VALUES.CALDAV,
+          ...defaultProtocolValues.CALDAV,
           ...connectedAccount.connectionParameters?.CALDAV,
         },
       });
@@ -118,20 +94,16 @@ export const useImapSmtpCaldavConnectionForm = ({
   const getConfiguredProtocols = useCallback(
     (
       values: ConnectionFormData = watchedValues,
-    ): (keyof ImapSmtpCaldavAccountInput)[] => {
-      const isProtocolConfiguredCheckFunction = isEditing
-        ? isProtocolConfiguredForUpdate
-        : isProtocolConfigured;
-
-      return ACCOUNT_TYPES.filter((protocol) => {
+    ): (keyof ImapSmtpCaldavAccount)[] => {
+      return ACCOUNT_PROTOCOLS.filter((protocol) => {
         const protocolConfig = values[protocol];
         return (
-          isDefined(protocolConfig) &&
-          isProtocolConfiguredCheckFunction(protocolConfig)
+          protocolConfig &&
+          isProtocolConfigured(protocolConfig as ConnectionParameters)
         );
       });
     },
-    [watchedValues, isEditing],
+    [watchedValues],
   );
 
   const isValid = useMemo(() => {
@@ -143,6 +115,10 @@ export const useImapSmtpCaldavConnectionForm = ({
 
   const handleSave = useCallback(
     async (formValues: ConnectionFormData): Promise<void> => {
+      if (!currentWorkspaceMember?.id) {
+        throw new Error('Workspace member ID is missing');
+      }
+
       const configuredProtocols = getConfiguredProtocols(formValues);
 
       if (configuredProtocols.length === 0) {
@@ -150,17 +126,12 @@ export const useImapSmtpCaldavConnectionForm = ({
       }
 
       const connectionParameters: Partial<
-        Record<keyof ImapSmtpCaldavAccountInput, ConnectionParametersInput>
+        Record<keyof ImapSmtpCaldavAccount, ConnectionParameters>
       > = {};
       configuredProtocols.forEach((protocol) => {
         const protocolConfig = formValues[protocol];
         if (isDefined(protocolConfig)) {
-          const { password, ...withoutPassword } = protocolConfig;
-          const hasPassword = isNonEmptyString(password);
-
-          connectionParameters[protocol] = hasPassword
-            ? { ...withoutPassword, password }
-            : withoutPassword;
+          connectionParameters[protocol] = protocolConfig;
         }
       });
 
@@ -170,11 +141,9 @@ export const useImapSmtpCaldavConnectionForm = ({
             ...(isEditing && connectedAccountId
               ? { id: connectedAccountId }
               : {}),
+            accountOwnerId: currentWorkspaceMember.id,
             handle: formValues.handle,
-            connectionParameters: {
-              ...connectionParameters,
-              name: formValues.name,
-            },
+            connectionParameters,
           },
         });
         if (!isDefined(data)) return;
@@ -198,6 +167,7 @@ export const useImapSmtpCaldavConnectionForm = ({
       }
     },
     [
+      currentWorkspaceMember?.id,
       getConfiguredProtocols,
       saveConnection,
       isEditing,

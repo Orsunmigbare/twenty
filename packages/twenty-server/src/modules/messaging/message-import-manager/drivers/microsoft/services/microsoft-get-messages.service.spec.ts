@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import {
@@ -6,6 +7,10 @@ import {
   MessageParticipantRole,
 } from 'twenty-shared/types';
 
+import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
+import { GoogleOAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/drivers/google/google-oauth2-client-manager.service';
+import { MicrosoftOAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/drivers/microsoft/microsoft-oauth2-client-manager.service';
+import { OAuth2ClientManagerService } from 'src/modules/connected-account/oauth2-client-manager/services/oauth2-client-manager.service';
 import {
   microsoftGraphBatchWithHtmlMessagesResponse,
   microsoftGraphBatchWithTwoMessagesResponse,
@@ -26,9 +31,14 @@ describe('Microsoft get messages service', () => {
           provide: MicrosoftMessagesImportErrorHandler,
           useValue: { handleError: jest.fn() },
         },
+        OAuth2ClientManagerService,
+        GoogleOAuth2ClientManagerService,
+        MicrosoftOAuth2ClientManagerService,
+        MicrosoftFetchByBatchService,
+        ConfigService,
         {
-          provide: MicrosoftFetchByBatchService,
-          useValue: { fetchAllByBatches: jest.fn() },
+          provide: TwentyConfigService,
+          useValue: {},
         },
         {
           provide: Logger,
@@ -60,7 +70,6 @@ describe('Microsoft get messages service', () => {
       refreshToken: 'refresh-token',
       handle: 'John.l@outlook.fr',
       handleAliases: [] as string[],
-      workspaceId: 'workspace-id',
     };
     const messages = service.formatBatchResponsesAsMessages(
       batchResponses,
@@ -99,12 +108,10 @@ describe('Microsoft get messages service', () => {
           role: MessageParticipantRole.TO,
         },
       ],
-      isDraft: false,
       attachments: [],
       messageFolderExternalIds: responseExample1.body.parentFolderId
         ? [responseExample1.body.parentFolderId]
         : [],
-      messageHeaders: [],
     });
 
     const responseExample2 =
@@ -147,16 +154,14 @@ describe('Microsoft get messages service', () => {
           role: MessageParticipantRole.CC,
         },
       ],
-      isDraft: false,
       attachments: [],
       messageFolderExternalIds: responseExample2.body.parentFolderId
         ? [responseExample2.body.parentFolderId]
         : [],
-      messageHeaders: [],
     });
   });
 
-  it('Should convert html responses to text', () => {
+  it('Should set empty text for html responses', () => {
     const batchResponses: MicrosoftGraphBatchResponse[] =
       microsoftGraphBatchWithHtmlMessagesResponse;
     const connectedAccount = {
@@ -166,7 +171,6 @@ describe('Microsoft get messages service', () => {
       refreshToken: 'refresh-token',
       handle: 'John.l@outlook.fr',
       handleAliases: [] as string[],
-      workspaceId: 'workspace-id',
     };
     const messages = service.formatBatchResponsesAsMessages(
       batchResponses,
@@ -180,7 +184,7 @@ describe('Microsoft get messages service', () => {
       externalId: responseExample.body.id,
       subject: responseExample.body.subject,
       receivedAt: new Date(responseExample.body.receivedDateTime),
-      text: 'test 4',
+      text: '',
       headerMessageId: responseExample.body.internetMessageId,
       messageThreadExternalId: responseExample.body.conversationId,
       direction: 'OUTGOING',
@@ -192,12 +196,10 @@ describe('Microsoft get messages service', () => {
           role: MessageParticipantRole.FROM,
         },
       ],
-      isDraft: false,
       attachments: [],
       messageFolderExternalIds: responseExample.body.parentFolderId
         ? [responseExample.body.parentFolderId]
         : [],
-      messageHeaders: [],
     });
   });
 });

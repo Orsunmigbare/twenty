@@ -1,5 +1,5 @@
 import { msg } from '@lingui/core/macro';
-import { IconCheck, IconX } from 'twenty-ui/icon';
+import { IconCheck, IconX } from 'twenty-ui/display';
 
 export const BOOLEAN_DATA_MODEL_SELECT_OPTIONS = [
   {

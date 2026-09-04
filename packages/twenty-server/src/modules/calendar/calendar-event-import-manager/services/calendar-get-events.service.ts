@@ -9,11 +9,13 @@ import {
   CalendarEventImportException,
   CalendarEventImportExceptionCode,
 } from 'src/modules/calendar/calendar-event-import-manager/exceptions/calendar-event-import.exception';
+import { type FetchedCalendarEvent } from 'src/modules/calendar/common/types/fetched-calendar-event';
 import { type ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
 
 export type GetCalendarEventsResponse = {
-  calendarEventIds: string[];
-  calendarEventIdsToDelete: string[];
+  fullEvents: boolean;
+  calendarEvents?: FetchedCalendarEvent[];
+  calendarEventIds?: string[];
   nextSyncCursor: string;
 };
 
@@ -34,7 +36,6 @@ export class CalendarGetCalendarEventsService {
       | 'id'
       | 'connectionParameters'
       | 'handle'
-      | 'workspaceId'
     >,
     syncCursor?: string,
   ): Promise<GetCalendarEventsResponse> {
@@ -51,7 +52,7 @@ export class CalendarGetCalendarEventsService {
         );
       case ConnectedAccountProvider.IMAP_SMTP_CALDAV:
         return this.caldavCalendarGetEventsService.getCalendarEvents(
-          connectedAccount.id,
+          connectedAccount,
           syncCursor,
         );
       default:

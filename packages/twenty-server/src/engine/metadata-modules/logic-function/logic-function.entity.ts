@@ -12,7 +12,6 @@ import {
   CronTriggerSettings,
   DatabaseEventTriggerSettings,
   HttpRouteTriggerSettings,
-  ServerRouteTriggerSettings,
   ToolTriggerSettings,
   WorkflowActionTriggerSettings,
 } from 'twenty-shared/application';
@@ -25,11 +24,6 @@ const DEFAULT_LOGIC_FUNCTION_TIMEOUT_SECONDS = 300; // 5 minutes
 export enum LogicFunctionRuntime {
   NODE18 = 'nodejs18.x',
   NODE22 = 'nodejs22.x',
-}
-
-export enum LogicFunctionExecutionMode {
-  LIVE = 'LIVE',
-  PREBUILT = 'PREBUILT',
 }
 
 @Entity('logicFunction')
@@ -69,14 +63,6 @@ export class LogicFunctionEntity
   @Column({ nullable: false, type: 'boolean', default: true })
   isBuildUpToDate: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: LogicFunctionExecutionMode,
-    default: LogicFunctionExecutionMode.LIVE,
-    nullable: false,
-  })
-  executionMode: LogicFunctionExecutionMode;
-
   @Column({ nullable: true, type: 'jsonb' })
   cronTriggerSettings: JsonbProperty<CronTriggerSettings> | null;
 
@@ -85,9 +71,6 @@ export class LogicFunctionEntity
 
   @Column({ nullable: true, type: 'jsonb' })
   httpRouteTriggerSettings: JsonbProperty<HttpRouteTriggerSettings> | null;
-
-  @Column({ nullable: true, type: 'jsonb' })
-  serverRouteTriggerSettings: JsonbProperty<ServerRouteTriggerSettings> | null;
 
   @Column({ nullable: true, type: 'jsonb' })
   toolTriggerSettings: JsonbProperty<ToolTriggerSettings> | null;

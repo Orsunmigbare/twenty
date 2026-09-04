@@ -13,7 +13,9 @@ import { TaskWorkspaceEntity } from 'src/modules/task/standard-objects/task.work
   key: `task.deleteMany`,
   type: WorkspaceQueryHookType.POST_HOOK,
 })
-export class TaskDeleteManyPostQueryHook implements WorkspacePostQueryHookInstance {
+export class TaskDeleteManyPostQueryHook
+  implements WorkspacePostQueryHookInstance
+{
   constructor(
     private readonly taskPostQueryHookService: TaskPostQueryHookService,
   ) {}

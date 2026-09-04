@@ -10,8 +10,12 @@ import { t } from '@lingui/core/macro';
 import { useState } from 'react';
 import { SettingsPath } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { IconArrowUpRight, IconUser, useIcons } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import {
+  H2Title,
+  IconArrowUpRight,
+  IconUser,
+  useIcons,
+} from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';

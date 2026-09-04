@@ -94,18 +94,14 @@ export class InboundEmailImportService {
       );
     }
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        await this.messagingSaveMessagesAndEnqueueContactCreationService.saveMessagesAndEnqueueContactCreation(
-          [parsedInboundMessage.message],
-          messageChannel,
-          connectedAccount,
-          workspaceId,
-        );
-      },
-      buildSystemAuthContext(workspaceId),
-      { lite: true },
-    );
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      await this.messagingSaveMessagesAndEnqueueContactCreationService.saveMessagesAndEnqueueContactCreation(
+        [parsedInboundMessage.message],
+        messageChannel,
+        connectedAccount,
+        workspaceId,
+      );
+    }, buildSystemAuthContext(workspaceId));
 
     await this.inboundEmailStorageService.deleteRawMessage(s3Key);
 

@@ -10,7 +10,6 @@ import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadat
 import { PageLayoutTabEntity } from 'src/engine/metadata-modules/page-layout-tab/entities/page-layout-tab.entity';
 import { PageLayoutWidgetEntity } from 'src/engine/metadata-modules/page-layout-widget/entities/page-layout-widget.entity';
 import { ViewEntity } from 'src/engine/metadata-modules/view/entities/view.entity';
-import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/provide-workspace-scoped-repository';
 
 @Module({
   imports: [
@@ -27,9 +26,6 @@ import { provideWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspac
   providers: [
     WorkspaceFlatPageLayoutWidgetMapCacheService,
     FlatPageLayoutWidgetTypeValidatorService,
-    provideWorkspaceScopedRepository(PageLayoutTabEntity),
-    provideWorkspaceScopedRepository(PageLayoutWidgetEntity),
-    provideWorkspaceScopedRepository(ViewEntity),
   ],
   exports: [
     WorkspaceFlatPageLayoutWidgetMapCacheService,

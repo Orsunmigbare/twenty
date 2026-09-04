@@ -1,17 +1,23 @@
-import { clsx } from 'clsx';
+import { styled } from '@linaria/react';
+import { themeCssVariables } from '@ui/theme-constants';
 
-import styles from './JsonList.module.scss';
+const StyledList = styled.ul<{ depth: number }>`
+  margin: 0;
+  padding: 0;
 
-export const JsonList = ({
-  depth,
-  className,
-  children,
-}: {
-  depth: number;
-  className?: string;
-  children?: React.ReactNode;
-}) => (
-  <ul className={clsx(styles.list, depth > 0 && styles.nested, className)}>
-    {children}
-  </ul>
-);
+  display: grid;
+  row-gap: ${themeCssVariables.spacing[2]};
+
+  ${({ depth }) =>
+    depth > 0
+      ? `
+      padding-left: ${themeCssVariables.spacing[8]};
+
+      > :first-of-type {
+        margin-top: ${themeCssVariables.spacing[2]};
+      }
+    `
+      : ''}
+`;
+
+export { StyledList as JsonList };

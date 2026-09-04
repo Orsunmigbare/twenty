@@ -1,5 +1,4 @@
 import { useIsPageLayoutInEditMode } from '@/page-layout/hooks/useIsPageLayoutInEditMode';
-import { PageLayoutWidgetErrorDisplay } from '@/page-layout/widgets/components/PageLayoutWidgetErrorDisplay';
 import { WidgetSkeletonLoader } from '@/page-layout/widgets/components/WidgetSkeletonLoader';
 import { GraphWidgetChartHasTooManyGroupsEffect } from '@/page-layout/widgets/graph/components/GraphWidgetChartHasTooManyGroupsEffect';
 import { useGraphPieChartWidgetData } from '@/page-layout/widgets/graph/graph-widget-pie-chart/hooks/useGraphPieChartWidgetData';
@@ -15,14 +14,14 @@ import { indexViewIdFromObjectMetadataItemFamilySelector } from '@/views/states/
 import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppPath } from 'twenty-shared/types';
-import { getAppPath, isDefined } from 'twenty-shared/utils';
+import { getAppPath } from 'twenty-shared/utils';
 
 const GraphWidgetPieChart = lazy(() =>
-  import('@/page-layout/widgets/graph/graph-widget-pie-chart/components/GraphWidgetPieChart').then(
-    (module) => ({
-      default: module.GraphWidgetPieChart,
-    }),
-  ),
+  import(
+    '@/page-layout/widgets/graph/graph-widget-pie-chart/components/GraphWidgetPieChart'
+  ).then((module) => ({
+    default: module.GraphWidgetPieChart,
+  })),
 );
 
 export const GraphWidgetPieChartRenderer = () => {
@@ -35,7 +34,6 @@ export const GraphWidgetPieChartRenderer = () => {
   const {
     data,
     loading,
-    error,
     hasTooManyGroups,
     objectMetadataItem,
     showLegend,
@@ -65,7 +63,7 @@ export const GraphWidgetPieChartRenderer = () => {
     isFilteredViewRedirectionSupported(groupByField);
 
   const handleSliceClick = (datum: PieChartDataItemWithColor) => {
-    const rawValue = formattedToRawLookup.get(datum.key) ?? null;
+    const rawValue = formattedToRawLookup.get(datum.id) ?? null;
 
     const drilldownQueryParams = buildChartDrilldownQueryParams({
       objectMetadataItem,
@@ -91,10 +89,6 @@ export const GraphWidgetPieChartRenderer = () => {
 
   if (loading) {
     return <WidgetSkeletonLoader />;
-  }
-
-  if (isDefined(error)) {
-    return <PageLayoutWidgetErrorDisplay widgetId={widget.id} error={error} />;
   }
 
   return (

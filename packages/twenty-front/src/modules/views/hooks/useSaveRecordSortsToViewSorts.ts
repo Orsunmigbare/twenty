@@ -59,7 +59,6 @@ export const useSaveRecordSortsToViewSorts = () => {
         fieldMetadataId: viewSort.fieldMetadataId,
         viewId: currentView.id,
         direction: viewSort.direction,
-        subFieldName: viewSort.subFieldName ?? null,
       },
     }));
 
@@ -68,7 +67,6 @@ export const useSaveRecordSortsToViewSorts = () => {
         id: viewSort.id,
         update: {
           direction: viewSort.direction,
-          subFieldName: viewSort.subFieldName ?? null,
         },
       },
     }));

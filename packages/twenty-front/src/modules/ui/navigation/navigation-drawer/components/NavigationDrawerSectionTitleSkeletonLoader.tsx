@@ -13,7 +13,7 @@ export const NavigationDrawerSectionTitleSkeletonLoader = () => {
   const { theme } = useContext(ThemeContext);
   return (
     <SkeletonTheme
-      baseColor={theme.grayScale.gray3}
+      baseColor={theme.background.tertiary}
       highlightColor={theme.background.transparent.lighter}
       borderRadius={4}
     >

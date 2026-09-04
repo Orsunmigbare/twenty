@@ -15,7 +15,6 @@ import {
   AuthException,
   AuthExceptionCode,
 } from 'src/engine/core-modules/auth/auth.exception';
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
 import { CreateCalendarChannelService } from 'src/engine/core-modules/auth/services/create-calendar-channel.service';
 import { CreateConnectedAccountService } from 'src/engine/core-modules/auth/services/create-connected-account.service';
 import { CreateMessageChannelService } from 'src/engine/core-modules/auth/services/create-message-channel.service';
@@ -37,7 +36,6 @@ import {
   type CalendarEventListFetchJobData,
 } from 'src/modules/calendar/calendar-event-import-manager/jobs/calendar-event-list-fetch.job';
 import { CalendarChannelSyncStatusService } from 'src/modules/calendar/common/services/calendar-channel-sync-status.service';
-import { EmailAliasManagerService } from 'src/modules/connected-account/email-alias-manager/services/email-alias-manager.service';
 import { AccountsToReconnectService } from 'src/modules/connected-account/services/accounts-to-reconnect.service';
 
 import { MessageChannelSyncStatusService } from 'src/modules/messaging/common/services/message-channel-sync-status.service';
@@ -64,7 +62,6 @@ export class MicrosoftAPIsService {
     private readonly updateConnectedAccountOnReconnectService: UpdateConnectedAccountOnReconnectService,
     private readonly twentyConfigService: TwentyConfigService,
     private readonly syncMessageFoldersService: SyncMessageFoldersService,
-    private readonly emailAliasManagerService: EmailAliasManagerService,
     @InjectRepository(ConnectedAccountEntity)
     private readonly connectedAccountRepository: Repository<ConnectedAccountEntity>,
     @InjectRepository(UserWorkspaceEntity)
@@ -80,8 +77,8 @@ export class MicrosoftAPIsService {
     userId: string;
     workspaceMemberId: string;
     workspaceId: string;
-    accessToken: PlaintextString;
-    refreshToken: PlaintextString;
+    accessToken: string;
+    refreshToken: string;
     calendarVisibility: CalendarChannelVisibility | undefined;
     messageVisibility: MessageChannelVisibility | undefined;
     skipMessageChannelConfiguration?: boolean;
@@ -120,7 +117,6 @@ export class MicrosoftAPIsService {
             handle,
             userWorkspaceId: userWorkspaceId,
             workspaceId,
-            provider: ConnectedAccountProvider.MICROSOFT,
           },
         });
 
@@ -221,22 +217,6 @@ export class MicrosoftAPIsService {
         );
 
         if (
-          this.twentyConfigService.get('MESSAGING_PROVIDER_MICROSOFT_ENABLED')
-        ) {
-          const connectedAccountForAliases =
-            await this.connectedAccountRepository.findOne({
-              where: { id: newOrExistingConnectedAccountId, workspaceId },
-            });
-
-          if (isDefined(connectedAccountForAliases)) {
-            await this.emailAliasManagerService.refreshHandleAliases(
-              connectedAccountForAliases,
-              workspaceId,
-            );
-          }
-        }
-
-        if (
           this.twentyConfigService.get(
             'MESSAGING_PROVIDER_MICROSOFT_ENABLED',
           ) &&
@@ -296,20 +276,19 @@ export class MicrosoftAPIsService {
             },
           });
 
-          const syncableCalendarChannels = calendarChannels.filter(
-            (calendarChannel) =>
+          for (const calendarChannel of calendarChannels) {
+            if (
               calendarChannel.syncStage !==
-              CalendarChannelSyncStage.PENDING_CONFIGURATION,
-          );
-
-          for (const calendarChannel of syncableCalendarChannels) {
-            await this.calendarQueueService.add<CalendarEventListFetchJobData>(
-              CalendarEventListFetchJob.name,
-              {
-                calendarChannelId: calendarChannel.id,
-                workspaceId,
-              },
-            );
+              CalendarChannelSyncStage.PENDING_CONFIGURATION
+            ) {
+              await this.calendarQueueService.add<CalendarEventListFetchJobData>(
+                CalendarEventListFetchJob.name,
+                {
+                  calendarChannelId: calendarChannel.id,
+                  workspaceId,
+                },
+              );
+            }
           }
         }
 

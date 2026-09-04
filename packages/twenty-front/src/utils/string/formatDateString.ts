@@ -1,5 +1,3 @@
-import { type Locale } from 'date-fns';
-
 import { type DateFormat } from '@/localization/constants/DateFormat';
 import { formatDateISOStringToCustomUnicodeFormat } from '@/localization/utils/formatDateISOStringToCustomUnicodeFormat';
 import { formatDateISOStringToDate } from '@/localization/utils/formatDateISOStringToDate';
@@ -33,7 +31,6 @@ export const formatDateString = ({
         isoDate: value,
         isDayMaximumPrecision: true,
         localeCatalog,
-        timeZone,
       });
     case FieldDateDisplayFormat.USER_SETTINGS:
       return formatDateISOStringToDate({

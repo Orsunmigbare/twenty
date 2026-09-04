@@ -22,7 +22,6 @@ export const requestSchema = async (
                 description
                 isNullable
                 defaultValue
-                options
               }
             }
           }

@@ -10,7 +10,9 @@ import { type Observable, catchError } from 'rxjs';
 import { connectedAccountGraphqlApiExceptionHandler } from 'src/engine/metadata-modules/connected-account/utils/connected-account-graphql-api-exception-handler.util';
 
 @Injectable()
-export class ConnectedAccountGraphqlApiExceptionInterceptor implements NestInterceptor {
+export class ConnectedAccountGraphqlApiExceptionInterceptor
+  implements NestInterceptor
+{
   intercept(
     _context: ExecutionContext,
     next: CallHandler,

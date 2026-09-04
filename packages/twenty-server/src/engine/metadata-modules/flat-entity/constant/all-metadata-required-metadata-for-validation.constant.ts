@@ -76,12 +76,8 @@ export const ALL_METADATA_REQUIRED_METADATA_FOR_VALIDATION = {
     view: true,
     pageLayout: true,
   },
-  rolePermissionFlag: {
-    permissionFlag: true,
-    role: true,
-  },
   permissionFlag: {
-    rolePermissionFlag: true,
+    role: true,
   },
   objectPermission: {
     role: true,
@@ -118,8 +114,4 @@ export const ALL_METADATA_REQUIRED_METADATA_FOR_VALIDATION = {
   webhook: {},
   applicationVariable: {},
   connectionProvider: {},
-  searchFieldMetadata: {
-    objectMetadata: true,
-    fieldMetadata: true,
-  },
 } as const satisfies MetadataRequiredForValidation;

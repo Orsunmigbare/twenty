@@ -18,7 +18,7 @@ describe('computeInsertIndexAndPosition', () => {
     expect(between.position).toBe(15);
   });
 
-  it('should only consider items in the target folder', () => {
+  it('should only consider items in target folder and exclude userWorkspaceId', () => {
     const draft: NavigationMenuItem[] = [
       { id: '1', folderId: 'folder-a', position: 10 } as NavigationMenuItem,
       { id: '2', folderId: 'folder-b', position: 20 } as NavigationMenuItem,
@@ -27,16 +27,9 @@ describe('computeInsertIndexAndPosition', () => {
     const result = computeInsertIndexAndPosition(draft, 'folder-b', 1);
     expect(result.flatIndex).toBe(2);
     expect(result.position).toBe(25);
-  });
 
-  it('should consider personal items, as callers pass a section-scoped list', () => {
-    const personalItems: NavigationMenuItem[] = [
-      {
-        id: '1',
-        folderId: null,
-        position: 10,
-        userWorkspaceId: 'ws-1',
-      } as NavigationMenuItem,
+    const withWorkspace: NavigationMenuItem[] = [
+      { id: '1', folderId: null, position: 10 } as NavigationMenuItem,
       {
         id: '2',
         folderId: null,
@@ -44,8 +37,7 @@ describe('computeInsertIndexAndPosition', () => {
         userWorkspaceId: 'ws-1',
       } as NavigationMenuItem,
     ];
-    const inserted = computeInsertIndexAndPosition(personalItems, null, 1);
-    expect(inserted.flatIndex).toBe(1);
-    expect(inserted.position).toBe(15);
+    const excluded = computeInsertIndexAndPosition(withWorkspace, null, 1);
+    expect(excluded.position).toBe(10.5);
   });
 });

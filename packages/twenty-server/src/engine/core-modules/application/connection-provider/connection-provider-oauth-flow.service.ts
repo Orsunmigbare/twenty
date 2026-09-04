@@ -6,8 +6,8 @@ import { Repository } from 'typeorm';
 import { ConnectedAccountProvider } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
-import { ConnectionProviderExceptionCode } from 'src/engine/core-modules/application/connection-provider/connection-provider-exception-code.enum';
 import { type ConnectionProviderEntity } from 'src/engine/core-modules/application/connection-provider/connection-provider.entity';
+import { ConnectionProviderExceptionCode } from 'src/engine/core-modules/application/connection-provider/connection-provider-exception-code.enum';
 import { ConnectionProviderException } from 'src/engine/core-modules/application/connection-provider/connection-provider.exception';
 import { ConnectionProviderService } from 'src/engine/core-modules/application/connection-provider/connection-provider.service';
 import { type TokenExchangeResponse } from 'src/engine/core-modules/application/connection-provider/types/token-exchange-response.type';
@@ -19,22 +19,14 @@ import { buildAppOAuthCallbackUrl } from 'src/engine/core-modules/application/co
 import { computePkceChallenge } from 'src/engine/core-modules/application/connection-provider/utils/compute-pkce-challenge.util';
 import { exchangeCodeForToken } from 'src/engine/core-modules/application/connection-provider/utils/exchange-code-for-token.util';
 import { generatePkceVerifier } from 'src/engine/core-modules/application/connection-provider/utils/generate-pkce-verifier.util';
-import { type AppOAuthStateJwtPayload } from 'src/engine/core-modules/auth/types/app-oauth-state-jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
-import { ExceptionHandlerService } from 'src/engine/core-modules/exception-handler/exception-handler.service';
-import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import {
-  LogicFunctionTriggerJob,
-  type LogicFunctionTriggerJobData,
-} from 'src/engine/core-modules/logic-function/logic-function-trigger/jobs/logic-function-trigger.job';
-import { InjectMessageQueue } from 'src/engine/core-modules/message-queue/decorators/message-queue.decorator';
-import { MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
-import { MessageQueueService } from 'src/engine/core-modules/message-queue/services/message-queue.service';
+  type AppOAuthStateJwtPayload,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
+import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { SecureHttpClientService } from 'src/engine/core-modules/secure-http-client/secure-http-client.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { ConnectedAccountEntity } from 'src/engine/metadata-modules/connected-account/entities/connected-account.entity';
-import { ConnectedAccountTokenEncryptionService } from 'src/engine/metadata-modules/connected-account/services/connected-account-token-encryption.service';
-import { WorkspaceCacheService } from 'src/engine/workspace-cache/services/workspace-cache.service';
 
 const STATE_JWT_EXPIRES_IN = '10m';
 
@@ -69,13 +61,8 @@ export class ConnectionProviderOAuthFlowService {
     private readonly jwtWrapperService: JwtWrapperService,
     private readonly secureHttpClientService: SecureHttpClientService,
     private readonly twentyConfigService: TwentyConfigService,
-    private readonly connectedAccountTokenEncryptionService: ConnectedAccountTokenEncryptionService,
     @InjectRepository(ConnectedAccountEntity)
     private readonly connectedAccountRepository: Repository<ConnectedAccountEntity>,
-    @InjectMessageQueue(MessageQueue.logicFunctionQueue)
-    private readonly messageQueueService: MessageQueueService,
-    private readonly workspaceCacheService: WorkspaceCacheService,
-    private readonly exceptionHandlerService: ExceptionHandlerService,
   ) {}
 
   async startAuthorizationFlow(
@@ -113,7 +100,7 @@ export class ConnectionProviderOAuthFlowService {
 
     const codeVerifier = usePkce ? generatePkceVerifier() : null;
 
-    const state = await this.signState({
+    const state = this.signState({
       sub: connectionProvider.id,
       type: JwtTokenTypeEnum.APP_OAUTH_STATE,
       connectionProviderId: connectionProvider.id,
@@ -152,7 +139,7 @@ export class ConnectionProviderOAuthFlowService {
   }
 
   async completeAuthorizationFlow(args: CallbackArgs): Promise<CallbackResult> {
-    const statePayload = await this.verifyState(args.state);
+    const statePayload = this.verifyState(args.state);
 
     const provider = await this.oauthProviderService.findOneByIdOrThrow(
       statePayload.connectionProviderId,
@@ -199,12 +186,6 @@ export class ConnectionProviderOAuthFlowService {
         statePayload.reconnectingConnectedAccountId,
     });
 
-    await this.dispatchOnConnectHook({
-      provider,
-      workspaceId: statePayload.workspaceId,
-      connectedAccountId: connectedAccount.id,
-    });
-
     return {
       connectedAccountId: connectedAccount.id,
       workspaceId: statePayload.workspaceId,
@@ -213,76 +194,23 @@ export class ConnectionProviderOAuthFlowService {
     };
   }
 
-  private async dispatchOnConnectHook({
-    provider,
-    workspaceId,
-    connectedAccountId,
-  }: {
-    provider: OAuthConnectionProvider;
-    workspaceId: string;
-    connectedAccountId: string;
-  }): Promise<void> {
-    const { onConnectLogicFunctionUniversalIdentifier } = provider;
+  private signState(payload: AppOAuthStateJwtPayload): string {
+    const secret = this.jwtWrapperService.generateAppSecret(
+      JwtTokenTypeEnum.APP_OAUTH_STATE,
+      payload.workspaceId,
+    );
 
-    if (!isDefined(onConnectLogicFunctionUniversalIdentifier)) {
-      return;
-    }
-
-    // The on-connect hook is best-effort: the ConnectedAccount is already
-    // persisted, so a misconfigured or failing hook must not break the OAuth
-    // callback. We still report failures to Sentry so they don't go unnoticed.
-    try {
-      const { flatLogicFunctionMaps } =
-        await this.workspaceCacheService.getOrRecompute(workspaceId, [
-          'flatLogicFunctionMaps',
-        ]);
-
-      const flatLogicFunction =
-        flatLogicFunctionMaps.byUniversalIdentifier[
-          onConnectLogicFunctionUniversalIdentifier
-        ];
-
-      if (
-        !isDefined(flatLogicFunction) ||
-        isDefined(flatLogicFunction.deletedAt)
-      ) {
-        throw new ConnectionProviderException(
-          `Connection provider ${provider.id} references on-connect logic function ${onConnectLogicFunctionUniversalIdentifier}, which was not found in workspace ${workspaceId}.`,
-          ConnectionProviderExceptionCode.ON_CONNECT_LOGIC_FUNCTION_NOT_FOUND,
-        );
-      }
-
-      await this.messageQueueService.add<LogicFunctionTriggerJobData>(
-        LogicFunctionTriggerJob.name,
-        {
-          logicFunctionId: flatLogicFunction.id,
-          workspaceId,
-          payload: {
-            connectionProviderId: provider.id,
-            connectionProviderName: provider.name,
-            connectedAccountId,
-          },
-        },
-        { retryLimit: 3 },
-      );
-    } catch (error) {
-      this.exceptionHandlerService.captureExceptions([error], {
-        workspace: { id: workspaceId },
-      });
-    }
-  }
-
-  private async signState(payload: AppOAuthStateJwtPayload): Promise<string> {
-    return this.jwtWrapperService.signAsyncOrThrow(payload, {
+    return this.jwtWrapperService.sign(payload, {
+      secret,
       expiresIn: STATE_JWT_EXPIRES_IN,
     });
   }
 
-  private async verifyState(state: string): Promise<AppOAuthStateJwtPayload> {
+  private verifyState(state: string): AppOAuthStateJwtPayload {
     try {
-      const verified = (await this.jwtWrapperService.verifyJwtToken(
+      const verified = this.jwtWrapperService.verifyJwtToken(
         state,
-      )) as AppOAuthStateJwtPayload;
+      ) as AppOAuthStateJwtPayload;
 
       if (verified.type !== JwtTokenTypeEnum.APP_OAUTH_STATE) {
         throw new Error('Wrong JWT type for OAuth state');
@@ -320,18 +248,9 @@ export class ConnectionProviderOAuthFlowService {
     visibility: 'user' | 'workspace';
     reconnectingConnectedAccountId: string | null;
   }): Promise<ConnectedAccountEntity> {
-    const { encryptedAccessToken, encryptedRefreshToken } =
-      this.connectedAccountTokenEncryptionService.encryptTokenPair({
-        accessToken: tokenResponse.accessToken,
-        refreshToken: isDefined(tokenResponse.refreshToken)
-          ? tokenResponse.refreshToken
-          : null,
-        workspaceId,
-      });
-
     const sharedFields = {
-      accessToken: encryptedAccessToken,
-      refreshToken: encryptedRefreshToken,
+      accessToken: tokenResponse.accessToken,
+      refreshToken: tokenResponse.refreshToken,
       scopes: tokenResponse.scopes ?? provider.oauthConfig.scopes,
       lastCredentialsRefreshedAt: new Date(),
       authFailedAt: null,

@@ -26,10 +26,7 @@ export class EvaluateAgentTurnJob {
       throw new Error('Workspace ID is required');
     }
 
-    const evaluation = await this.graderService.evaluateTurn({
-      turnId: data.turnId,
-      workspaceId: data.workspaceId,
-    });
+    const evaluation = await this.graderService.evaluateTurn(data.turnId);
 
     this.logger.log(
       `Evaluation completed for turn ${data.turnId}: score=${evaluation.score}`,

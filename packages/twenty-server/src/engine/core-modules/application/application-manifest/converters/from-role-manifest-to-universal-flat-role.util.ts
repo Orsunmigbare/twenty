@@ -32,7 +32,7 @@ export const fromRoleManifestToUniversalFlatRole = ({
     roleTargetUniversalIdentifiers: [],
     objectPermissionUniversalIdentifiers: [],
     fieldPermissionUniversalIdentifiers: [],
-    rolePermissionFlagUniversalIdentifiers: [],
+    permissionFlagUniversalIdentifiers: [],
     rowLevelPermissionPredicateUniversalIdentifiers: [],
     rowLevelPermissionPredicateGroupUniversalIdentifiers: [],
     createdAt: now,

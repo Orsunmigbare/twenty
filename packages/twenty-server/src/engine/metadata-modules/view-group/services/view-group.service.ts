@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { isDefined } from 'twenty-shared/utils';
-import { IsNull } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
 import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadata-modules/flat-entity/services/workspace-many-or-all-flat-entity-maps-cache.service';
@@ -24,16 +25,14 @@ import {
   ViewGroupExceptionCode,
 } from 'src/engine/metadata-modules/view-group/exceptions/view-group.exception';
 import { fromFlatViewGroupToViewGroupDto } from 'src/engine/metadata-modules/view-group/utils/from-flat-view-group-to-view-group-dto.util';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceMigrationBuilderException } from 'src/engine/workspace-manager/workspace-migration/exceptions/workspace-migration-builder-exception';
 import { WorkspaceMigrationValidateBuildAndRunService } from 'src/engine/workspace-manager/workspace-migration/services/workspace-migration-validate-build-and-run-service';
 
 @Injectable()
 export class ViewGroupService {
   constructor(
-    @InjectWorkspaceScopedRepository(ViewGroupEntity)
-    private readonly viewGroupRepository: WorkspaceScopedRepository<ViewGroupEntity>,
+    @InjectRepository(ViewGroupEntity)
+    private readonly viewGroupRepository: Repository<ViewGroupEntity>,
     private readonly workspaceMigrationValidateBuildAndRunService: WorkspaceMigrationValidateBuildAndRunService,
     private readonly flatEntityMapsCacheService: WorkspaceManyOrAllFlatEntityMapsCacheService,
     private readonly applicationService: ApplicationService,
@@ -380,8 +379,9 @@ export class ViewGroupService {
   }
 
   async findByWorkspaceId(workspaceId: string): Promise<ViewGroupEntity[]> {
-    return this.viewGroupRepository.find(workspaceId, {
+    return this.viewGroupRepository.find({
       where: {
+        workspaceId,
         deletedAt: IsNull(),
       },
       order: { position: 'ASC' },
@@ -393,8 +393,9 @@ export class ViewGroupService {
     workspaceId: string,
     viewId: string,
   ): Promise<ViewGroupEntity[]> {
-    return this.viewGroupRepository.find(workspaceId, {
+    return this.viewGroupRepository.find({
       where: {
+        workspaceId,
         viewId,
         deletedAt: IsNull(),
       },
@@ -407,9 +408,10 @@ export class ViewGroupService {
     id: string,
     workspaceId: string,
   ): Promise<ViewGroupEntity | null> {
-    const viewGroup = await this.viewGroupRepository.findOne(workspaceId, {
+    const viewGroup = await this.viewGroupRepository.findOne({
       where: {
         id,
+        workspaceId,
         deletedAt: IsNull(),
       },
       relations: ['workspace', 'view'],

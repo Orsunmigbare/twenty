@@ -27,7 +27,7 @@ describe('computeRecordGqlOperationFilter', () => {
     ];
 
     const filter = computeRecordGqlOperationFilter({
-      fieldMetadataItems: [companyIdField],
+      fields: [companyIdField],
       recordFilters,
       recordFilterGroups: [],
       filterValueDependencies: {

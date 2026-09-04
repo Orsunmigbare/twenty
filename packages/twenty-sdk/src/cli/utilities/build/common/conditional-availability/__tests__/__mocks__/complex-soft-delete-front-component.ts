@@ -1,10 +1,10 @@
+import { defineCommandMenuItem } from '@/sdk/define';
 import {
-  defineCommandMenuItem,
   none,
   numberOfSelectedRecords,
   objectPermissions,
   selectedRecords,
-} from '@/sdk/define';
+} from '@/sdk/front-component';
 
 export default defineCommandMenuItem({
   universalIdentifier: 'complex-soft-delete-cmd',

@@ -11,7 +11,6 @@ const LOGIC_FUNCTION_GQL_FIELDS = `
   name
   description
   runtime
-  executionMode
   createdAt
   updatedAt
 `;

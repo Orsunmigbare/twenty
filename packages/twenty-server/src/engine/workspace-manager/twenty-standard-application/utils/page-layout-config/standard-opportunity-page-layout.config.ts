@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { WidgetType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-type.enum';
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
@@ -18,21 +15,15 @@ import {
 
 const OPPORTUNITY_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs.home
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1301',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .home.widgets.fields.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1311',
         ...WIDGET_PROPS.fields,
       },
       pointOfContact: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .home.widgets.pointOfContact.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1312',
         title: 'Point of Contact',
         type: WidgetType.FIELD,
         gridPosition: GRID_POSITIONS.FULL_WIDTH,
@@ -42,9 +33,7 @@ const OPPORTUNITY_PAGE_TABS = {
             .universalIdentifier,
       },
       company: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .home.widgets.company.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1313',
         title: 'Company',
         type: WidgetType.FIELD,
         gridPosition: GRID_POSITIONS.FULL_WIDTH,
@@ -53,9 +42,7 @@ const OPPORTUNITY_PAGE_TABS = {
           STANDARD_OBJECTS.opportunity.fields.company.universalIdentifier,
       },
       owner: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .home.widgets.owner.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1314',
         title: 'Owner',
         type: WidgetType.FIELD,
         gridPosition: GRID_POSITIONS.FULL_WIDTH,
@@ -66,85 +53,61 @@ const OPPORTUNITY_PAGE_TABS = {
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .timeline.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1302',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .timeline.widgets.timeline.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1321',
         ...WIDGET_PROPS.timeline,
       },
     },
   },
   tasks: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .tasks.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1303',
     ...TAB_PROPS.tasks,
     widgets: {
       tasks: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .tasks.widgets.tasks.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1331',
         ...WIDGET_PROPS.tasks,
       },
     },
   },
   notes: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .notes.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1304',
     ...TAB_PROPS.notes,
     widgets: {
       notes: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .notes.widgets.notes.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1341',
         ...WIDGET_PROPS.notes,
       },
     },
   },
   files: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .files.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1305',
     ...TAB_PROPS.files,
     widgets: {
       files: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .files.widgets.files.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1351',
         ...WIDGET_PROPS.files,
       },
     },
   },
   emails: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .emails.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1306',
     ...TAB_PROPS.emails,
     widgets: {
       emails: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .emails.widgets.emails.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1361',
         ...WIDGET_PROPS.emails,
       },
     },
   },
   calendar: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-        .calendar.universalIdentifier,
+    universalIdentifier: '20202020-ab03-4003-8003-0aa0b1ca1307',
     ...TAB_PROPS.calendar,
     widgets: {
       calendar: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage.tabs
-            .calendar.widgets.calendar.universalIdentifier,
+        universalIdentifier: '20202020-ac03-4003-8003-0aa0b1ca1371',
         ...WIDGET_PROPS.calendar,
       },
     },
@@ -155,9 +118,7 @@ export const STANDARD_OPPORTUNITY_PAGE_LAYOUT_CONFIG = {
   name: 'Default Opportunity Layout',
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier: STANDARD_OBJECTS.opportunity.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS.opportunityRecordPage
-      .universalIdentifier,
+  universalIdentifier: '20202020-a103-4003-8003-0aa0b1ca1003',
   defaultTabUniversalIdentifier: null,
   tabs: OPPORTUNITY_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

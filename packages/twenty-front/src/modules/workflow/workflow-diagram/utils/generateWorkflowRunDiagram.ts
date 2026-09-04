@@ -25,16 +25,10 @@ const shouldOpenStep = ({
 }) => {
   const step = steps.find((step) => step.id === nodeId);
   const stepInfo = stepInfos?.[nodeId];
+  const isStepPending = isDefined(stepInfo) && stepInfo.status === 'PENDING';
   const isStepOpenable = isDefined(step) && ['FORM'].includes(step.type);
 
-  if (!isStepOpenable || !isDefined(stepInfo)) {
-    return false;
-  }
-
-  return (
-    stepInfo.status === StepStatus.PENDING ||
-    stepInfo.status === StepStatus.RUNNING
-  );
+  return isStepPending && isStepOpenable;
 };
 
 export const generateWorkflowRunDiagram = ({

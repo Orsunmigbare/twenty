@@ -14,9 +14,9 @@ import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomState
 import { t } from '@lingui/core/macro';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
-import { H2Title } from 'twenty-ui/typography';
+import { Tag } from 'twenty-ui/components';
+import { H2Title, IconLock } from 'twenty-ui/display';
 import { Section } from 'twenty-ui/layout';
-import { OrganizationAdornment } from '~/pages/settings/enterprise/components/OrganizationAdornment';
 
 export const SettingsAiUsageTab = () => {
   const currentWorkspace = useAtomStateValue(currentWorkspaceState);
@@ -41,7 +41,14 @@ export const SettingsAiUsageTab = () => {
         <H2Title
           title={t`AI Usage`}
           description={t`Track AI consumption across your workspace.`}
-          adornment={<OrganizationAdornment />}
+          adornment={
+            <Tag
+              text={t`Enterprise`}
+              color="transparent"
+              Icon={IconLock}
+              variant="border"
+            />
+          }
         />
         <SettingsEnterpriseFeatureGateCard
           title={t`Enterprise feature`}

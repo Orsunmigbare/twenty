@@ -1,8 +1,8 @@
 import { Command } from 'nest-commander';
-import { type FeatureFlagKey, ViewType } from 'twenty-shared/types';
+import { FeatureFlagKey, ViewType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
-import { ProvisionedWorkspaceCommandRunner } from 'src/database/commands/command-runners/provisioned-workspace.command-runner';
+import { ActiveOrSuspendedWorkspaceCommandRunner } from 'src/database/commands/command-runners/active-or-suspended-workspace.command-runner';
 import { WorkspaceIteratorService } from 'src/database/commands/command-runners/workspace-iterator.service';
 import { type RunOnWorkspaceArgs } from 'src/database/commands/command-runners/workspace.command-runner';
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
@@ -29,7 +29,7 @@ import { type UniversalFlatView } from 'src/engine/workspace-manager/workspace-m
   description:
     'Delete and recreate all record page layouts from standard config, backfill custom objects, and enable IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED',
 })
-export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceCommandRunner {
+export class BackfillRecordPageLayoutsCommand extends ActiveOrSuspendedWorkspaceCommandRunner {
   constructor(
     protected readonly workspaceIteratorService: WorkspaceIteratorService,
     private readonly applicationService: ApplicationService,
@@ -47,7 +47,7 @@ export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceComman
     const isDryRun = options.dryRun ?? false;
 
     const isAlreadyEnabled = await this.featureFlagService.isFeatureEnabled(
-      'IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED' as FeatureFlagKey,
+      FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED,
       workspaceId,
     );
 
@@ -88,12 +88,12 @@ export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceComman
     });
 
     await this.featureFlagService.enableFeatureFlags(
-      ['IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED' as FeatureFlagKey],
+      [FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED],
       workspaceId,
     );
 
     await this.featureFlagService.enableFeatureFlags(
-      ['IS_RECORD_PAGE_LAYOUT_GLOBAL_EDITION_ENABLED' as FeatureFlagKey],
+      [FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_GLOBAL_EDITION_ENABLED],
       workspaceId,
     );
 
@@ -182,7 +182,7 @@ export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceComman
     );
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
         {
           allFlatEntityOperationByMetadataName: {
             viewField: {
@@ -400,7 +400,7 @@ export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceComman
     );
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
         {
           allFlatEntityOperationByMetadataName: {
             pageLayout: {
@@ -544,7 +544,7 @@ export class BackfillRecordPageLayoutsCommand extends ProvisionedWorkspaceComman
     }
 
     const result =
-      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunLegacyWorkspaceMigration(
+      await this.workspaceMigrationValidateBuildAndRunService.validateBuildAndRunWorkspaceMigration(
         {
           allFlatEntityOperationByMetadataName: {
             pageLayout: {

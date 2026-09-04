@@ -1,7 +1,5 @@
 import { Logger } from '@nestjs/common';
 
-import { isDefined } from 'twenty-shared/utils';
-
 import { type MessageQueueDriver } from 'src/engine/core-modules/message-queue/drivers/interfaces/message-queue-driver.interface';
 import {
   type MessageQueueJob,
@@ -10,7 +8,6 @@ import {
 
 import { type MessageQueue } from 'src/engine/core-modules/message-queue/message-queue.constants';
 
-// Synchronous driver for tests and local dev
 export class SyncDriver implements MessageQueueDriver {
   private readonly logger = new Logger(SyncDriver.name);
   private workersMap: {
@@ -27,28 +24,6 @@ export class SyncDriver implements MessageQueueDriver {
     await this.processJob(queueName, { id: '', name: jobName, data });
   }
 
-  async bulkAdd<T extends MessageQueueJobData>(
-    queueName: MessageQueue,
-    jobName: string,
-    dataItems: T[],
-  ): Promise<void> {
-    let firstError: unknown = undefined;
-
-    // Each payload is an independent job in BullMQ, so a failing one must not
-    // prevent the others from being processed
-    for (const data of dataItems) {
-      try {
-        await this.processJob(queueName, { id: '', name: jobName, data });
-      } catch (error) {
-        firstError = firstError ?? error;
-      }
-    }
-
-    if (isDefined(firstError)) {
-      throw firstError;
-    }
-  }
-
   async addCron<T extends MessageQueueJobData | undefined>({
     queueName,
     jobName,
@@ -63,7 +38,7 @@ export class SyncDriver implements MessageQueueDriver {
       id: '',
       name: jobName,
       // TODO: Fix this type issue
-      // oxlint-disable-next-line typescript/no-explicit-any
+      // oxlint-disable-next-line @typescripttypescript/no-explicit-any
       data: data as any,
     });
   }
@@ -75,7 +50,7 @@ export class SyncDriver implements MessageQueueDriver {
   work<T extends MessageQueueJobData>(
     queueName: MessageQueue,
     handler: (job: MessageQueueJob<T>) => Promise<void> | void,
-  ): void {
+  ) {
     this.logger.log(`Registering handler for queue: ${queueName}`);
     this.workersMap[queueName] = handler;
   }

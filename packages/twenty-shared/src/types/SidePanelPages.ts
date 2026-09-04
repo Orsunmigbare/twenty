@@ -3,6 +3,7 @@ export enum SidePanelPages {
   ViewRecord = 'view-record',
   MergeRecords = 'merge-records',
   UpdateRecords = 'update-records',
+  ViewCalendarEvent = 'view-calendar-event',
   EditRichText = 'edit-rich-text',
   Copilot = 'copilot',
   WorkflowTriggerSelectType = 'workflow-trigger-select-type',
@@ -27,5 +28,4 @@ export enum SidePanelPages {
   CommandMenuEdit = 'command-menu-edit',
   PageLayoutRecordPageWidgetTypeSelect = 'page-layout-record-page-widget-type-select',
   ComposeEmail = 'compose-email',
-  ComposeCampaign = 'compose-campaign',
 }

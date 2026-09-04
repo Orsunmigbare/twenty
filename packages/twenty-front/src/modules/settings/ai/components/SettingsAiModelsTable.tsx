@@ -4,8 +4,7 @@ import { css } from '@linaria/core';
 import { styled } from '@linaria/react';
 import { Trans } from '@lingui/react/macro';
 import { isDefined } from 'twenty-shared/utils';
-import { IconTrash } from 'twenty-ui/icon';
-import { AppTooltip, TooltipDelay } from 'twenty-ui/surfaces';
+import { AppTooltip, IconTrash, TooltipDelay } from 'twenty-ui/display';
 import { Checkbox, IconButton } from 'twenty-ui/input';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -42,7 +41,6 @@ const StyledDeprecatedSuffix = styled.span`
 
 const hoverCardTooltipClass = css`
   border-radius: ${themeCssVariables.border.radius.rounded} !important;
-  corner-shape: round;
 
   padding: 0 !important;
 `;

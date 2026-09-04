@@ -9,7 +9,7 @@ import { useAvailableComponentInstanceIdOrThrow } from '@/ui/utilities/state/com
 import { useLingui } from '@lingui/react/macro';
 import { useContext, useRef, useState } from 'react';
 import { Key } from 'ts-key-enum';
-import { IconPencil } from 'twenty-ui/icon';
+import { IconPencil } from 'twenty-ui/display';
 import { CodeEditor, FloatingIconButton } from 'twenty-ui/input';
 import { JsonTree, isTwoFirstDepths } from 'twenty-ui/json-visualizer';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -142,7 +142,7 @@ export const RawJsonFieldInput = () => {
     dependencies: [handleShiftTab, draftValue],
   });
 
-  const showEditingButton = fieldDefinition.metadata.isUIEditable ?? true;
+  const showEditingButton = !fieldDefinition.metadata.isUIReadOnly;
 
   const handleStartEditing = () => {
     setIsEditing(true);

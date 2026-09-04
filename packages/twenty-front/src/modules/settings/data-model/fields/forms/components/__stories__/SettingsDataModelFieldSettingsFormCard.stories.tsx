@@ -1,5 +1,4 @@
 import { type Meta, type StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
 
 import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { FormProviderDecorator } from '~/testing/decorators/FormProviderDecorator';
@@ -57,13 +56,6 @@ export const WithRelationForm: Story = {
     existingFieldMetadataId: 'new-field',
     fieldType: FieldMetadataType.RELATION,
     objectNameSingular: 'company',
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    await waitFor(() => {
-      expect(canvas.getByText('Housecall Pro')).toBeVisible();
-    });
   },
 };
 

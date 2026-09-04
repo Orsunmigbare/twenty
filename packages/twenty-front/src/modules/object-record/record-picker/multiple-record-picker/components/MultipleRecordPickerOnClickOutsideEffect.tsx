@@ -5,7 +5,7 @@ export const MultipleRecordPickerOnClickOutsideEffect = ({
   containerRef,
   onClickOutside,
 }: {
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: React.RefObject<HTMLDivElement>;
   onClickOutside: () => void;
 }) => {
   useListenClickOutside({

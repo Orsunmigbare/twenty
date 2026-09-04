@@ -1,4 +1,5 @@
 import {
+  FeatureFlagKey,
   type FieldMetadataType,
   type ObjectsPermissions,
 } from 'twenty-shared/types';
@@ -19,7 +20,6 @@ import {
   withWorkspaceContext,
   type ORMWorkspaceContext,
 } from 'src/engine/twenty-orm/storage/orm-workspace-context.storage';
-import { formatResult } from 'src/engine/twenty-orm/utils/format-result.util';
 import { getObjectMetadataFromEntityTarget } from 'src/engine/twenty-orm/utils/get-object-metadata-from-entity-target.util';
 
 import { WorkspaceEntityManager } from './workspace-entity-manager';
@@ -102,6 +102,7 @@ describe('WorkspaceEntityManager', () => {
       workspaceId: 'test-workspace-id',
       icon: 'test-icon',
       color: null,
+      isCustom: false,
       isRemote: false,
       isAuditLogged: false,
       isSearchable: false,
@@ -110,7 +111,6 @@ describe('WorkspaceEntityManager', () => {
       targetTableName: 'test_entity',
       fieldIds: ['field-id'],
       indexMetadataIds: [],
-      searchFieldMetadataIds: [],
       objectPermissionIds: [],
       fieldPermissionIds: [],
       viewIds: [],
@@ -119,11 +119,10 @@ describe('WorkspaceEntityManager', () => {
       imageIdentifierFieldMetadataId: null,
       labelIdentifierFieldMetadataId: null,
       shortcut: null,
-      overrides: null,
+      standardOverrides: null,
       applicationId: 'test-application-id',
       isLabelSyncedWithName: false,
-      isUIEditable: true,
-      isUICreatable: true,
+      isUIReadOnly: false,
       duplicateCriteria: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -133,7 +132,6 @@ describe('WorkspaceEntityManager', () => {
       fieldPermissionUniversalIdentifiers: [],
       viewUniversalIdentifiers: [],
       indexMetadataUniversalIdentifiers: [],
-      searchFieldMetadataUniversalIdentifiers: [],
       labelIdentifierFieldMetadataUniversalIdentifier: null,
       imageIdentifierFieldMetadataUniversalIdentifier: null,
     };
@@ -149,7 +147,6 @@ describe('WorkspaceEntityManager', () => {
       label: 'Field Name',
       objectMetadataId: 'test-entity-id',
       isNullable: true,
-      isSystemSideEffect: false,
       isLabelSyncedWithName: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -158,19 +155,19 @@ describe('WorkspaceEntityManager', () => {
       description: null,
       icon: null,
       isActive: true,
+      isCustom: false,
       isSystem: false,
-      isUIEditable: true,
+      isUIReadOnly: false,
       isUnique: false,
       options: null,
       settings: null,
-      overrides: null,
+      standardOverrides: null,
       workspaceId: 'test-workspace-id',
       viewFieldIds: [],
       viewFilterIds: [],
       fieldPermissionIds: [],
       kanbanAggregateOperationViewIds: [],
       calendarViewIds: [],
-      calendarEndViewIds: [],
       mainGroupByFieldMetadataViewIds: [],
       relationTargetFieldMetadataId: null,
       relationTargetObjectMetadataId: null,
@@ -184,13 +181,10 @@ describe('WorkspaceEntityManager', () => {
       viewFieldUniversalIdentifiers: [],
       kanbanAggregateOperationViewUniversalIdentifiers: [],
       calendarViewUniversalIdentifiers: [],
-      calendarEndViewUniversalIdentifiers: [],
       mainGroupByFieldMetadataViewUniversalIdentifiers: [],
       fieldPermissionUniversalIdentifiers: [],
       viewSortIds: [],
       viewSortUniversalIdentifiers: [],
-      searchFieldMetadataIds: [],
-      searchFieldMetadataUniversalIdentifiers: [],
       universalSettings: null,
     };
 
@@ -237,20 +231,22 @@ describe('WorkspaceEntityManager', () => {
         'test-entity': 'test-entity-id',
       },
       featureFlagsMap: {
-        IS_APP_CLAIMING_ENABLED: false,
         IS_UNIQUE_INDEXES_ENABLED: false,
         IS_JSON_FILTER_ENABLED: false,
-        IS_CALENDAR_WEEK_VIEW_ENABLED: false,
+        IS_MARKETPLACE_SETTING_TAB_VISIBLE: false,
+        IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED: false,
+        IS_PUBLIC_DOMAIN_ENABLED: false,
+        IS_EMAILING_DOMAIN_ENABLED: false,
         IS_EMAIL_GROUP_ENABLED: false,
         IS_JUNCTION_RELATIONS_ENABLED: false,
-        IS_REST_METADATA_API_NEW_FORMAT_DIRECT: false,
-        IS_LOGIC_FUNCTION_PREBUILT_MODE_ENABLED: false,
-        IS_SETTINGS_DISCOVERY_HERO_ENABLED: false,
-        IS_WORKFLOW_VERSION_IN_CORE_ENABLED: false,
-        IS_ONBOARDING_AI_CHAT_ENABLED: false,
+        IS_CONNECTED_ACCOUNT_MIGRATED: false,
+        IS_RICH_TEXT_V1_MIGRATED: false,
+        IS_RECORD_PAGE_LAYOUT_GLOBAL_EDITION_ENABLED: false,
+        IS_DATASOURCE_MIGRATED: false,
+        IS_COMMAND_MENU_ITEM_ENABLED: false,
+        [FeatureFlagKey.IS_BILLING_V2_ENABLED]: false,
       },
       userWorkspaceRoleMap: {},
-      apiKeyRoleMap: {},
       eventEmitterService: {
         emitMutationEvent: jest.fn(),
         emitDatabaseBatchEvent: jest.fn(),
@@ -268,6 +264,8 @@ describe('WorkspaceEntityManager', () => {
       featureFlagMap: {
         IS_UNIQUE_INDEXES_ENABLED: false,
         IS_JSON_FILTER_ENABLED: false,
+        IS_PUBLIC_DOMAIN_ENABLED: false,
+        IS_EMAILING_DOMAIN_ENABLED: false,
       },
       permissionsPerRoleId: {},
       eventEmitterService: mockInternalContext.eventEmitterService,
@@ -477,82 +475,12 @@ describe('WorkspaceEntityManager', () => {
         updatedColumns: [],
       });
     });
-
-    it('should emit the update event with the record re-selected after the write', async () => {
-      const recordBefore = {
-        id: 'record-id',
-        fieldName: 'Old Name',
-        avatarUrl: 'http://localhost:3000/file/core-picture/abc',
-      };
-      const recordAfter = {
-        id: 'record-id',
-        fieldName: 'New Name',
-        avatarUrl: 'http://localhost:3000/file/core-picture/abc',
-      };
-      const persistedPayloadWithUntouchedColumnsNulled = {
-        id: 'record-id',
-        fieldName: 'New Name',
-        avatarUrl: '',
-      };
-
-      (formatResult as jest.Mock).mockReturnValue([
-        persistedPayloadWithUntouchedColumnsNulled,
-      ]);
-
-      const findSpy = jest
-        .spyOn(entityManager, 'find')
-        .mockResolvedValueOnce([recordBefore])
-        .mockResolvedValueOnce([recordAfter]);
-
-      await withWorkspaceContext(mockWorkspaceContext, () =>
-        entityManager.save(
-          'test-entity',
-          { id: 'record-id', fieldName: 'New Name' },
-          { reload: false },
-          mockPermissionOptions,
-        ),
-      );
-
-      expect(findSpy).toHaveBeenCalledTimes(2);
-
-      const emitDatabaseBatchEvent = mockInternalContext.eventEmitterService
-        .emitDatabaseBatchEvent as jest.Mock;
-      const updatedBatchEvent = emitDatabaseBatchEvent.mock.calls[0][0];
-
-      expect(updatedBatchEvent.events[0].properties.after).toBe(recordAfter);
-      expect(updatedBatchEvent.events[0].properties.updatedFields).toEqual([
-        'fieldName',
-      ]);
-    });
-
-    it('should not re-select when the save only creates records', async () => {
-      (formatResult as jest.Mock).mockReturnValue([{ id: 'created-id' }]);
-
-      const findSpy = jest.spyOn(entityManager, 'find').mockResolvedValue([]);
-
-      await withWorkspaceContext(mockWorkspaceContext, () =>
-        entityManager.save(
-          'test-entity',
-          { fieldName: 'New Name' },
-          { reload: false },
-          mockPermissionOptions,
-        ),
-      );
-
-      expect(findSpy).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('Update Methods', () => {
     it('should call createQueryBuilder with permissionOptions for update', async () => {
       await withWorkspaceContext(mockWorkspaceContext, () =>
-        entityManager.update(
-          'test-entity',
-          {},
-          {},
-          undefined,
-          mockPermissionOptions,
-        ),
+        entityManager.update('test-entity', {}, {}, mockPermissionOptions),
       );
       expect(entityManager['createQueryBuilder']).toHaveBeenCalledWith(
         'test-entity',

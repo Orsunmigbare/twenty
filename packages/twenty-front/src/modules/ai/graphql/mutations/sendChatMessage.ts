@@ -7,7 +7,7 @@ export const SEND_CHAT_MESSAGE = gql`
     $messageId: UUID!
     $browsingContext: JSON
     $modelId: String
-    $fileAttachments: [FileAttachmentInput!]
+    $fileIds: [UUID!]
   ) {
     sendChatMessage(
       threadId: $threadId
@@ -15,7 +15,7 @@ export const SEND_CHAT_MESSAGE = gql`
       messageId: $messageId
       browsingContext: $browsingContext
       modelId: $modelId
-      fileAttachments: $fileAttachments
+      fileIds: $fileIds
     ) {
       messageId
       queued

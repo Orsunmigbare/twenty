@@ -2,14 +2,13 @@ import { useApolloAdminClient } from '@/settings/admin-panel/apollo/hooks/useApo
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import { SettingsTableCard } from '@/settings/components/SettingsTableCard';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SubMenuTopBarContainer } from '@/ui/layout/page/components/SubMenuTopBarContainer';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { styled } from '@linaria/react';
 import { t } from '@lingui/core/macro';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
-import { IconId } from 'twenty-ui/icon';
-import { H2Title } from 'twenty-ui/typography';
+import { H2Title, IconId } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
@@ -64,7 +63,7 @@ export const SettingsAdminInferredVersion = () => {
   };
 
   return (
-    <SettingsPageLayout
+    <SubMenuTopBarContainer
       links={[
         {
           children: t`Other`,
@@ -105,6 +104,6 @@ export const SettingsAdminInferredVersion = () => {
           </StyledRefreshButtonContainer>
         </Section>
       </SettingsPageContainer>
-    </SettingsPageLayout>
+    </SubMenuTopBarContainer>
   );
 };

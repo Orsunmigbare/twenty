@@ -1,4 +1,3 @@
-import { type JSX } from 'react';
 import { Link as EmailLink } from '@react-email/components';
 
 import { emailTheme } from 'src/common-style';

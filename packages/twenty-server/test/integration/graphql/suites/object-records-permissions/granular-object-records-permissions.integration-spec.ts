@@ -83,9 +83,10 @@ describe('granularObjectRecordsPermissions', () => {
         objectMetadataSingularName: 'person',
         gqlFields: `
           id
+          city
           jobTitle
         `,
-        filter: { jobTitle: { eq: 'Seattle' } },
+        filter: { city: { eq: 'Seattle' } },
       });
 
       const companyGraphqlOperation = findOneOperationFactory({
@@ -137,9 +138,10 @@ describe('granularObjectRecordsPermissions', () => {
         objectMetadataSingularName: 'person',
         gqlFields: `
           id
+          city
           jobTitle
         `,
-        filter: { jobTitle: { eq: 'Seattle' } },
+        filter: { city: { eq: 'Seattle' } },
       });
 
       const companyGraphqlOperation = findOneOperationFactory({

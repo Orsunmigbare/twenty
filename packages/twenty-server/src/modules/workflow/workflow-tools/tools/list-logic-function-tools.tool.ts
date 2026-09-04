@@ -40,7 +40,6 @@ export const createListLogicFunctionToolsTool = (
       logicFunctions: workflowActionFunctions.map((fn) => ({
         id: fn.id,
         name: fn.name,
-        displayName: fn.workflowActionTriggerSettings?.label ?? fn.name,
         description: fn.description,
       })),
     };

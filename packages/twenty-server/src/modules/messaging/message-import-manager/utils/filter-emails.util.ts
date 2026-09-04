@@ -5,7 +5,6 @@ import { type MessageWithParticipants } from 'src/modules/messaging/message-impo
 import { filterOutBlocklistedMessages } from 'src/modules/messaging/message-import-manager/utils/filter-out-blocklisted-messages.util';
 import { filterOutIcsAttachments } from 'src/modules/messaging/message-import-manager/utils/filter-out-ics-attachments.util';
 import { filterOutInternals } from 'src/modules/messaging/message-import-manager/utils/filter-out-internals.util';
-import { isBulkMail } from 'src/modules/messaging/message-import-manager/utils/is-bulk-mail.util';
 import { isGroupEmail } from 'src/modules/messaging/message-import-manager/utils/is-group-email';
 import { isMessageSenderMatchingHandles } from 'src/modules/messaging/message-import-manager/utils/is-message-sender-matching-handles.util';
 import { isWorkEmail } from 'src/utils/is-work-email';
@@ -16,7 +15,6 @@ export const filterEmails = (
   messages: MessageWithParticipants[],
   blocklist: string[],
   excludeGroupEmails: boolean = true,
-  isInternalMessagesImportEnabled: boolean = false,
 ) => {
   const messagesWithoutIcsAttachments = filterOutIcsAttachments(messages);
 
@@ -26,10 +24,7 @@ export const filterEmails = (
     blocklist,
   );
 
-  const shouldFilterOutInternals =
-    isWorkEmail(primaryHandle) && !isInternalMessagesImportEnabled;
-
-  const messagesWithoutInternals = shouldFilterOutInternals
+  const messagesWithoutInternals = isWorkEmail(primaryHandle)
     ? filterOutInternals(primaryHandle, messagesWithoutBlocklisted)
     : messagesWithoutBlocklisted;
 
@@ -44,10 +39,6 @@ export const filterEmails = (
 
     if (isSentByUser) {
       return true;
-    }
-
-    if (isBulkMail(message.messageHeaders ?? [])) {
-      return false;
     }
 
     const senderHandle = message.participants?.find(

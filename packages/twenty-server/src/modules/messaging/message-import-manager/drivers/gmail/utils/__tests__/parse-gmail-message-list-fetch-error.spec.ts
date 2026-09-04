@@ -1,8 +1,9 @@
+import { GaxiosError } from 'gaxios';
+
 import {
   MessageImportDriverException,
   MessageImportDriverExceptionCode,
 } from 'src/modules/messaging/message-import-manager/drivers/exceptions/message-import-driver.exception';
-import { createMockGaxiosError } from 'src/modules/messaging/message-import-manager/drivers/gmail/mocks/create-mock-gaxios-error.util';
 import { getGmailApiError } from 'src/modules/messaging/message-import-manager/drivers/gmail/mocks/gmail-api-error-mocks';
 import { parseGmailApiError } from 'src/modules/messaging/message-import-manager/drivers/gmail/utils/parse-gmail-api-error.util';
 
@@ -124,12 +125,18 @@ describe('parseGmailApiError', () => {
   });
 
   it('should handle 500 OAuth internal_failure error', () => {
-    const error = createMockGaxiosError({
-      message: 'internal_failure',
-      status: 500,
-      statusText: 'Internal Server Error',
-      data: { error: 'internal_failure' },
-    });
+    const error = new GaxiosError(
+      'internal_failure',
+      { url: 'https://oauth2.googleapis.com/token' },
+      {
+        status: 500,
+        statusText: 'Internal Server Error',
+        data: { error: 'internal_failure' },
+        headers: {},
+        config: { url: 'https://oauth2.googleapis.com/token' },
+        request: { responseURL: 'https://oauth2.googleapis.com/token' },
+      },
+    );
     const exception = parseGmailApiError(error);
 
     expect(exception).toBeInstanceOf(MessageImportDriverException);

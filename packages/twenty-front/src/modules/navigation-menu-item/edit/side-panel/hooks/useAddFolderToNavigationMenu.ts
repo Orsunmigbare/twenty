@@ -1,16 +1,22 @@
 import { useLingui } from '@lingui/react/macro';
-import { NavigationMenuItemType } from 'twenty-shared/types';
-import { IconFolder } from 'twenty-ui/icon';
+import { isDefined } from 'twenty-shared/utils';
+import { IconFolder } from 'twenty-ui/display';
 
-import { DEFAULT_NAVIGATION_MENU_ITEM_COLOR_FOLDER } from '@/navigation-menu-item/common/constants/NavigationMenuItemDefaultColorFolder';
-import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
+import { useAddFolderToNavigationMenuDraft } from '@/navigation-menu-item/edit/folder/hooks/useAddFolderToNavigationMenuDraft';
+import { useNavigationMenuItemsDraftState } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemsDraftState';
 import { useOpenNavigationMenuItemInSidePanel } from '@/navigation-menu-item/edit/hooks/useOpenNavigationMenuItemInSidePanel';
+import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
+import { navigationMenuItemsDraftState } from '@/navigation-menu-item/common/states/navigationMenuItemsDraftState';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
+import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 
 export const useAddFolderToNavigationMenu = () => {
   const { t } = useLingui();
-  const { createItem } = useNavigationMenuItemEditController();
+  const { addFolderToDraft } = useAddFolderToNavigationMenuDraft();
+  const { workspaceNavigationMenuItems } = useNavigationMenuItemsDraftState();
+  const navigationMenuItemsDraft = useAtomStateValue(
+    navigationMenuItemsDraftState,
+  );
   const { openNavigationMenuItemInSidePanel } =
     useOpenNavigationMenuItemInSidePanel();
   const [
@@ -18,17 +24,16 @@ export const useAddFolderToNavigationMenu = () => {
     setPendingInsertionNavigationMenuItem,
   ] = useAtomState(pendingInsertionNavigationMenuItemState);
 
+  const currentDraft = isDefined(navigationMenuItemsDraft)
+    ? navigationMenuItemsDraft
+    : workspaceNavigationMenuItems;
+
   const handleAddFolder = () => {
-    const itemId = createItem(
-      {
-        type: NavigationMenuItemType.FOLDER,
-        name: t`New folder`,
-        color: DEFAULT_NAVIGATION_MENU_ITEM_COLOR_FOLDER,
-      },
-      {
-        targetFolderId: pendingInsertionNavigationMenuItem?.folderId ?? null,
-        targetIndex: pendingInsertionNavigationMenuItem?.position,
-      },
+    const itemId = addFolderToDraft(
+      t`New folder`,
+      currentDraft,
+      pendingInsertionNavigationMenuItem?.folderId ?? null,
+      pendingInsertionNavigationMenuItem?.position,
     );
 
     setPendingInsertionNavigationMenuItem(null);

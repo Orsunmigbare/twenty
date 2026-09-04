@@ -1,52 +1,35 @@
 import { useAuth } from '@/auth/hooks/useAuth';
-import { useHasAccessTokenPair } from '@/auth/hooks/useHasAccessTokenPair';
 import {
   SignInUpStep,
   signInUpStepState,
 } from '@/auth/states/signInUpStepState';
-import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { useLoadCurrentUser } from '@/users/hooks/useLoadCurrentUser';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 import { isDefined } from 'twenty-shared/utils';
 
 export const SignInUpGlobalScopeFormEffect = () => {
-  const signInUpStep = useAtomStateValue(signInUpStepState);
+  const setSignInUpStep = useSetAtomState(signInUpStepState);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { setAuthTokens, navigateAfterMultiWorkspaceSignInUp } = useAuth();
+  const { setAuthTokens } = useAuth();
   const { loadCurrentUser } = useLoadCurrentUser();
-  const hasAccessTokenPair = useHasAccessTokenPair();
 
   useEffect(() => {
-    const resumeOnCentralDomain = async () => {
-      const { user } = await loadCurrentUser();
-      await navigateAfterMultiWorkspaceSignInUp(
-        user.availableWorkspaces,
-        user.email,
-      );
-    };
-
-    const tokenPairFromUrl = searchParams.get('tokenPair');
-    if (isDefined(tokenPairFromUrl)) {
-      setAuthTokens(JSON.parse(tokenPairFromUrl));
+    const tokenPair = searchParams.get('tokenPair');
+    if (isDefined(tokenPair)) {
+      setAuthTokens(JSON.parse(tokenPair));
       searchParams.delete('tokenPair');
       setSearchParams(searchParams);
-      void resumeOnCentralDomain();
-      return;
+      loadCurrentUser();
+      setSignInUpStep(SignInUpStep.WorkspaceSelection);
     }
-
-    if (signInUpStep !== SignInUpStep.Init) return;
-    if (!hasAccessTokenPair) return;
-
-    void resumeOnCentralDomain();
   }, [
     searchParams,
     setSearchParams,
+    setSignInUpStep,
     loadCurrentUser,
     setAuthTokens,
-    signInUpStep,
-    hasAccessTokenPair,
-    navigateAfterMultiWorkspaceSignInUp,
   ]);
 
   return <></>;

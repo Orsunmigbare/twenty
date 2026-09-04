@@ -1,7 +1,6 @@
 import { styled } from '@linaria/react';
 import { isDefined } from 'twenty-shared/utils';
-import { Banner } from 'twenty-ui/feedback';
-import { IconChevronDown, IconInfoCircle } from 'twenty-ui/icon';
+import { Banner, IconChevronDown, IconInfoCircle } from 'twenty-ui/display';
 import { useContext } from 'react';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 

@@ -26,13 +26,17 @@ const StyledInnerList = styled.div`
   padding-left: ${themeCssVariables.spacing[2]};
   padding-right: ${themeCssVariables.spacing[2]};
   padding-top: ${themeCssVariables.spacing[2]};
-  width: 100%;
+  width: calc(100% - ${themeCssVariables.spacing[4]});
 
   @media (min-width: ${MOBILE_VIEWPORT}px) {
     max-height: calc(
       100dvh - ${SIDE_PANEL_TOP_BAR_HEIGHT}px - ${SIDE_PANEL_LIST_PADDING * 2}px
     );
   }
+`;
+
+const StyledSidePanelList = styled.div`
+  overflow-y: hidden;
 `;
 
 const StyledEmpty = styled.div`
@@ -57,7 +61,7 @@ export const SidePanelList = ({
   );
 
   return (
-    <>
+    <StyledSidePanelList>
       <SidePanelDefaultSelectionEffect selectableItemIds={selectableItemIds} />
       <ScrollWrapper componentInstanceId={`scroll-wrapper-side-panel`}>
         <StyledInnerList>
@@ -76,6 +80,6 @@ export const SidePanelList = ({
           </SelectableList>
         </StyledInnerList>
       </ScrollWrapper>
-    </>
+    </StyledSidePanelList>
   );
 };

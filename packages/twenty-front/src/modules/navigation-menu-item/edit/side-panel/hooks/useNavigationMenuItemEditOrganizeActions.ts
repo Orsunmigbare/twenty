@@ -3,14 +3,15 @@ import { isNonEmptyString } from '@sniptt/guards';
 import { useNavigate } from 'react-router-dom';
 import { SidePanelPages } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { IconDotsVertical } from 'twenty-ui/icon';
+import { IconDotsVertical } from 'twenty-ui/display';
 
 import { pendingInsertionNavigationMenuItemState } from '@/navigation-menu-item/common/states/pendingInsertionNavigationMenuItemState';
 import { selectedNavigationMenuItemIdInEditModeState } from '@/navigation-menu-item/common/states/selectedNavigationMenuItemIdInEditModeState';
 import { type PendingInsertionNavigationMenuItem } from '@/navigation-menu-item/common/types/PendingInsertionNavigationMenuItem';
+import { useNavigationMenuItemSectionItems } from '@/navigation-menu-item/display/hooks/useNavigationMenuItemSectionItems';
 import { getNavigationMenuItemComputedLink } from '@/navigation-menu-item/display/utils/getNavigationMenuItemComputedLink';
-import { useNavigationMenuItemEditSectionItems } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditSectionItems';
 import { useNavigationMenuItemMoveRemove } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemMoveRemove';
+import { useNavigationMenuItemsDraftState } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemsDraftState';
 import { type OrganizeActionsProps } from '@/navigation-menu-item/edit/side-panel/components/SidePanelEditOrganizeActions';
 import { objectMetadataItemsSelector } from '@/object-metadata/states/objectMetadataItemsSelector';
 import { useNavigateSidePanel } from '@/side-panel/hooks/useNavigateSidePanel';
@@ -21,16 +22,19 @@ import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomState
 import { useSetAtomState } from '@/ui/utilities/state/jotai/hooks/useSetAtomState';
 import { viewsSelector } from '@/views/states/selectors/viewsSelector';
 import { type NavigationMenuItem } from '~/generated-metadata/graphql';
-import { lastVisitedViewPerObjectMetadataItemState } from '@/navigation/states/lastVisitedViewPerObjectMetadataItemState';
 
 const computeInsertionPosition = (
   selectedItem: { id: string; folderId?: string | null },
-  sectionItems: NavigationMenuItem[],
+  workspaceNavigationMenuItems: NavigationMenuItem[],
   offset: 0 | 1,
 ): PendingInsertionNavigationMenuItem | null => {
   const folderId = selectedItem.folderId ?? null;
-  const itemsInFolderSorted = sectionItems
-    .filter((item) => (item.folderId ?? null) === folderId)
+  const itemsInFolderSorted = workspaceNavigationMenuItems
+    .filter(
+      (item) =>
+        (item.folderId ?? null) === folderId &&
+        !isDefined(item.userWorkspaceId),
+    )
     .sort((a, b) => a.position - b.position);
   const selectedIndexSorted = itemsInFolderSorted.findIndex(
     (item) => item.id === selectedItem.id,
@@ -62,13 +66,11 @@ export const useNavigationMenuItemEditOrganizeActions =
     const setPendingInsertionNavigationMenuItem = useSetAtomState(
       pendingInsertionNavigationMenuItemState,
     );
-    const items = useNavigationMenuItemEditSectionItems();
+    const { workspaceNavigationMenuItems } = useNavigationMenuItemsDraftState();
+    const items = useNavigationMenuItemSectionItems();
     const { moveUp, moveDown, remove } = useNavigationMenuItemMoveRemove();
     const objectMetadataItems = useAtomStateValue(objectMetadataItemsSelector);
     const views = useAtomStateValue(viewsSelector);
-    const lastVisitedViewPerObjectMetadataItem = useAtomStateValue(
-      lastVisitedViewPerObjectMetadataItemState,
-    );
 
     const selectedItem = selectedNavigationMenuItemIdInEditMode
       ? items.find((item) => item.id === selectedNavigationMenuItemIdInEditMode)
@@ -97,13 +99,13 @@ export const useNavigationMenuItemEditOrganizeActions =
 
     const handleMoveUp = () => {
       if (canMoveUp && isDefined(selectedNavigationMenuItemIdInEditMode)) {
-        void moveUp(selectedNavigationMenuItemIdInEditMode);
+        moveUp(selectedNavigationMenuItemIdInEditMode);
       }
     };
 
     const handleMoveDown = () => {
       if (canMoveDown && isDefined(selectedNavigationMenuItemIdInEditMode)) {
-        void moveDown(selectedNavigationMenuItemIdInEditMode);
+        moveDown(selectedNavigationMenuItemIdInEditMode);
       }
     };
 
@@ -116,16 +118,15 @@ export const useNavigationMenuItemEditOrganizeActions =
         siblings[selectedIndexInSiblings + 1] ??
         siblings[selectedIndexInSiblings - 1];
 
-      void remove(selectedNavigationMenuItemIdInEditMode);
+      remove(selectedNavigationMenuItemIdInEditMode);
 
       if (isDefined(nextItem)) {
         setSelectedNavigationMenuItemIdInEditMode(nextItem.id);
-        const link = getNavigationMenuItemComputedLink({
-          item: nextItem,
+        const link = getNavigationMenuItemComputedLink(
+          nextItem,
           objectMetadataItems,
           views,
-          lastVisitedViewPerObjectMetadataItem,
-        });
+        );
         if (isNonEmptyString(link)) {
           navigate(link);
         }
@@ -143,7 +144,11 @@ export const useNavigationMenuItemEditOrganizeActions =
 
     const handleAddAtOffset = (offset: 0 | 1) => {
       if (!isDefined(selectedItem)) return;
-      const insertion = computeInsertionPosition(selectedItem, items, offset);
+      const insertion = computeInsertionPosition(
+        selectedItem,
+        workspaceNavigationMenuItems,
+        offset,
+      );
       if (!insertion) return;
 
       const title =

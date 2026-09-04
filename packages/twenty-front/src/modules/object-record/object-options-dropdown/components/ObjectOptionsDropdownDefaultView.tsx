@@ -19,7 +19,7 @@ import {
   IconListDetails,
   IconLock,
   useIcons,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
 import { useCopyToClipboard } from '~/hooks/useCopyToClipboard';
 

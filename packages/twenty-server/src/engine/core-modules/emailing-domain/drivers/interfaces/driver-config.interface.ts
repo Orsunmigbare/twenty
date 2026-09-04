@@ -1,4 +1,4 @@
-import { type EmailingDomainDriver } from 'src/engine/core-modules/emailing-domain/drivers/types/emailing-domain-driver.type';
+import { type EmailingDomainDriver } from 'src/engine/core-modules/emailing-domain/drivers/types/emailing-domain';
 
 export interface BaseDriverConfig {
   driver: EmailingDomainDriver;

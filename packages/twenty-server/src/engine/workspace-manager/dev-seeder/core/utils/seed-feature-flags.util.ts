@@ -21,17 +21,17 @@ export const seedFeatureFlags = async ({
     .orIgnore()
     .values([
       {
-        key: FeatureFlagKey.IS_APP_CLAIMING_ENABLED,
-        workspaceId: workspaceId,
-        value: false,
-      },
-      {
         key: FeatureFlagKey.IS_UNIQUE_INDEXES_ENABLED,
         workspaceId: workspaceId,
         value: false,
       },
       {
-        key: FeatureFlagKey.IS_CALENDAR_WEEK_VIEW_ENABLED,
+        key: FeatureFlagKey.IS_PUBLIC_DOMAIN_ENABLED,
+        workspaceId: workspaceId,
+        value: true,
+      },
+      {
+        key: FeatureFlagKey.IS_EMAILING_DOMAIN_ENABLED,
         workspaceId: workspaceId,
         value: true,
       },
@@ -46,14 +46,19 @@ export const seedFeatureFlags = async ({
         value: true,
       },
       {
-        key: FeatureFlagKey.IS_SETTINGS_DISCOVERY_HERO_ENABLED,
+        key: FeatureFlagKey.IS_MARKETPLACE_SETTING_TAB_VISIBLE,
         workspaceId: workspaceId,
-        value: false,
+        value: true,
       },
       {
-        key: FeatureFlagKey.IS_ONBOARDING_AI_CHAT_ENABLED,
+        key: FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_EDITING_ENABLED,
         workspaceId: workspaceId,
-        value: false,
+        value: true,
+      },
+      {
+        key: FeatureFlagKey.IS_RECORD_PAGE_LAYOUT_GLOBAL_EDITION_ENABLED,
+        workspaceId: workspaceId,
+        value: true,
       },
     ])
     .execute();

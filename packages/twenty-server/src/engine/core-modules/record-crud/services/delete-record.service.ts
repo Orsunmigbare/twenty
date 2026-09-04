@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { isDefined, isValidUuid } from 'twenty-shared/utils';
-import { canObjectBeManagedByAutomation } from 'twenty-shared/workflow';
+import { canObjectBeManagedByWorkflow } from 'twenty-shared/workflow';
 
 import { CommonDeleteOneQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-delete-one-query-runner.service';
 import { CommonDestroyOneQueryRunnerService } from 'src/engine/api/common/common-query-runners/common-destroy-one-query-runner.service';
@@ -24,13 +24,7 @@ export class DeleteRecordService {
   ) {}
 
   async execute(params: DeleteRecordParams): Promise<ToolOutput> {
-    const {
-      objectName,
-      objectRecordId,
-      authContext,
-      rolePermissionConfig,
-      soft = true,
-    } = params;
+    const { objectName, objectRecordId, authContext, soft = true } = params;
 
     if (!isDefined(objectRecordId) || !isValidUuid(objectRecordId)) {
       return {
@@ -45,16 +39,16 @@ export class DeleteRecordService {
         await this.commonApiContextBuilder.build({
           authContext,
           objectName,
-          rolePermissionConfig,
         });
 
       if (
-        !canObjectBeManagedByAutomation({
+        !canObjectBeManagedByWorkflow({
           nameSingular: flatObjectMetadata.nameSingular,
+          isSystem: flatObjectMetadata.isSystem,
         })
       ) {
         throw new RecordCrudException(
-          'Failed to delete: Object cannot be deleted by automation',
+          'Failed to delete: Object cannot be deleted by workflow',
           RecordCrudExceptionCode.INVALID_REQUEST,
         );
       }

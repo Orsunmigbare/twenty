@@ -5,11 +5,11 @@ import { FileFolder } from 'twenty-shared/types';
 import { v4 } from 'uuid';
 
 import { ApplicationService } from 'src/engine/core-modules/application/application.service';
-import { FileStorageService } from 'src/engine/core-modules/file-storage/services/file-storage.service';
+import { FileStorageService } from 'src/engine/core-modules/file-storage/file-storage.service';
 import { FileWithSignedUrlDTO } from 'src/engine/core-modules/file/dtos/file-with-sign-url.dto';
 import { FileUrlService } from 'src/engine/core-modules/file/file-url/file-url.service';
-import { extractFileInfoOrThrow } from 'src/engine/core-modules/file/utils/extract-file-info-or-throw.utils';
-
+import { extractFileInfo } from 'src/engine/core-modules/file/utils/extract-file-info.utils';
+import { sanitizeFile } from 'src/engine/core-modules/file/utils/sanitize-file.utils';
 @Injectable()
 export class FileAiChatService {
   constructor(
@@ -27,10 +27,12 @@ export class FileAiChatService {
     filename: string;
     workspaceId: string;
   }): Promise<FileWithSignedUrlDTO> {
-    const { ext } = await extractFileInfoOrThrow({
+    const { mimeType, ext } = await extractFileInfo({
       file,
       filename,
     });
+
+    const sanitizedFile = sanitizeFile({ file, ext, mimeType });
 
     const fileId = v4();
     const name = `${fileId}${isNonEmptyString(ext) ? `.${ext}` : ''}`;
@@ -43,8 +45,9 @@ export class FileAiChatService {
       );
 
     const savedFile = await this.fileStorageService.writeFile({
-      sourceFile: file,
+      sourceFile: sanitizedFile,
       resourcePath: name,
+      mimeType,
       fileFolder: FileFolder.AgentChat,
       applicationUniversalIdentifier:
         workspaceCustomFlatApplication.universalIdentifier,
@@ -58,7 +61,7 @@ export class FileAiChatService {
 
     return {
       ...savedFile,
-      url: await this.fileUrlService.signFileByIdUrl({
+      url: this.fileUrlService.signFileByIdUrl({
         fileId,
         workspaceId,
         fileFolder: FileFolder.AgentChat,

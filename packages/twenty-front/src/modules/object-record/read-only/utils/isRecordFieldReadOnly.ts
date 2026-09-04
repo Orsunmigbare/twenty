@@ -15,8 +15,10 @@ type ObjectPermissionsByObjectMetadataId = Record<
 type IsRecordFieldReadOnlyParams = {
   isRecordReadOnly: boolean;
   isSystemObject?: boolean;
-  isFieldFromStandardApplication?: boolean;
-  fieldMetadataItem: Pick<FieldMetadataItem, 'id' | 'isUIEditable'>;
+  fieldMetadataItem: Pick<
+    FieldMetadataItem,
+    'id' | 'isUIReadOnly' | 'isCustom'
+  >;
   objectPermissions: ObjectPermission;
   fieldDefinition?: FieldDefinition<FieldMetadata>;
   objectPermissionsByObjectMetadataId?: ObjectPermissionsByObjectMetadataId;
@@ -26,7 +28,6 @@ export const isRecordFieldReadOnly = ({
   objectPermissions,
   isRecordReadOnly,
   isSystemObject,
-  isFieldFromStandardApplication,
   fieldMetadataItem,
   fieldDefinition,
   objectPermissionsByObjectMetadataId,
@@ -44,15 +45,10 @@ export const isRecordFieldReadOnly = ({
       objectPermissionsByObjectMetadataId,
     });
 
-  // Keep system-object standard fields read-only. If the application origin
-  // cannot be resolved yet, fail closed until metadata finishes loading.
-  const isReadOnlyStandardFieldOnSystemObject =
-    isSystemObject === true && isFieldFromStandardApplication !== false;
-
   return (
     isRecordReadOnly ||
-    isReadOnlyStandardFieldOnSystemObject ||
-    !(fieldMetadataItem.isUIEditable ?? true) ||
+    (isSystemObject === true && fieldMetadataItem.isCustom !== true) ||
+    fieldMetadataItem.isUIReadOnly ||
     fieldReadOnlyByPermissions ||
     oneToManyTargetReadOnly
   );

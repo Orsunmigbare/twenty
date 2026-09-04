@@ -9,11 +9,10 @@ export const generateUpdateManyRecordInputSchema = (
   objectMetadata: ObjectMetadataForToolSchema,
   restrictedFields?: RestrictedFieldsPermissions,
 ) => {
-  const { filterSchema } = generateRecordFilterSchema({
+  const { filterSchema } = generateRecordFilterSchema(
     objectMetadata,
     restrictedFields,
-    additionalExcludedFieldNames: ['createdAt', 'updatedAt'],
-  });
+  );
 
   const dataSchema = generateRecordPropertiesZodSchema(
     objectMetadata,

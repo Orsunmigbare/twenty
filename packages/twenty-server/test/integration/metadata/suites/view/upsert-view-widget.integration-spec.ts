@@ -21,7 +21,6 @@ import { createOneView } from 'test/integration/metadata/suites/view/utils/creat
 import { destroyOneView } from 'test/integration/metadata/suites/view/utils/destroy-one-view.util';
 import { upsertViewWidget } from 'test/integration/metadata/suites/view/utils/upsert-view-widget.util';
 import {
-  AggregateOperations,
   ViewFilterGroupLogicalOperator,
   ViewFilterOperand,
   ViewSortDirection,
@@ -304,142 +303,6 @@ describe('upsertViewWidget', () => {
       expect(updatedField!.position).toBe(42);
     });
 
-    it('should create a new view field with an aggregate operation', async () => {
-      const { data: fieldsBefore } = await findViewFields({
-        viewId: testSetup.viewId,
-        gqlFields: 'id fieldMetadataId position isVisible aggregateOperation',
-        expectToFail: false,
-      });
-
-      const existingFieldMetadataIds = new Set(
-        fieldsBefore.getViewFields.map(
-          (field: { fieldMetadataId: string }) => field.fieldMetadataId,
-        ),
-      );
-      const newFieldMetadataId = testSetup.fieldMetadataIds.find(
-        (id) => !existingFieldMetadataIds.has(id),
-      );
-
-      expect(newFieldMetadataId).toBeDefined();
-
-      await upsertViewWidget({
-        expectToFail: false,
-        input: {
-          widgetId: testSetup.widgetId,
-          viewFields: [
-            ...fieldsBefore.getViewFields.map(
-              (field: {
-                id: string;
-                fieldMetadataId: string;
-                isVisible: boolean;
-                position: number;
-                aggregateOperation?: AggregateOperations | null;
-              }) => ({
-                viewFieldId: field.id,
-                fieldMetadataId: field.fieldMetadataId,
-                isVisible: field.isVisible,
-                position: field.position,
-                aggregateOperation: field.aggregateOperation ?? null,
-              }),
-            ),
-            {
-              fieldMetadataId: newFieldMetadataId!,
-              isVisible: true,
-              position: 99,
-              aggregateOperation: AggregateOperations.SUM,
-            },
-          ],
-        },
-      });
-
-      const { data: fieldsAfter } = await findViewFields({
-        viewId: testSetup.viewId,
-        gqlFields: 'id fieldMetadataId aggregateOperation',
-        expectToFail: false,
-      });
-
-      const createdField = fieldsAfter.getViewFields.find(
-        (field: { fieldMetadataId: string }) =>
-          field.fieldMetadataId === newFieldMetadataId,
-      );
-
-      expect(createdField).toBeDefined();
-      expect(createdField!.aggregateOperation).toBe(AggregateOperations.SUM);
-    });
-
-    it('should update and clear an existing view field aggregate operation', async () => {
-      const { data: fieldsBefore } = await findViewFields({
-        viewId: testSetup.viewId,
-        gqlFields: 'id fieldMetadataId position isVisible aggregateOperation',
-        expectToFail: false,
-      });
-
-      const targetField = fieldsBefore.getViewFields.find(
-        (field: { fieldMetadataId: string }) =>
-          field.fieldMetadataId !== testSetup.labelIdentifierFieldMetadataId,
-      );
-
-      expect(targetField).toBeDefined();
-
-      await upsertViewWidget({
-        expectToFail: false,
-        input: {
-          widgetId: testSetup.widgetId,
-          viewFields: [
-            {
-              viewFieldId: targetField!.id,
-              fieldMetadataId: targetField!.fieldMetadataId,
-              isVisible: targetField!.isVisible,
-              position: targetField!.position,
-              aggregateOperation: AggregateOperations.COUNT,
-            },
-          ],
-        },
-      });
-
-      const { data: fieldsWithAggregate } = await findViewFields({
-        viewId: testSetup.viewId,
-        gqlFields: 'id aggregateOperation',
-        expectToFail: false,
-      });
-
-      const updatedField = fieldsWithAggregate.getViewFields.find(
-        (field: { id: string }) => field.id === targetField!.id,
-      );
-
-      expect(updatedField).toBeDefined();
-      expect(updatedField!.aggregateOperation).toBe(AggregateOperations.COUNT);
-
-      await upsertViewWidget({
-        expectToFail: false,
-        input: {
-          widgetId: testSetup.widgetId,
-          viewFields: [
-            {
-              viewFieldId: targetField!.id,
-              fieldMetadataId: targetField!.fieldMetadataId,
-              isVisible: targetField!.isVisible,
-              position: targetField!.position,
-              aggregateOperation: null,
-            },
-          ],
-        },
-      });
-
-      const { data: fieldsAfterClear } = await findViewFields({
-        viewId: testSetup.viewId,
-        gqlFields: 'id aggregateOperation',
-        expectToFail: false,
-      });
-
-      const clearedField = fieldsAfterClear.getViewFields.find(
-        (field: { id: string }) => field.id === targetField!.id,
-      );
-
-      expect(clearedField).toBeDefined();
-      expect(clearedField!.aggregateOperation).toBeNull();
-    });
-
     it('should not modify fields when viewFields is omitted', async () => {
       const { data: fieldsBefore } = await findViewFields({
         viewId: testSetup.viewId,
@@ -707,7 +570,7 @@ describe('upsertViewWidget', () => {
             {
               id: filterId,
               fieldMetadataId,
-              operand: ViewFilterOperand.DOES_NOT_CONTAIN,
+              operand: ViewFilterOperand.IS,
               value: 'updated',
             },
           ],
@@ -725,7 +588,7 @@ describe('upsertViewWidget', () => {
       );
 
       expect(updatedFilter).toBeDefined();
-      expect(updatedFilter!.operand).toBe(ViewFilterOperand.DOES_NOT_CONTAIN);
+      expect(updatedFilter!.operand).toBe(ViewFilterOperand.IS);
       expect(updatedFilter!.value).toBe('updated');
     });
 
@@ -974,7 +837,7 @@ describe('upsertViewWidget', () => {
       const filterGroupId = uuidv4();
       const filterId = uuidv4();
       const sortId = uuidv4();
-      const fieldMetadataId = testSetup.fieldMetadataIds[0];
+      const fieldMetadataId = testSetup.fieldMetadataIds[2];
       const targetField = testSetup.viewFields.find(
         (field) =>
           field.fieldMetadataId !== testSetup.labelIdentifierFieldMetadataId,

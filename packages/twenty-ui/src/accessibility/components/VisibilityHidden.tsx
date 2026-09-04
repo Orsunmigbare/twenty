@@ -1,9 +1,21 @@
-import styles from './VisibilityHidden.module.scss';
+import { styled } from '@linaria/react';
+
+const StyledSpan = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+`;
 
 export const VisibilityHidden = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  return <span className={styles.root}>{children}</span>;
+  return <StyledSpan>{children}</StyledSpan>;
 };

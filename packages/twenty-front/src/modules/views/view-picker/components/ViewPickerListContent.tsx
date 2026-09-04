@@ -1,5 +1,5 @@
 import { styled } from '@linaria/react';
-import { type DraggableListDropResult } from '@/ui/layout/draggable-list/types/DraggableListDropResult';
+import { type DropResult } from '@hello-pangea/dnd';
 import { type MouseEvent, useCallback } from 'react';
 
 import { useContextStoreObjectMetadataItemOrThrow } from '@/context-store/hooks/useContextStoreObjectMetadataItemOrThrow';
@@ -22,7 +22,7 @@ import { VIEW_PICKER_DROPDOWN_ID } from '@/views/view-picker/constants/ViewPicke
 import { useViewPickerMode } from '@/views/view-picker/hooks/useViewPickerMode';
 import { viewPickerReferenceViewIdComponentState } from '@/views/view-picker/states/viewPickerReferenceViewIdComponentState';
 import { useLingui } from '@lingui/react/macro';
-import { IconPlus } from 'twenty-ui/icon';
+import { IconPlus } from 'twenty-ui/display';
 import { MenuItem } from 'twenty-ui/navigation';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { ViewVisibility } from '~/generated-metadata/graphql';
@@ -89,7 +89,7 @@ export const ViewPickerListContent = () => {
   };
 
   const handleWorkspaceDragEnd = useCallback(
-    async (result: DraggableListDropResult) => {
+    async (result: DropResult) => {
       if (!result.destination) return;
 
       const viewsReordered = moveArrayItem(workspaceViews, {
@@ -112,7 +112,7 @@ export const ViewPickerListContent = () => {
   );
 
   const handleUnlistedDragEnd = useCallback(
-    async (result: DraggableListDropResult) => {
+    async (result: DropResult) => {
       if (!result.destination) return;
 
       const viewsReordered = moveArrayItem(unlistedViews, {
@@ -146,7 +146,6 @@ export const ViewPickerListContent = () => {
               onDragEnd={handleWorkspaceDragEnd}
               draggableItems={workspaceViews.map((view, index) => {
                 const isIndexView = view.key === 'INDEX';
-                const isCurrentView = currentView?.id === view.id;
                 return (
                   <DraggableItem
                     key={view.id}
@@ -160,7 +159,6 @@ export const ViewPickerListContent = () => {
                         isIndexView={isIndexView}
                         isLastView={isLastView}
                         onEdit={handleEditViewButtonClick}
-                        isCurrentView={isCurrentView}
                       />
                     }
                   />
@@ -181,7 +179,6 @@ export const ViewPickerListContent = () => {
               onDragEnd={handleUnlistedDragEnd}
               draggableItems={unlistedViews.map((view, index) => {
                 const isIndexView = view.key === 'INDEX';
-                const isCurrentView = currentView?.id === view.id;
                 return (
                   <DraggableItem
                     key={view.id}
@@ -195,7 +192,6 @@ export const ViewPickerListContent = () => {
                         isIndexView={isIndexView}
                         isLastView={isLastView}
                         onEdit={handleEditViewButtonClick}
-                        isCurrentView={isCurrentView}
                       />
                     }
                   />

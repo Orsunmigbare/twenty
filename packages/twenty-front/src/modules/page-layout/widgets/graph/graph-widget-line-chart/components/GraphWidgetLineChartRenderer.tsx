@@ -1,5 +1,4 @@
 import { useIsPageLayoutInEditMode } from '@/page-layout/hooks/useIsPageLayoutInEditMode';
-import { PageLayoutWidgetErrorDisplay } from '@/page-layout/widgets/components/PageLayoutWidgetErrorDisplay';
 import { WidgetSkeletonLoader } from '@/page-layout/widgets/components/WidgetSkeletonLoader';
 import { GraphWidgetChartHasTooManyGroupsEffect } from '@/page-layout/widgets/graph/components/GraphWidgetChartHasTooManyGroupsEffect';
 import { LINE_CHART_CONSTANTS } from '@/page-layout/widgets/graph/graph-widget-line-chart/constants/LineChartConstants';
@@ -24,11 +23,11 @@ import {
 } from '~/generated-metadata/graphql';
 
 const GraphWidgetLineChart = lazy(() =>
-  import('@/page-layout/widgets/graph/graph-widget-line-chart/components/GraphWidgetLineChart').then(
-    (module) => ({
-      default: module.GraphWidgetLineChart,
-    }),
-  ),
+  import(
+    '@/page-layout/widgets/graph/graph-widget-line-chart/components/GraphWidgetLineChart'
+  ).then((module) => ({
+    default: module.GraphWidgetLineChart,
+  })),
 );
 
 export const GraphWidgetLineChartRenderer = () => {
@@ -46,7 +45,6 @@ export const GraphWidgetLineChartRenderer = () => {
     showLegend,
     hasTooManyGroups,
     loading,
-    error,
     formattedToRawLookup,
     colorMode,
     objectMetadataItem,
@@ -127,10 +125,6 @@ export const GraphWidgetLineChartRenderer = () => {
 
   if (loading) {
     return <WidgetSkeletonLoader />;
-  }
-
-  if (isDefined(error)) {
-    return <PageLayoutWidgetErrorDisplay widgetId={widget.id} error={error} />;
   }
 
   return (

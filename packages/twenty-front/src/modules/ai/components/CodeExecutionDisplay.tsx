@@ -12,7 +12,7 @@ import {
   IconPlayerPlay,
   IconSquareRoundedCheck,
   IconSquareRoundedX,
-} from 'twenty-ui/icon';
+} from 'twenty-ui/display';
 import { CodeEditor, LightIconButton } from 'twenty-ui/input';
 import { AnimatedExpandableContainer } from 'twenty-ui/layout';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
@@ -66,7 +66,6 @@ const StyledStatusBadge = styled.div<{
       : status === 'error'
         ? themeCssVariables.color.red
         : themeCssVariables.font.color.secondary};
-  corner-shape: round;
   display: flex;
   font-size: ${themeCssVariables.font.size.xs};
   font-weight: ${themeCssVariables.font.weight.medium};

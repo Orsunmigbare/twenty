@@ -1,13 +1,11 @@
 import { useLingui } from '@lingui/react/macro';
-import { NavigationMenuItemType } from 'twenty-shared/types';
-import { isDefined } from 'twenty-shared/utils';
-import { IconLink, IconWorld } from 'twenty-ui/icon';
+import { IconLink, IconWorld } from 'twenty-ui/display';
 
-import { selectedNavigationMenuItemIdInEditModeState } from '@/navigation-menu-item/common/states/selectedNavigationMenuItemIdInEditModeState';
 import { LinkIconWithLinkOverlay } from '@/navigation-menu-item/display/link/components/LinkIconWithLinkOverlay';
-import { useNavigationMenuItemEditSectionItems } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditSectionItems';
-import { useNavigationMenuItemTitleEdit } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemTitleEdit';
-import { useNavigationMenuItemEditController } from '@/navigation-menu-item/edit/hooks/useNavigationMenuItemEditController';
+import { NavigationMenuItemType } from 'twenty-shared/types';
+import { useUpdateLinkInDraft } from '@/navigation-menu-item/edit/link/hooks/useUpdateLinkInDraft';
+import { useNavigationMenuItemSectionItems } from '@/navigation-menu-item/display/hooks/useNavigationMenuItemSectionItems';
+import { selectedNavigationMenuItemIdInEditModeState } from '@/navigation-menu-item/common/states/selectedNavigationMenuItemIdInEditModeState';
 import { SidePanelPageInfoLayout } from '@/side-panel/components/SidePanelPageInfoLayout';
 import { sidePanelPageInfoState } from '@/side-panel/states/sidePanelPageInfoState';
 import { sidePanelShouldFocusTitleInputComponentState } from '@/side-panel/states/sidePanelShouldFocusTitleInputComponentState';
@@ -26,8 +24,8 @@ export const SidePanelLinkInfo = () => {
   const selectedNavigationMenuItemIdInEditMode = useAtomStateValue(
     selectedNavigationMenuItemIdInEditModeState,
   );
-  const items = useNavigationMenuItemEditSectionItems();
-  const { updateItem } = useNavigationMenuItemEditController();
+  const items = useNavigationMenuItemSectionItems();
+  const { updateLinkInDraft } = useUpdateLinkInDraft();
 
   const defaultLabel = t`Link label`;
   const placeholder = t`Link label`;
@@ -40,18 +38,23 @@ export const SidePanelLinkInfo = () => {
       )
     : undefined;
 
-  const { value, handleChange, handleSave } = useNavigationMenuItemTitleEdit({
-    itemId: selectedItem?.id ?? null,
-    itemName: selectedItem?.name ?? defaultLabel,
-    defaultLabel,
-    persistName: (name) => {
-      if (isDefined(selectedItem)) {
-        void updateItem(selectedItem.id, { name });
-      }
-    },
-  });
+  if (!selectedItem) return null;
 
-  if (!isDefined(selectedItem)) return null;
+  const itemId = selectedItem.id;
+  const itemName = selectedItem.name ?? defaultLabel;
+
+  const handleChange = (text: string) => {
+    updateLinkInDraft(itemId, { name: text });
+  };
+
+  const handleSave = () => {
+    const trimmed = itemName.trim();
+    const finalName = trimmed.length > 0 ? trimmed : defaultLabel;
+
+    if (finalName !== itemName) {
+      updateLinkInDraft(itemId, { name: finalName });
+    }
+  };
 
   return (
     <SidePanelPageInfoLayout
@@ -65,9 +68,9 @@ export const SidePanelLinkInfo = () => {
       }
       title={
         <TitleInput
-          instanceId={`link-label-${selectedItem.id}`}
+          instanceId={`link-label-${itemId}`}
           sizeVariant="sm"
-          value={value}
+          value={itemName}
           onChange={handleChange}
           placeholder={placeholder}
           onEnter={handleSave}

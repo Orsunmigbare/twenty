@@ -40,10 +40,7 @@ export const validateRelationSubfield = ({
 
   let targetObjectId = field.relationTargetObjectMetadataId ?? null;
 
-  if (
-    field.type === FieldMetadataType.MORPH_RELATION &&
-    !isDefined(targetObjectId)
-  ) {
+  if (field.type === FieldMetadataType.MORPH_RELATION) {
     targetObjectId = resolveMorphTargetObjectId({ field, allFields });
   }
 

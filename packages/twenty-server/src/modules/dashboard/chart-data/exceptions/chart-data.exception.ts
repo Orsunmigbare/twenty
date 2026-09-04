@@ -11,7 +11,6 @@ export enum ChartDataExceptionCode {
   FIELD_METADATA_NOT_FOUND = 'FIELD_METADATA_NOT_FOUND',
   QUERY_EXECUTION_FAILED = 'QUERY_EXECUTION_FAILED',
   TRANSFORMATION_FAILED = 'TRANSFORMATION_FAILED',
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
 }
 
 const getChartDataExceptionUserFriendlyMessage = (
@@ -30,8 +29,6 @@ const getChartDataExceptionUserFriendlyMessage = (
       return msg`Query execution failed.`;
     case ChartDataExceptionCode.TRANSFORMATION_FAILED:
       return msg`Transformation failed.`;
-    case ChartDataExceptionCode.PERMISSION_DENIED:
-      return msg`You do not have permission to view this data.`;
     default:
       assertUnreachable(code);
   }
@@ -61,7 +58,6 @@ export const generateChartDataExceptionMessage = (
     [ChartDataExceptionCode.FIELD_METADATA_NOT_FOUND]: `Field metadata not found${context ? `: ${context}` : ''}`,
     [ChartDataExceptionCode.QUERY_EXECUTION_FAILED]: `Query execution failed${context ? `: ${context}` : ''}`,
     [ChartDataExceptionCode.TRANSFORMATION_FAILED]: `Transformation failed${context ? `: ${context}` : ''}`,
-    [ChartDataExceptionCode.PERMISSION_DENIED]: `Permission denied${context ? `: ${context}` : ''}`,
   };
 
   return messages[code];

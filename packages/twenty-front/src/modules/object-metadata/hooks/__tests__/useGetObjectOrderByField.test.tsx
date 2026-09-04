@@ -23,8 +23,7 @@ describe('useGetObjectOrderByField', () => {
     );
 
     expect(result.current).toEqual([
-      { name: { firstName: 'AscNullsLast' } },
-      { name: { lastName: 'AscNullsLast' } },
+      { name: { firstName: 'AscNullsLast', lastName: 'AscNullsLast' } },
     ]);
   });
 });

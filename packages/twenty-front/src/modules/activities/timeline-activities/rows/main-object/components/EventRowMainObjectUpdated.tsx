@@ -7,6 +7,7 @@ import { EventCardToggleButton } from '@/activities/timeline-activities/rows/com
 import { EventRowItem } from '@/activities/timeline-activities/rows/components/EventRowItem';
 import { EventFieldDiffContainer } from '@/activities/timeline-activities/rows/main-object/components/EventFieldDiffContainer';
 import { type TimelineActivity } from '@/activities/timeline-activities/types/TimelineActivity';
+import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { MOBILE_VIEWPORT, themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -60,6 +61,12 @@ export const EventRowMainObjectUpdated = ({
 
   const [isOpen, setIsOpen] = useState(true);
 
+  const fieldMetadataItemMap: Record<string, FieldMetadataItem> =
+    mainObjectMetadataItem.fields.reduce(
+      (acc, field) => ({ ...acc, [field.name]: field }),
+      {},
+    );
+
   const diffEntries = Object.entries(diff);
   if (diffEntries.length === 0) {
     throw new Error('Cannot render update description without changes');
@@ -78,8 +85,9 @@ export const EventRowMainObjectUpdated = ({
             <EventFieldDiffContainer
               mainObjectMetadataItem={mainObjectMetadataItem}
               diffKey={diffEntries[0][0]}
-              fieldDiff={diffEntries[0][1]}
+              diffValue={diffEntries[0][1].after}
               eventId={event.id}
+              fieldMetadataItemMap={fieldMetadataItemMap}
             />
           )}
           {diffEntries.length > 1 && (
@@ -98,8 +106,9 @@ export const EventRowMainObjectUpdated = ({
               key={diffKey}
               mainObjectMetadataItem={mainObjectMetadataItem}
               diffKey={diffKey}
-              fieldDiff={diffValue}
+              diffValue={diffValue.after}
               eventId={event.id}
+              fieldMetadataItemMap={fieldMetadataItemMap}
             />
           ))}
         </EventCard>

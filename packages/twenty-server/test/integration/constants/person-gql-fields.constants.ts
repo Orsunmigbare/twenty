@@ -1,5 +1,6 @@
 export const PERSON_GQL_FIELDS = `
     id
+    city
     jobTitle
     avatarUrl
     avatarFile {

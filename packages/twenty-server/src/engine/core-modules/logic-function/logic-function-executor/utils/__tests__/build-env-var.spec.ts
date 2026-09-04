@@ -1,23 +1,11 @@
-import { FieldMetadataType } from 'twenty-shared/types';
-
-import { type EncryptedString } from 'src/engine/core-modules/secret-encryption/branded-strings/encrypted-string.type';
-import { buildEnvVar } from 'src/engine/core-modules/logic-function/logic-function-executor/utils/build-env-var';
-import { type SecretEncryptionService } from 'src/engine/core-modules/secret-encryption/secret-encryption.service';
 import { type FlatApplicationVariable } from 'src/engine/metadata-modules/flat-application-variable/types/flat-application-variable.type';
+import { type SecretEncryptionService } from 'src/engine/core-modules/secret-encryption/secret-encryption.service';
+import { buildEnvVar } from 'src/engine/core-modules/logic-function/logic-function-executor/utils/build-env-var';
 
 describe('buildEnvVar', () => {
-  const workspaceA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-  const workspaceB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-
   const mockSecretEncryptionService = {
-    encryptVersioned: jest.fn(
-      (value: string, opts?: { workspaceId?: string }) =>
-        `enc:v2:deadbeef:${value}|${opts?.workspaceId ?? 'instance'}`,
-    ),
-    decryptVersionedOrThrow: jest.fn(
-      (value: string, _opts?: { workspaceId?: string }) =>
-        value.replace(/^enc:v2:[0-9a-f]+:/, '').replace(/\|.*$/, ''),
-    ),
+    encrypt: jest.fn((value: string) => `encrypted_${value}`),
+    decrypt: jest.fn((value: string) => value.replace('encrypted_', '')),
   } as unknown as SecretEncryptionService;
 
   beforeEach(() => {
@@ -30,19 +18,16 @@ describe('buildEnvVar', () => {
     expect(result).toEqual({});
   });
 
-  it('should decrypt all encrypted variables regardless of isSecret', () => {
+  it('should handle mixed secret and non-secret variables', () => {
     const flatVariables: FlatApplicationVariable[] = [
       {
         id: '1',
         key: 'PUBLIC_URL',
-        value:
-          `enc:v2:deadbeef:https://example.com|${workspaceA}` as EncryptedString,
+        value: 'https://example.com',
         description: 'Public URL',
         isSecret: false,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -51,13 +36,11 @@ describe('buildEnvVar', () => {
       {
         id: '2',
         key: 'API_SECRET',
-        value: `enc:v2:deadbeef:secret-123|${workspaceA}` as EncryptedString,
+        value: 'encrypted_secret-123',
         description: 'API secret',
         isSecret: true,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -66,13 +49,11 @@ describe('buildEnvVar', () => {
       {
         id: '3',
         key: 'DEBUG',
-        value: `enc:v2:deadbeef:true|${workspaceA}` as EncryptedString,
+        value: 'true',
         description: 'Debug flag',
         isSecret: false,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -87,57 +68,10 @@ describe('buildEnvVar', () => {
       API_SECRET: 'secret-123',
       DEBUG: 'true',
     });
-    expect(
-      mockSecretEncryptionService.decryptVersionedOrThrow,
-    ).toHaveBeenCalledTimes(3);
-  });
-
-  it('routes each secret variable to its own workspace HKDF context', () => {
-    const flatVariables: FlatApplicationVariable[] = [
-      {
-        id: '1',
-        key: 'A_SECRET',
-        value: `enc:v2:deadbeef:value-a|${workspaceA}` as EncryptedString,
-        description: '',
-        isSecret: true,
-        type: FieldMetadataType.TEXT,
-        options: null,
-        applicationId: 'app-1',
-        workspaceId: workspaceA,
-        universalIdentifier: '00000000-0000-0000-0000-000000000000',
-        applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
-      },
-      {
-        id: '2',
-        key: 'B_SECRET',
-        value: `enc:v2:deadbeef:value-b|${workspaceB}` as EncryptedString,
-        description: '',
-        isSecret: true,
-        type: FieldMetadataType.TEXT,
-        options: null,
-        applicationId: 'app-1',
-        workspaceId: workspaceB,
-        universalIdentifier: '00000000-0000-0000-0000-000000000000',
-        applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
-      },
-    ];
-
-    buildEnvVar(flatVariables, mockSecretEncryptionService);
-
-    expect(
-      mockSecretEncryptionService.decryptVersionedOrThrow,
-    ).toHaveBeenCalledWith(`enc:v2:deadbeef:value-a|${workspaceA}`, {
-      workspaceId: workspaceA,
-    });
-    expect(
-      mockSecretEncryptionService.decryptVersionedOrThrow,
-    ).toHaveBeenCalledWith(`enc:v2:deadbeef:value-b|${workspaceB}`, {
-      workspaceId: workspaceB,
-    });
+    expect(mockSecretEncryptionService.decrypt).toHaveBeenCalledTimes(1);
+    expect(mockSecretEncryptionService.decrypt).toHaveBeenCalledWith(
+      'encrypted_secret-123',
+    );
   });
 
   it('should handle null or undefined values', () => {
@@ -145,13 +79,11 @@ describe('buildEnvVar', () => {
       {
         id: '1',
         key: 'NULL_VALUE',
-        value: null as unknown as EncryptedString | '',
+        value: null as unknown as string,
         description: '',
         isSecret: false,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -160,13 +92,11 @@ describe('buildEnvVar', () => {
       {
         id: '2',
         key: 'UNDEFINED_VALUE',
-        value: undefined as unknown as EncryptedString | '',
+        value: undefined as unknown as string,
         description: '',
         isSecret: false,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -187,13 +117,11 @@ describe('buildEnvVar', () => {
       {
         id: '1',
         key: 'NUMBER_VALUE',
-        value: 123 as unknown as EncryptedString | '',
+        value: 123 as unknown as string,
         description: '',
         isSecret: false,
-        type: FieldMetadataType.TEXT,
-        options: null,
         applicationId: 'app-1',
-        workspaceId: workspaceA,
+        workspaceId: '00000000-0000-0000-0000-000000000000',
         universalIdentifier: '00000000-0000-0000-0000-000000000000',
         applicationUniversalIdentifier: '00000000-0000-0000-0000-000000000000',
         createdAt: '2024-01-01T00:00:00.000Z',

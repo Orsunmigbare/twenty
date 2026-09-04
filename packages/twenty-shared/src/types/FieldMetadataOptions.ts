@@ -2,30 +2,15 @@ import { type FieldMetadataType } from '@/types/FieldMetadataType';
 import { type IsExactly } from '@/types/IsExactly';
 
 export type TagColor =
-  | 'red'
-  | 'ruby'
-  | 'crimson'
-  | 'tomato'
-  | 'orange'
-  | 'amber'
-  | 'yellow'
-  | 'lime'
-  | 'grass'
   | 'green'
-  | 'jade'
-  | 'mint'
   | 'turquoise'
-  | 'cyan'
   | 'sky'
   | 'blue'
-  | 'iris'
-  | 'violet'
   | 'purple'
-  | 'plum'
   | 'pink'
-  | 'bronze'
-  | 'gold'
-  | 'brown'
+  | 'red'
+  | 'orange'
+  | 'yellow'
   | 'gray';
 
 export class FieldMetadataDefaultOption {

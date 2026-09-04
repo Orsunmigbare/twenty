@@ -72,7 +72,7 @@ const createZip = async (buildDir, zipPath) => {
   const p = pipeline(archive, output);
 
   archive.directory(buildDir, false);
-  void archive.finalize();
+  archive.finalize();
 
   return p;
 };

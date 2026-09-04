@@ -46,7 +46,6 @@ export const formatSentMessage = (
     headerMessageId,
     messageThreadExternalId: resolveOutboundThreadExternalId({
       sendResult: input.sendResult,
-      parentThreadExternalId: input.parentThreadExternalId,
       inReplyTo: input.inReplyTo,
     }),
     subject: input.subject,
@@ -55,6 +54,5 @@ export const formatSentMessage = (
     direction: MessageDirection.OUTGOING,
     attachments: [],
     participants,
-    isDraft: false,
   };
 };

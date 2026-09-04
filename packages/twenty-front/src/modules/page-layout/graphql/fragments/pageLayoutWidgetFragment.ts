@@ -121,7 +121,7 @@ export const PAGE_LAYOUT_WIDGET_FRAGMENT = gql`
         aggregateOperation
         label
         displayDataLabel
-        numberFormat
+        format
         description
         filter
         prefix
@@ -132,6 +132,17 @@ export const PAGE_LAYOUT_WIDGET_FRAGMENT = gql`
           fieldMetadataId
           optionValue
         }
+      }
+      ... on GaugeChartConfiguration {
+        configurationType
+        aggregateFieldMetadataId
+        aggregateOperation
+        displayDataLabel
+        color
+        description
+        filter
+        timezone
+        firstDayOfTheWeek
       }
       ... on IframeConfiguration {
         configurationType
@@ -157,7 +168,6 @@ export const PAGE_LAYOUT_WIDGET_FRAGMENT = gql`
         configurationType
         fieldDisplayMode
         fieldMetadataId
-        viewId
       }
       ... on FieldRichTextConfiguration {
         configurationType

@@ -31,7 +31,7 @@ import { useStore } from 'jotai';
 import { useCallback } from 'react';
 import { SidePanelPages } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
-import { IconApps, IconList } from 'twenty-ui/icon';
+import { IconApps, IconList } from 'twenty-ui/display';
 import { v4 as uuidv4 } from 'uuid';
 import {
   type FrontComponent,
@@ -135,9 +135,7 @@ export const SidePanelPageLayoutRecordPageWidgetTypeSelect = () => {
     frontComponents: FrontComponent[];
   }>(FIND_MANY_FRONT_COMPONENTS);
 
-  const frontComponents = (frontComponentsData?.frontComponents ?? []).filter(
-    (frontComponent) => !frontComponent.isHeadless,
-  );
+  const frontComponents = frontComponentsData?.frontComponents ?? [];
 
   const frontComponentsWithSelectItemId = frontComponents.map(
     (frontComponent) => ({

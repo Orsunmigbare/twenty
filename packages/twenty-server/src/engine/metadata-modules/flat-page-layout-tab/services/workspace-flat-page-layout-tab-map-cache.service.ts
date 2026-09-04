@@ -12,8 +12,6 @@ import { transformPageLayoutTabEntityToFlatPageLayoutTab } from 'src/engine/meta
 import { PageLayoutTabEntity } from 'src/engine/metadata-modules/page-layout-tab/entities/page-layout-tab.entity';
 import { PageLayoutWidgetEntity } from 'src/engine/metadata-modules/page-layout-widget/entities/page-layout-widget.entity';
 import { PageLayoutEntity } from 'src/engine/metadata-modules/page-layout/entities/page-layout.entity';
-import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
-import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
 import { WorkspaceCache } from 'src/engine/workspace-cache/decorators/workspace-cache.decorator';
 import { createIdToUniversalIdentifierMap } from 'src/engine/workspace-cache/utils/create-id-to-universal-identifier-map.util';
 import { regroupEntitiesByRelatedEntityId } from 'src/engine/workspace-cache/utils/regroup-entities-by-related-entity-id';
@@ -23,14 +21,14 @@ import { addFlatEntityToFlatEntityMapsThroughMutationOrThrow } from 'src/engine/
 @WorkspaceCache('flatPageLayoutTabMaps')
 export class WorkspaceFlatPageLayoutTabMapCacheService extends WorkspaceCacheProvider<FlatPageLayoutTabMaps> {
   constructor(
-    @InjectWorkspaceScopedRepository(PageLayoutTabEntity)
-    private readonly pageLayoutTabRepository: WorkspaceScopedRepository<PageLayoutTabEntity>,
-    @InjectWorkspaceScopedRepository(PageLayoutWidgetEntity)
-    private readonly pageLayoutWidgetRepository: WorkspaceScopedRepository<PageLayoutWidgetEntity>,
+    @InjectRepository(PageLayoutTabEntity)
+    private readonly pageLayoutTabRepository: Repository<PageLayoutTabEntity>,
+    @InjectRepository(PageLayoutWidgetEntity)
+    private readonly pageLayoutWidgetRepository: Repository<PageLayoutWidgetEntity>,
     @InjectRepository(ApplicationEntity)
     private readonly applicationRepository: Repository<ApplicationEntity>,
-    @InjectWorkspaceScopedRepository(PageLayoutEntity)
-    private readonly pageLayoutRepository: WorkspaceScopedRepository<PageLayoutEntity>,
+    @InjectRepository(PageLayoutEntity)
+    private readonly pageLayoutRepository: Repository<PageLayoutEntity>,
   ) {
     super();
   }
@@ -38,10 +36,12 @@ export class WorkspaceFlatPageLayoutTabMapCacheService extends WorkspaceCachePro
   async computeForCache(workspaceId: string): Promise<FlatPageLayoutTabMaps> {
     const [pageLayoutTabs, pageLayoutWidgets, applications, pageLayouts] =
       await Promise.all([
-        this.pageLayoutTabRepository.find(workspaceId, {
+        this.pageLayoutTabRepository.find({
+          where: { workspaceId },
           withDeleted: true,
         }),
-        this.pageLayoutWidgetRepository.find(workspaceId, {
+        this.pageLayoutWidgetRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier', 'pageLayoutTabId'],
           withDeleted: true,
         }),
@@ -50,7 +50,8 @@ export class WorkspaceFlatPageLayoutTabMapCacheService extends WorkspaceCachePro
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),
-        this.pageLayoutRepository.find(workspaceId, {
+        this.pageLayoutRepository.find({
+          where: { workspaceId },
           select: ['id', 'universalIdentifier'],
           withDeleted: true,
         }),

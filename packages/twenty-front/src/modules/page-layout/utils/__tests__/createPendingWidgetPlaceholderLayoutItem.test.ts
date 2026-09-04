@@ -1,4 +1,4 @@
-import { DEFAULT_WIDGET_SIZE } from 'twenty-shared/constants';
+import { DEFAULT_WIDGET_SIZE } from '@/page-layout/constants/DefaultWidgetSize';
 import { PENDING_WIDGET_PLACEHOLDER_LAYOUT_KEY } from '@/page-layout/constants/PendingWidgetPlaceholderLayoutKey';
 import { createPendingWidgetPlaceholderLayoutItem } from '@/page-layout/utils/createPendingWidgetPlaceholderLayoutItem';
 

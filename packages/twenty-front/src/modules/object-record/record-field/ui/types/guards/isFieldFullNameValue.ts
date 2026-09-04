@@ -1,7 +1,13 @@
+import { z } from 'zod';
+
 import { type FieldFullNameValue } from '@/object-record/record-field/ui/types/FieldMetadata';
-import { fullNameFieldValueSchema } from '@/object-record/record-field/ui/validation-schemas/fullNameFieldValueSchema';
+
+const fullnameSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+});
 
 export const isFieldFullNameValue = (
   fieldValue: unknown,
 ): fieldValue is FieldFullNameValue =>
-  fullNameFieldValueSchema.safeParse(fieldValue).success;
+  fullnameSchema.safeParse(fieldValue).success;

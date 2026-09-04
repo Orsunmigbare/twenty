@@ -16,7 +16,9 @@ import {
 import { type WorkspaceAuthContext } from 'src/engine/core-modules/auth/types/workspace-auth-context.type';
 
 @WorkspaceQueryHook(`*.createMany`)
-export class CreatedByCreateManyPreQueryHook implements WorkspacePreQueryHookInstance {
+export class CreatedByCreateManyPreQueryHook
+  implements WorkspacePreQueryHookInstance
+{
   constructor(
     private readonly actorFromAuthContextService: ActorFromAuthContextService,
   ) {}

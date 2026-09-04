@@ -8,7 +8,6 @@ import { parseJson } from 'twenty-shared/utils';
 
 import { GoogleAPIsOauthCommonStrategy } from 'src/engine/core-modules/auth/strategies/google-apis-oauth-common.auth.strategy';
 import { type APIsOAuthRequest } from 'src/engine/core-modules/auth/types/apis-oauth-request.type';
-import { type PlaintextString } from 'src/engine/core-modules/secret-encryption/branded-strings/plaintext-string.type';
 import { type APIsOAuthState } from 'src/engine/core-modules/auth/types/apis-oauth-state.type';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 
@@ -20,8 +19,8 @@ export class GoogleAPIsOauthExchangeCodeForTokenStrategy extends GoogleAPIsOauth
 
   async validate(
     request: APIsOAuthRequest,
-    accessToken: PlaintextString,
-    refreshToken: PlaintextString,
+    accessToken: string,
+    refreshToken: string,
     profile: GoogleProfile,
     done: VerifyCallback,
   ): Promise<void> {

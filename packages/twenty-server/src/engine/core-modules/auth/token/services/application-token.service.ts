@@ -8,9 +8,11 @@ import ms from 'ms';
 
 import { JwtWrapperService } from 'src/engine/core-modules/jwt/services/jwt-wrapper.service';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
-import { type ApplicationAccessTokenJwtPayload } from 'src/engine/core-modules/auth/types/application-access-token-jwt-payload.type';
-import { type ApplicationRefreshTokenJwtPayload } from 'src/engine/core-modules/auth/types/application-refresh-token-jwt-payload.type';
-import { JwtTokenTypeEnum } from 'src/engine/core-modules/auth/types/jwt-token-type.enum';
+import {
+  type ApplicationAccessTokenJwtPayload,
+  type ApplicationRefreshTokenJwtPayload,
+  JwtTokenTypeEnum,
+} from 'src/engine/core-modules/auth/types/auth-context.type';
 import { type AuthToken } from 'src/engine/core-modules/auth/dto/auth-token.dto';
 import { WorkspaceNotFoundDefaultError } from 'src/engine/core-modules/workspace/workspace.exception';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
@@ -89,35 +91,32 @@ export class ApplicationTokenService {
       'APPLICATION_REFRESH_TOKEN_EXPIRES_IN',
     );
 
-    const [applicationAccessToken, applicationRefreshToken] = await Promise.all(
-      [
-        this.signApplicationToken({
-          workspaceId,
-          applicationId,
-          userWorkspaceId,
-          userId,
-          tokenType: JwtTokenTypeEnum.APPLICATION_ACCESS,
-          expiresIn: accessTokenExpiresIn,
-        }),
-        this.signApplicationToken({
-          workspaceId,
-          applicationId,
-          userWorkspaceId,
-          userId,
-          tokenType: JwtTokenTypeEnum.APPLICATION_REFRESH,
-          expiresIn: refreshTokenExpiresIn,
-        }),
-      ],
-    );
+    const applicationAccessToken = this.signApplicationToken({
+      workspaceId,
+      applicationId,
+      userWorkspaceId,
+      userId,
+      tokenType: JwtTokenTypeEnum.APPLICATION_ACCESS,
+      expiresIn: accessTokenExpiresIn,
+    });
+
+    const applicationRefreshToken = this.signApplicationToken({
+      workspaceId,
+      applicationId,
+      userWorkspaceId,
+      userId,
+      tokenType: JwtTokenTypeEnum.APPLICATION_REFRESH,
+      expiresIn: refreshTokenExpiresIn,
+    });
 
     return { applicationAccessToken, applicationRefreshToken };
   }
 
-  async validateApplicationRefreshToken(
+  validateApplicationRefreshToken(
     refreshToken: string,
-  ): Promise<ApplicationRefreshTokenJwtPayload> {
+  ): ApplicationRefreshTokenJwtPayload {
     try {
-      await this.jwtWrapperService.verifyJwtToken(refreshToken);
+      this.jwtWrapperService.verifyJwtToken(refreshToken);
 
       const payload =
         this.jwtWrapperService.decode<ApplicationRefreshTokenJwtPayload>(
@@ -149,11 +148,11 @@ export class ApplicationTokenService {
     }
   }
 
-  async validateApplicationAccessToken(
+  validateApplicationAccessToken(
     token: string,
-  ): Promise<ApplicationAccessTokenJwtPayload> {
+  ): ApplicationAccessTokenJwtPayload {
     try {
-      await this.jwtWrapperService.verifyJwtToken(token);
+      this.jwtWrapperService.verifyJwtToken(token);
 
       const payload =
         this.jwtWrapperService.decode<ApplicationAccessTokenJwtPayload>(token, {
@@ -230,7 +229,7 @@ export class ApplicationTokenService {
     );
   }
 
-  private async signApplicationToken({
+  private signApplicationToken({
     workspaceId,
     applicationId,
     userWorkspaceId,
@@ -246,7 +245,7 @@ export class ApplicationTokenService {
       | JwtTokenTypeEnum.APPLICATION_ACCESS
       | JwtTokenTypeEnum.APPLICATION_REFRESH;
     expiresIn: string;
-  }): Promise<AuthToken> {
+  }): AuthToken {
     const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
 
     const jwtPayload:
@@ -261,7 +260,11 @@ export class ApplicationTokenService {
     };
 
     return {
-      token: await this.jwtWrapperService.signAsyncOrThrow(jwtPayload, {
+      token: this.jwtWrapperService.sign(jwtPayload, {
+        secret: this.jwtWrapperService.generateAppSecret(
+          tokenType,
+          workspaceId,
+        ),
         expiresIn,
       }),
       expiresAt,

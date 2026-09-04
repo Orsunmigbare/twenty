@@ -4,18 +4,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { ApiKeyService } from 'src/engine/core-modules/api-key/services/api-key.service';
 import { AppTokenEntity } from 'src/engine/core-modules/app-token/app-token.entity';
-import { EventLogEmitterService } from 'src/engine/core-modules/event-logs/emit/event-log-emitter.service';
-import { ImpersonationAuthorizationService } from 'src/engine/core-modules/impersonation/services/impersonation-authorization.service';
+import { AuditService } from 'src/engine/core-modules/audit/services/audit.service';
 import { SignInUpService } from 'src/engine/core-modules/auth/services/sign-in-up.service';
-import { AccessTokenService } from 'src/engine/core-modules/auth/token/services/access-token.service';
 import { RefreshTokenService } from 'src/engine/core-modules/auth/token/services/refresh-token.service';
 import { WorkspaceAgnosticTokenService } from 'src/engine/core-modules/auth/token/services/workspace-agnostic-token.service';
 import { CaptchaGuard } from 'src/engine/core-modules/captcha/captcha.guard';
-import { SubdomainManagerService } from 'src/engine/core-modules/domain/subdomain-manager/services/subdomain-manager.service';
 import { WorkspaceDomainsService } from 'src/engine/core-modules/domain/workspace-domains/services/workspace-domains.service';
 import { EmailVerificationService } from 'src/engine/core-modules/email-verification/services/email-verification.service';
 import { FeatureFlagService } from 'src/engine/core-modules/feature-flag/services/feature-flag.service';
-import { FileCorePictureService } from 'src/engine/core-modules/file/file-core-picture/services/file-core-picture.service';
 import { SSOService } from 'src/engine/core-modules/sso/services/sso.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { TwoFactorAuthenticationService } from 'src/engine/core-modules/two-factor-authentication/two-factor-authentication.service';
@@ -75,14 +71,6 @@ describe('AuthResolver', () => {
           },
         },
         {
-          provide: SubdomainManagerService,
-          useValue: {},
-        },
-        {
-          provide: FileCorePictureService,
-          useValue: {},
-        },
-        {
           provide: UserWorkspaceService,
           useValue: {},
         },
@@ -96,10 +84,6 @@ describe('AuthResolver', () => {
         },
         {
           provide: ApiKeyService,
-          useValue: {},
-        },
-        {
-          provide: AccessTokenService,
           useValue: {},
         },
         {
@@ -127,10 +111,6 @@ describe('AuthResolver', () => {
           useValue: {},
         },
         {
-          provide: ImpersonationAuthorizationService,
-          useValue: {},
-        },
-        {
           provide: PermissionsService,
           useValue: {},
         },
@@ -151,7 +131,7 @@ describe('AuthResolver', () => {
           useValue: {},
         },
         {
-          provide: EventLogEmitterService,
+          provide: AuditService,
           useValue: {
             createContext: jest.fn().mockReturnValue({
               insertWorkspaceEvent: jest.fn(),

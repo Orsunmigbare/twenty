@@ -28,16 +28,8 @@ export const addFlatEntityToFlatEntityMapsThroughMutationOrThrow = <
     )
   ) {
     throw new FlatEntityMapsException(
-      `addFlatEntityToFlatEntityMapsThroughMutationOrThrow: flat entity to add already exists (universalIdentifier: ${flatEntity.universalIdentifier})`,
+      'addFlatEntityToFlatEntityMapsThroughMutationOrThrow: flat entity to add already exists',
       FlatEntityMapsExceptionCode.ENTITY_ALREADY_EXISTS,
-      {
-        context: {
-          universalIdentifier: flatEntity.universalIdentifier,
-          id: flatEntity.id,
-          applicationId: flatEntity.applicationId,
-          operation: 'add',
-        },
-      },
     );
   }
 
@@ -54,7 +46,11 @@ export const addFlatEntityToFlatEntityMapsThroughMutationOrThrow = <
       ];
 
     if (isDefined(existingUniversalIdentifiers)) {
-      existingUniversalIdentifiers.push(flatEntity.universalIdentifier);
+      if (
+        !existingUniversalIdentifiers.includes(flatEntity.universalIdentifier)
+      ) {
+        existingUniversalIdentifiers.push(flatEntity.universalIdentifier);
+      }
     } else {
       flatEntityMapsToMutate.universalIdentifiersByApplicationId[
         flatEntity.applicationId

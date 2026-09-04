@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { NestjsQueryGraphQLModule } from '@ptc-org/nestjs-query-graphql';
+import { NestjsQueryTypeOrmModule } from '@ptc-org/nestjs-query-typeorm';
+
 import { TypeORMModule } from 'src/database/typeorm/typeorm.module';
 import { ApplicationModule } from 'src/engine/core-modules/application/application.module';
 import { PreInstalledAppsModule } from 'src/engine/core-modules/application/pre-installed-apps/pre-installed-apps.module';
+import { AuditModule } from 'src/engine/core-modules/audit/audit.module';
 import { TokenModule } from 'src/engine/core-modules/auth/token/token.module';
 import { BillingModule } from 'src/engine/core-modules/billing/billing.module';
 import { BillingSubscriptionEntity } from 'src/engine/core-modules/billing/entities/billing-subscription.entity';
@@ -16,7 +20,7 @@ import { FeatureFlagModule } from 'src/engine/core-modules/feature-flag/feature-
 import { FileModule } from 'src/engine/core-modules/file/file.module';
 import { MetricsModule } from 'src/engine/core-modules/metrics/metrics.module';
 import { OnboardingModule } from 'src/engine/core-modules/onboarding/onboarding.module';
-import { SdkClientModule } from 'src/engine/core-modules/sdk-client/sdk-client.module';
+import { PublicDomainEntity } from 'src/engine/core-modules/public-domain/public-domain.entity';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { UserWorkspaceModule } from 'src/engine/core-modules/user-workspace/user-workspace.module';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
@@ -27,6 +31,7 @@ import { CoreEntityCacheModule } from 'src/engine/core-entity-cache/core-entity-
 import { WorkspaceEntityCacheProviderService } from 'src/engine/core-modules/workspace/services/workspace-entity-cache-provider.service';
 import { WorkspaceService } from 'src/engine/core-modules/workspace/services/workspace.service';
 import { WorkspaceGaugeService } from 'src/engine/core-modules/workspace/workspace-gauge.service';
+import { workspaceAutoResolverOpts } from 'src/engine/core-modules/workspace/workspace.auto-resolver-opts';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
 import { WorkspaceResolver } from 'src/engine/core-modules/workspace/workspace.resolver';
 import { BillingDisabledGuard } from 'src/engine/guards/billing-disabled.guard';
@@ -45,40 +50,49 @@ import { StandardObjectsPrefillModule } from 'src/engine/workspace-manager/stand
 @Module({
   imports: [
     TypeORMModule,
-    TypeOrmModule.forFeature([
-      BillingSubscriptionEntity,
-      WorkspaceEntity,
-      UserEntity,
-      UserWorkspaceEntity,
-    ]),
+    TypeOrmModule.forFeature([BillingSubscriptionEntity, WorkspaceEntity]),
     MetricsModule,
     StandardObjectsPrefillModule,
-    BillingModule,
-    FileModule,
-    TokenModule,
-    ObjectMetadataModule,
-    UserWorkspaceModule,
-    WorkspaceManagerModule,
-    FeatureFlagModule,
-    OnboardingModule,
-    WorkspaceDataSourceModule,
-    PermissionsModule,
-    WorkspaceCacheStorageModule,
-    RoleModule,
-    AiAgentModule,
-    DnsManagerModule,
-    WorkspaceDomainsModule,
-    SubdomainManagerModule,
-    CustomDomainManagerModule,
-    ViewModule,
-    WorkspaceManyOrAllFlatEntityMapsCacheModule,
-    ApplicationModule,
-    PreInstalledAppsModule,
-    EnterpriseModule,
-    WorkspaceMigrationModule,
-    CoreEntityCacheModule,
-    UpgradeModule,
-    SdkClientModule,
+    NestjsQueryGraphQLModule.forFeature({
+      imports: [
+        AuditModule,
+        BillingModule,
+        FileModule,
+        TokenModule,
+        NestjsQueryTypeOrmModule.forFeature([
+          UserEntity,
+          WorkspaceEntity,
+          UserWorkspaceEntity,
+          PublicDomainEntity,
+        ]),
+        ObjectMetadataModule,
+        UserWorkspaceModule,
+        WorkspaceManagerModule,
+        FeatureFlagModule,
+        OnboardingModule,
+        WorkspaceDataSourceModule,
+        TypeORMModule,
+        PermissionsModule,
+        WorkspaceCacheStorageModule,
+        RoleModule,
+        AiAgentModule,
+        DnsManagerModule,
+        WorkspaceDomainsModule,
+        SubdomainManagerModule,
+        CustomDomainManagerModule,
+        ViewModule,
+        WorkspaceManyOrAllFlatEntityMapsCacheModule,
+        ApplicationModule,
+        PreInstalledAppsModule,
+        EnterpriseModule,
+        StandardObjectsPrefillModule,
+        WorkspaceMigrationModule,
+        CoreEntityCacheModule,
+        UpgradeModule,
+      ],
+      services: [WorkspaceService],
+      resolvers: workspaceAutoResolverOpts,
+    }),
   ],
   exports: [WorkspaceService, CheckCustomDomainValidRecordsCronCommand],
   providers: [

@@ -6,16 +6,15 @@ import { VariableChipStandalone } from '@/object-record/record-field/ui/form-typ
 import { type VariablePickerComponent } from '@/object-record/record-field/ui/form-types/types/VariablePickerComponent';
 import { InputHint } from '@/ui/input/components/InputHint';
 import { InputLabel } from '@/ui/input/components/InputLabel';
-import { type CallToActionButton, Select } from '@/ui/input/components/Select';
+import { Select } from '@/ui/input/components/Select';
 import { GenericDropdownContentWidth } from '@/ui/layout/dropdown/constants/GenericDropdownContentWidth';
 import { useRemoveFocusItemFromFocusStackById } from '@/ui/utilities/focus/hooks/useRemoveFocusItemFromFocusStackById';
 import { useHotkeysOnFocusedElement } from '@/ui/utilities/hotkey/hooks/useHotkeysOnFocusedElement';
 import { isStandaloneVariableString } from '@/workflow/utils/isStandaloneVariableString';
 import { useContext, useId, useState } from 'react';
 import { Key } from 'ts-key-enum';
-import { isNonEmptyString } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
-import { IconCircleOff } from 'twenty-ui/icon';
+import { IconCircleOff } from 'twenty-ui/display';
 import { type SelectOption } from 'twenty-ui/input';
 import { ThemeContext } from 'twenty-ui/theme-constants';
 
@@ -27,8 +26,6 @@ type FormSelectFieldInputProps = {
   VariablePicker?: VariablePickerComponent;
   options: SelectOption[];
   readonly?: boolean;
-  isNullable?: boolean;
-  callToActionButton?: CallToActionButton;
 };
 
 export const FormSelectFieldInput = ({
@@ -39,8 +36,6 @@ export const FormSelectFieldInput = ({
   VariablePicker,
   options,
   readonly,
-  isNullable,
-  callToActionButton,
 }: FormSelectFieldInputProps) => {
   const { theme } = useContext(ThemeContext);
   const instanceId = useId();
@@ -71,16 +66,16 @@ export const FormSelectFieldInput = ({
         },
   );
 
-  const onSelect = (selectedValue: string) => {
+  const onSelect = (option: string) => {
     setDraftValue({
       type: 'static',
-      value: selectedValue,
+      value: option,
       editingMode: 'view',
     });
 
     removeFocusItemFromFocusStackById({ focusId: instanceId });
 
-    onChange(isNonEmptyString(selectedValue) ? selectedValue : null);
+    onChange(option);
   };
 
   const onCancel = () => {
@@ -96,18 +91,15 @@ export const FormSelectFieldInput = ({
     removeFocusItemFromFocusStackById({ focusId: instanceId });
   };
 
-  const emptyOption: SelectOption = {
-    label: label ? t`No ${label}` : t`No value`,
-    value: '',
-    Icon: IconCircleOff,
-  };
-
-  const optionsWithEmptyOption =
-    isNullable || options.length === 0 ? [emptyOption, ...options] : options;
-
-  const selectedOption = optionsWithEmptyOption.find(
+  const selectedOption = options.find(
     (option) => option.value === draftValue.value,
   );
+
+  const defaultEmptyOption = {
+    label: label ? t`No ${label}` : t`No value`,
+    value: '',
+    icon: IconCircleOff,
+  };
 
   const handleUnlinkVariable = () => {
     setDraftValue({
@@ -143,10 +135,10 @@ export const FormSelectFieldInput = ({
         {draftValue.type === 'static' ? (
           <Select
             dropdownId={`${instanceId}-select-display`}
-            options={optionsWithEmptyOption}
+            options={options}
             value={selectedOption?.value}
             onChange={onSelect}
-            callToActionButton={callToActionButton}
+            emptyOption={defaultEmptyOption}
             fullWidth
             hasRightElement={isDefined(VariablePicker) && !readonly}
             withSearchInput

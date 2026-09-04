@@ -1,7 +1,4 @@
-import {
-  STANDARD_OBJECTS,
-  STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS,
-} from 'twenty-shared/metadata';
+import { STANDARD_OBJECTS } from 'twenty-shared/metadata';
 
 import { PageLayoutType } from 'src/engine/metadata-modules/page-layout/enums/page-layout-type.enum';
 import {
@@ -15,33 +12,21 @@ import {
 
 const CALENDAR_CHANNEL_EVENT_ASSOCIATION_PAGE_TABS = {
   home: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .calendarChannelEventAssociationRecordPage.tabs.home
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab0b-400b-800b-ca1c4e0b0b01',
     ...TAB_PROPS.home,
     widgets: {
       fields: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .calendarChannelEventAssociationRecordPage.tabs.home.widgets.fields
-            .universalIdentifier,
+        universalIdentifier: '20202020-ac0b-400b-800b-ca1c4e0b0b11',
         ...WIDGET_PROPS.fields,
       },
     },
   },
   timeline: {
-    universalIdentifier:
-      STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-        .calendarChannelEventAssociationRecordPage.tabs.timeline
-        .universalIdentifier,
+    universalIdentifier: '20202020-ab0b-400b-800b-ca1c4e0b0b02',
     ...TAB_PROPS.timeline,
     widgets: {
       timeline: {
-        universalIdentifier:
-          STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-            .calendarChannelEventAssociationRecordPage.tabs.timeline.widgets
-            .timeline.universalIdentifier,
+        universalIdentifier: '20202020-ac0b-400b-800b-ca1c4e0b0b21',
         ...WIDGET_PROPS.timeline,
       },
     },
@@ -53,9 +38,7 @@ export const STANDARD_CALENDAR_CHANNEL_EVENT_ASSOCIATION_PAGE_LAYOUT_CONFIG = {
   type: PageLayoutType.RECORD_PAGE,
   objectUniversalIdentifier:
     STANDARD_OBJECTS.calendarChannelEventAssociation.universalIdentifier,
-  universalIdentifier:
-    STANDARD_PAGE_LAYOUT_UNIVERSAL_IDENTIFIERS
-      .calendarChannelEventAssociationRecordPage.universalIdentifier,
+  universalIdentifier: '20202020-a10b-400b-800b-ca1c4e0b0001',
   defaultTabUniversalIdentifier: null,
   tabs: CALENDAR_CHANNEL_EVENT_ASSOCIATION_PAGE_TABS,
 } as const satisfies StandardPageLayoutConfig;

@@ -74,7 +74,7 @@ export const Default: Story = {};
 // TODO: optimize this component once we have morph many
 export const Performance = getProfilingStory({
   componentName: 'RelationFromManyFieldDisplay',
-  averageThresholdInMs: 2,
+  averageThresholdInMs: 1,
   numberOfRuns: 20,
   numberOfTestsPerRun: 100,
 });

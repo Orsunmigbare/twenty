@@ -2,7 +2,6 @@ import { isDefined } from 'twenty-shared/utils';
 import { StepStatus, type WorkflowRunStepInfos } from 'twenty-shared/workflow';
 
 import { TERMINAL_STEP_STATUSES } from 'src/modules/workflow/workflow-executor/constants/terminal-step-statuses.constant';
-import { findParentSteps } from 'src/modules/workflow/workflow-executor/utils/find-parent-steps.util';
 import { shouldExecuteChildStep } from 'src/modules/workflow/workflow-executor/utils/should-execute-child-step.util';
 import { stepHasBeenStarted } from 'src/modules/workflow/workflow-executor/utils/step-has-been-started.util';
 import { getAllStepIdsInLoop } from 'src/modules/workflow/workflow-executor/workflow-actions/iterator/utils/get-all-step-ids-in-loop.util';
@@ -20,7 +19,10 @@ export const shouldExecuteIteratorStep = ({
   steps: WorkflowAction[];
   stepInfos: WorkflowRunStepInfos;
 }) => {
-  const allParentSteps = findParentSteps({ step, steps });
+  const stepsTargetingIterator = steps.filter(
+    (parentStep) =>
+      isDefined(parentStep) && parentStep.nextStepIds?.includes(step.id),
+  );
 
   const initialLoopStepIds = step.settings.input.initialLoopStepIds;
 
@@ -32,13 +34,13 @@ export const shouldExecuteIteratorStep = ({
       })
     : [];
 
-  const externalParentSteps = allParentSteps.filter(
+  const parentSteps = stepsTargetingIterator.filter(
     (parentStep) => !stepIdsInLoop.includes(parentStep.id),
   );
 
   const stepsToCheck = stepHasBeenStarted(step.id, stepInfos)
-    ? allParentSteps
-    : externalParentSteps;
+    ? stepsTargetingIterator
+    : parentSteps;
 
   // When iterator has been started and has the continue-on-failure flag,
   // allow re-execution even if all loop-back parents are FAILED_SAFELY/SKIPPED

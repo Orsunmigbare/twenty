@@ -54,10 +54,7 @@ export class WorkflowVersionStepHelpersWorkspaceService {
           { shouldBypassPermissionChecks: true },
         );
 
-      const updateData: Pick<
-        Partial<WorkflowVersionWorkspaceEntity>,
-        'steps' | 'trigger'
-      > = {};
+      const updateData: Partial<WorkflowVersionWorkspaceEntity> = {};
 
       if (steps !== undefined) {
         updateData.steps = steps;

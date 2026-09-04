@@ -1,9 +1,8 @@
 import { SidePanelPageInfoLayout } from '@/side-panel/components/SidePanelPageInfoLayout';
 import { useFindManyRecordsSelectedInContextStore } from '@/context-store/hooks/useFindManyRecordsSelectedInContextStore';
-import { useNumberFormat } from '@/localization/hooks/useNumberFormat';
 import { t } from '@lingui/core/macro';
 import { useContext } from 'react';
-import { IconPencil } from 'twenty-ui/icon';
+import { IconPencil } from 'twenty-ui/display';
 import { ThemeContext } from 'twenty-ui/theme-constants';
 
 type SidePanelMultipleRecordsInfoProps = {
@@ -14,7 +13,6 @@ export const SidePanelMultipleRecordsInfo = ({
   sidePanelPageInstanceId,
 }: SidePanelMultipleRecordsInfoProps) => {
   const { theme } = useContext(ThemeContext);
-  const { formatNumber } = useNumberFormat();
   const { totalCount } = useFindManyRecordsSelectedInContextStore({
     instanceId: sidePanelPageInstanceId,
     limit: 1,
@@ -27,7 +25,7 @@ export const SidePanelMultipleRecordsInfo = ({
       }
       iconColor={theme.font.color.tertiary}
       title={t`Update records`}
-      label={t`${formatNumber(totalCount ?? 0)} selected`}
+      label={t`${totalCount} selected`}
     />
   );
 };

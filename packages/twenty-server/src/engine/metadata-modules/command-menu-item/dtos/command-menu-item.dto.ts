@@ -105,9 +105,6 @@ export class CommandMenuItemDTO {
   @Field(() => UUIDScalarType, { nullable: true })
   applicationId?: string;
 
-  @Field(() => Boolean, { nullable: false })
-  isActive: boolean;
-
   @IsDateString()
   @Field()
   createdAt: Date;

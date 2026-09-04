@@ -4,5 +4,4 @@ export type RecordSort = {
   id: string;
   fieldMetadataId: string;
   direction: ViewSortDirection;
-  subFieldName?: string | null;
 };

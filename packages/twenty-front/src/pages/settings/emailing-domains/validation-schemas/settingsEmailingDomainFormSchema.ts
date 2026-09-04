@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EmailingDomainDriver } from '~/generated-metadata/graphql';
 
 export const settingsEmailingDomainFormSchema = z.object({
   domain: z
@@ -9,6 +10,7 @@ export const settingsEmailingDomainFormSchema = z.object({
       'Invalid domain format. Please enter a valid domain name.',
     )
     .max(256, 'Domain must be less than 256 characters.'),
+  driver: z.nativeEnum(EmailingDomainDriver),
 });
 
 export type SettingsEmailingDomainFormValues = z.infer<

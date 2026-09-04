@@ -6,15 +6,14 @@ import { styled } from '@linaria/react';
 import { motion } from 'framer-motion';
 import React, { useContext } from 'react';
 import { isDefined } from 'twenty-shared/utils';
-import { IconChevronRight } from 'twenty-ui/icon';
-import { Label } from 'twenty-ui/typography';
+import { IconChevronRight, Label } from 'twenty-ui/display';
 import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledTitle = styled.div`
   align-items: center;
-  border-radius: ${themeCssVariables.border.radius.md};
+  border-radius: ${themeCssVariables.border.radius.sm};
   display: flex;
-  height: ${themeCssVariables.spacing[7]};
+  height: ${themeCssVariables.spacing[5]};
   justify-content: space-between;
   padding-bottom: ${themeCssVariables.spacing[1]};
   padding-left: ${themeCssVariables.spacing[1]};

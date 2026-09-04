@@ -1,4 +1,3 @@
-import { StyledOnboardingContentContainer } from '@/auth/components/StyledOnboardingContentContainer';
 import { SignInUpWithCredentials } from '@/auth/sign-in-up/components/internal/SignInUpWithCredentials';
 import { SignInUpWithGoogle } from '@/auth/sign-in-up/components/internal/SignInUpWithGoogle';
 import { SignInUpWithMicrosoft } from '@/auth/sign-in-up/components/internal/SignInUpWithMicrosoft';
@@ -10,11 +9,19 @@ import { useWorkspaceBypass } from '@/auth/sign-in-up/hooks/useWorkspaceBypass';
 import { SignInUpStep } from '@/auth/states/signInUpStepState';
 import { workspaceAuthBypassProvidersState } from '@/workspace/states/workspaceAuthBypassProvidersState';
 import { workspaceAuthProvidersState } from '@/workspace/states/workspaceAuthProvidersState';
+import { styled } from '@linaria/react';
 import { Trans } from '@lingui/react/macro';
 import { FormProvider } from 'react-hook-form';
-import { HorizontalSeparator } from 'twenty-ui/layout';
+import { HorizontalSeparator } from 'twenty-ui/display';
 import { ClickToActionLink } from 'twenty-ui/navigation';
+import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
+
+const StyledContentContainer = styled.div`
+  margin-bottom: ${themeCssVariables.spacing[8]};
+  margin-top: ${themeCssVariables.spacing[4]};
+  min-width: 200px;
+`;
 
 export const SignInUpWorkspaceScopeForm = () => {
   const workspaceAuthProviders = useAtomStateValue(workspaceAuthProvidersState);
@@ -43,7 +50,7 @@ export const SignInUpWorkspaceScopeForm = () => {
 
   return (
     <>
-      <StyledOnboardingContentContainer>
+      <StyledContentContainer>
         {providers.google && <SignInUpWithGoogle action="join-workspace" />}
 
         {providers.microsoft && (
@@ -64,7 +71,7 @@ export const SignInUpWorkspaceScopeForm = () => {
             <SignInUpWithCredentials />
           </FormProvider>
         )}
-      </StyledOnboardingContentContainer>
+      </StyledContentContainer>
       {signInUpStep === SignInUpStep.Password && (
         <ClickToActionLink
           onClick={handleResetPassword(form.getValues('email'))}

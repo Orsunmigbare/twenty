@@ -7,7 +7,6 @@ import {
   type RecordFilterValueDependencies,
   type RecordGqlOperationFilter,
 } from 'twenty-shared/types';
-import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import {
   computeRecordGqlOperationFilter,
   turnAnyFieldFilterIntoRecordGqlFilter,
@@ -18,7 +17,6 @@ type ComputeContextStoreFiltersProps = {
   contextStoreFilters: RecordFilter[];
   contextStoreFilterGroups: RecordFilterGroup[];
   objectMetadataItem: EnrichedObjectMetadataItem;
-  fieldMetadataItems: FieldMetadataItem[];
   filterValueDependencies: RecordFilterValueDependencies;
   contextStoreAnyFieldFilterValue: string;
 };
@@ -28,7 +26,6 @@ export const computeContextStoreFilters = ({
   contextStoreFilters,
   contextStoreFilterGroups,
   objectMetadataItem,
-  fieldMetadataItems,
   filterValueDependencies,
   contextStoreAnyFieldFilterValue,
 }: ComputeContextStoreFiltersProps) => {
@@ -45,7 +42,7 @@ export const computeContextStoreFilters = ({
       recordGqlFilterForAnyFieldFilter,
       computeRecordGqlOperationFilter({
         filterValueDependencies,
-        fieldMetadataItems,
+        fields: objectMetadataItem?.fields ?? [],
         recordFilters: contextStoreFilters,
         recordFilterGroups: contextStoreFilterGroups,
       }),
@@ -61,11 +58,24 @@ export const computeContextStoreFilters = ({
     ]);
   }
   if (contextStoreTargetedRecordsRule.mode === 'selection') {
-    return {
-      id: {
-        in: contextStoreTargetedRecordsRule.selectedRecordIds,
+    if (contextStoreTargetedRecordsRule.selectedRecordIds.length === 0) {
+      return { id: { in: [] } };
+    }
+
+    queryFilter = makeAndFilterVariables([
+      recordGqlFilterForAnyFieldFilter,
+      {
+        id: {
+          in: contextStoreTargetedRecordsRule.selectedRecordIds,
+        },
       },
-    };
+      computeRecordGqlOperationFilter({
+        filterValueDependencies,
+        fields: objectMetadataItem?.fields ?? [],
+        recordFilters: contextStoreFilters,
+        recordFilterGroups: contextStoreFilterGroups,
+      }),
+    ]);
   }
 
   return queryFilter;

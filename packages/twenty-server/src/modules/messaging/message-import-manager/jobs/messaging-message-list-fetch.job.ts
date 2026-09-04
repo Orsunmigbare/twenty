@@ -48,63 +48,59 @@ export class MessagingMessageListFetchJob {
 
     const authContext = buildSystemAuthContext(workspaceId);
 
-    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
-      async () => {
-        const messageChannel = await this.messageChannelRepository.findOne({
-          where: {
-            id: messageChannelId,
-            workspaceId,
-          },
-          relations: { connectedAccount: true, messageFolders: true },
+    await this.globalWorkspaceOrmManager.executeInWorkspaceContext(async () => {
+      const messageChannel = await this.messageChannelRepository.findOne({
+        where: {
+          id: messageChannelId,
+          workspaceId,
+        },
+        relations: { connectedAccount: true, messageFolders: true },
+      });
+
+      if (!messageChannel) {
+        await this.messagingMonitoringService.track({
+          eventName: 'message_list_fetch_job.error.message_channel_not_found',
+          messageChannelId,
+          workspaceId,
         });
 
-        if (!messageChannel) {
-          await this.messagingMonitoringService.track({
-            eventName: 'message_list_fetch_job.error.message_channel_not_found',
-            messageChannelId,
-            workspaceId,
-          });
+        return;
+      }
 
-          return;
-        }
+      if (
+        messageChannel.syncStage !==
+        MessageChannelSyncStage.MESSAGE_LIST_FETCH_SCHEDULED
+      ) {
+        return;
+      }
 
-        if (
-          messageChannel.syncStage !==
-          MessageChannelSyncStage.MESSAGE_LIST_FETCH_SCHEDULED
-        ) {
-          return;
-        }
+      try {
+        await this.messagingMonitoringService.track({
+          eventName: 'message_list_fetch.started',
+          workspaceId,
+          connectedAccountId: messageChannel.connectedAccount.id,
+          messageChannelId: messageChannel.id,
+        });
 
-        try {
-          await this.messagingMonitoringService.track({
-            eventName: 'message_list_fetch.started',
-            workspaceId,
-            connectedAccountId: messageChannel.connectedAccount.id,
-            messageChannelId: messageChannel.id,
-          });
+        await this.messagingMessageListFetchService.processMessageListFetch(
+          messageChannel,
+          workspaceId,
+        );
 
-          await this.messagingMessageListFetchService.processMessageListFetch(
-            messageChannel,
-            workspaceId,
-          );
-
-          await this.messagingMonitoringService.track({
-            eventName: 'message_list_fetch.completed',
-            workspaceId,
-            connectedAccountId: messageChannel.connectedAccount.id,
-            messageChannelId: messageChannel.id,
-          });
-        } catch (error) {
-          await this.messageImportErrorHandlerService.handleDriverException(
-            error,
-            MessageImportSyncStep.MESSAGE_LIST_FETCH,
-            messageChannel,
-            workspaceId,
-          );
-        }
-      },
-      authContext,
-      { lite: true },
-    );
+        await this.messagingMonitoringService.track({
+          eventName: 'message_list_fetch.completed',
+          workspaceId,
+          connectedAccountId: messageChannel.connectedAccount.id,
+          messageChannelId: messageChannel.id,
+        });
+      } catch (error) {
+        await this.messageImportErrorHandlerService.handleDriverException(
+          error,
+          MessageImportSyncStep.MESSAGE_LIST_FETCH,
+          messageChannel,
+          workspaceId,
+        );
+      }
+    }, authContext);
   }
 }

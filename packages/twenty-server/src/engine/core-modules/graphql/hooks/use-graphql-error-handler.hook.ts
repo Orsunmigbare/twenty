@@ -116,7 +116,7 @@ export const useGraphQLErrorHandlerHook = <
             setResult,
           }) => {
             if (!result.errors || result.errors.length === 0) {
-              void options.metricsService.incrementCounterForEvent({
+              options.metricsService.incrementCounter({
                 key: MetricsKeys.GraphqlOperation200,
               });
 
@@ -178,11 +178,9 @@ export const useGraphQLErrorHandlerHook = <
               }
 
               if (metricKey) {
-                void options.metricsService.incrementCounterForEvent({
-                  key: metricKey,
-                });
+                options.metricsService.incrementCounter({ key: metricKey });
               } else {
-                void options.metricsService.incrementCounterForEvent({
+                options.metricsService.incrementCounter({
                   key: MetricsKeys.GraphqlOperationUnknown,
                 });
               }
@@ -282,7 +280,7 @@ export const useGraphQLErrorHandlerHook = <
           isDefined(currentMetadataVersion) &&
           requestMetadataVersion !== `${currentMetadataVersion}`
         ) {
-          void options.metricsService.incrementCounterForEvent({
+          options.metricsService.incrementCounter({
             key: MetricsKeys.SchemaVersionMismatch,
           });
 
@@ -304,8 +302,15 @@ export const useGraphQLErrorHandlerHook = <
           return;
         }
 
-        if (semver.lt(frontEndAppVersion, backendAppVersion)) {
-          void options.metricsService.incrementCounterForEvent({
+        const frontEndMajor = semver.parse(frontEndAppVersion)?.major;
+        const backendMajor = semver.parse(backendAppVersion)?.major;
+
+        if (
+          isDefined(frontEndMajor) &&
+          isDefined(backendMajor) &&
+          frontEndMajor < backendMajor
+        ) {
+          options.metricsService.incrementCounter({
             key: MetricsKeys.AppVersionMismatch,
           });
           throw new GraphQLError(APP_VERSION_MISMATCH_ERROR, {

@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { getFrontComponentBuildPlugins } from 'twenty-sdk/front-component-renderer/build';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const storiesDir = path.resolve(dirname, '../../src/__stories__');
+const exampleSourcesDir = path.resolve(
+  dirname,
+  '../../src/__stories__/example-sources',
+);
 const exampleSourcesBuiltDir = path.resolve(
   dirname,
   '../../src/__stories__/example-sources-built',
@@ -15,13 +18,6 @@ const exampleSourcesBuiltPreactDir = path.resolve(
   dirname,
   '../../src/__stories__/example-sources-built-preact',
 );
-
-const SOURCE_SCAN_ROOTS = [
-  'html-tag',
-  'host-api',
-  'showcase',
-  'twenty-ui-gallery',
-];
 
 const rootNodeModules = path.resolve(dirname, '../../../../node_modules');
 
@@ -66,102 +62,50 @@ const twentySharedAliases = Object.fromEntries(
   ]),
 );
 
-const TWENTY_UI_SUBMODULES = [
-  'accessibility',
-  'data-display',
-  'feedback',
-  'icon',
-  'input',
-  'json-visualizer',
-  'layout',
-  'navigation',
-  'surfaces',
-  'theme-constants',
-  'typography',
-  'utilities',
-];
-
-const twentyUiAliases = {
-  'twenty-ui': twentyUiIndividualIndex,
-  ...Object.fromEntries(
-    TWENTY_UI_SUBMODULES.map((submodule) => [
-      `twenty-ui/${submodule}`,
-      twentyUiIndividualIndex,
-    ]),
-  ),
-};
-
 const storyAlias = {
   react: path.join(rootNodeModules, 'react'),
   'react-dom': path.join(rootNodeModules, 'react-dom'),
   'twenty-sdk/define': sdkDefineIndex,
   'twenty-sdk/front-component': sdkFrontComponentIndex,
-  ...twentyUiAliases,
+  'twenty-sdk/ui': twentyUiIndividualIndex,
   ...twentySharedAliases,
 };
 
-const ENTRY_POINT_PATTERN = /\.front-component\.tsx$/;
-
-const findEntryPointFiles = (directory: string): string[] => {
-  const result: string[] = [];
-
-  if (!fs.existsSync(directory)) {
-    return result;
-  }
-
-  for (const dirent of fs.readdirSync(directory, { withFileTypes: true })) {
-    const absolutePath = path.join(directory, dirent.name);
-
-    if (dirent.isDirectory()) {
-      if (dirent.name === 'shared') {
-        continue;
-      }
-
-      result.push(...findEntryPointFiles(absolutePath));
-      continue;
-    }
-
-    if (!dirent.isFile()) {
-      continue;
-    }
-
-    if (ENTRY_POINT_PATTERN.test(dirent.name)) {
-      result.push(absolutePath);
-    }
-  }
-
-  return result;
-};
+const STORY_COMPONENTS = [
+  'static.front-component',
+  'interactive.front-component',
+  'lifecycle.front-component',
+  'chakra-example.front-component',
+  'tailwind-example.front-component',
+  'emotion-example.front-component',
+  'styled-components-example.front-component',
+  'shadcn-example.front-component',
+  'mui-example.front-component',
+  'twenty-ui-example.front-component',
+  'sdk-context-example.front-component',
+  'form-events.front-component',
+  'keyboard-events.front-component',
+  'host-api-calls.front-component',
+];
 
 const resolveEntryPoints = (): Record<string, string> => {
-  const files = SOURCE_SCAN_ROOTS.flatMap((root) =>
-    findEntryPointFiles(path.join(storiesDir, root)),
-  );
-
   const entryPoints: Record<string, string> = {};
 
-  for (const filePath of files) {
-    const basename = path.basename(filePath).replace(/\.tsx$/, '');
+  for (const name of STORY_COMPONENTS) {
+    const filePath = path.join(exampleSourcesDir, `${name}.tsx`);
 
-    if (entryPoints[basename] !== undefined) {
+    if (!fs.existsSync(filePath)) {
       throw new Error(
-        `Duplicate front-component basename "${basename}" found at ${filePath} and ${entryPoints[basename]}`,
+        `Story component source file not found: ${filePath}\n` +
+          `Ensure the file exists in ${exampleSourcesDir} and the name in STORY_COMPONENTS is correct.`,
       );
     }
 
-    entryPoints[basename] = filePath;
-  }
-
-  if (Object.keys(entryPoints).length === 0) {
-    throw new Error(
-      `No front-component source files found under ${storiesDir} (scanned: ${SOURCE_SCAN_ROOTS.join(', ')})`,
-    );
+    entryPoints[name] = filePath;
   }
 
   return entryPoints;
 };
-
-const STORY_COMPONENTS = Object.keys(resolveEntryPoints());
 
 type BundleSizeEntry = {
   name: string;

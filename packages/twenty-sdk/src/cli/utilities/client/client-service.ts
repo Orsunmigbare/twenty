@@ -14,7 +14,7 @@ export class ClientService {
     this.apiService = new ApiService({
       disableInterceptors: true,
       serverUrl: options?.serverUrl,
-      skipAuth: options?.skipAuth ?? true,
+      skipAuth: true,
       token: options?.token,
     });
   }

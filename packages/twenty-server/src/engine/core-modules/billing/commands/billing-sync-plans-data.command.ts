@@ -46,23 +46,21 @@ export class BillingSyncPlansDataCommand extends MigrationCommandRunner {
     meters: Stripe.Billing.Meter[],
     options: MigrationCommandOptions,
   ) {
-    await Promise.all(
-      meters.map(async (meter) => {
-        try {
-          if (!options.dryRun) {
-            await this.billingMeterRepository.upsert(
-              transformStripeMeterToDatabaseMeter(meter),
-              {
-                conflictPaths: ['stripeMeterId'],
-              },
-            );
-          }
-          this.logger.log(`Upserted meter: ${meter.id}`);
-        } catch (error) {
-          this.logger.error(`Error upserting meter ${meter.id}: ${error}`);
+    meters.map(async (meter) => {
+      try {
+        if (!options.dryRun) {
+          await this.billingMeterRepository.upsert(
+            transformStripeMeterToDatabaseMeter(meter),
+            {
+              conflictPaths: ['stripeMeterId'],
+            },
+          );
         }
-      }),
-    );
+        this.logger.log(`Upserted meter: ${meter.id}`);
+      } catch (error) {
+        this.logger.error(`Error upserting meter ${meter.id}: ${error}`);
+      }
+    });
   }
 
   private async upsertProductRepositoryData(

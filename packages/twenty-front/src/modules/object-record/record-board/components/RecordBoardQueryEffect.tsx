@@ -3,9 +3,7 @@ import { useTriggerRecordBoardInitialQuery } from '@/object-record/record-board/
 import { lastRecordBoardQueryIdentifierComponentState } from '@/object-record/record-board/states/lastRecordBoardQueryIdentifierComponentState';
 import { lastRecordGroupIdsComponentState } from '@/object-record/record-board/states/lastRecordGroupIdsComponentState';
 import { recordBoardCurrentGroupByQueryOffsetComponentState } from '@/object-record/record-board/states/recordBoardCurrentGroupByQueryOffsetComponentState';
-import { recordBoardIsFetchingMoreComponentState } from '@/object-record/record-board/states/recordBoardIsFetchingMoreComponentState';
 import { recordBoardShouldFetchMoreComponentState } from '@/object-record/record-board/states/recordBoardShouldFetchMoreComponentState';
-import { recordBoardHasColumnsToFetchMoreComponentSelector } from '@/object-record/record-board/states/selectors/recordBoardHasColumnsToFetchMoreComponentSelector';
 import { isDraggingRecordComponentState } from '@/object-record/record-drag/states/isDraggingRecordComponentState';
 import { recordGroupIdsComponentState } from '@/object-record/record-group/states/recordGroupIdsComponentState';
 import { useRecordIndexContextOrThrow } from '@/object-record/record-index/contexts/RecordIndexContext';
@@ -14,7 +12,6 @@ import { useRecordIndexGroupCommonQueryVariables } from '@/object-record/record-
 import { recordIndexRecordGroupsAreInInitialLoadingComponentState } from '@/object-record/record-index/states/recordIndexRecordGroupsAreInInitialLoadingComponentState';
 import { getQueryIdentifier } from '@/object-record/utils/getQueryIdentifier';
 import { useScrollWrapperHTMLElement } from '@/ui/utilities/scroll/hooks/useScrollWrapperHTMLElement';
-import { useAtomComponentSelectorValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentSelectorValue';
 import { useAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useAtomComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useSetAtomComponentState } from '@/ui/utilities/state/jotai/hooks/useSetAtomComponentState';
@@ -62,14 +59,6 @@ export const RecordBoardQueryEffect = () => {
     recordBoardShouldFetchMoreComponentState,
   );
 
-  const recordBoardIsFetchingMore = useAtomComponentStateValue(
-    recordBoardIsFetchingMoreComponentState,
-  );
-
-  const recordBoardHasColumnsToFetchMore = useAtomComponentSelectorValue(
-    recordBoardHasColumnsToFetchMoreComponentSelector,
-  );
-
   const { triggerRecordBoardFetchMore } = useTriggerRecordBoardFetchMore();
 
   const { triggerRecordBoardInitialQuery } =
@@ -92,14 +81,12 @@ export const RecordBoardQueryEffect = () => {
       !recordIndexRecordGroupsAreInInitialLoading &&
       (queryIdentifierHasChanged || recordGroupIdsHaveChanged)
     ) {
-      triggerRecordBoardInitialQuery({ shouldResetScroll: true });
+      triggerRecordBoardInitialQuery();
       setLastRecordGroupIds(recordGroupIds);
     } else if (
       !recordIndexRecordGroupsAreInInitialLoading &&
       recordBoardShouldFetchMore &&
-      recordBoardHasColumnsToFetchMore &&
-      !queryIdentifierHasChanged &&
-      !recordBoardIsFetchingMore
+      !queryIdentifierHasChanged
     ) {
       triggerRecordBoardFetchMore();
     }
@@ -112,8 +99,6 @@ export const RecordBoardQueryEffect = () => {
     scrollWrapperHTMLElement,
     recordIndexRecordGroupsAreInInitialLoading,
     recordBoardShouldFetchMore,
-    recordBoardIsFetchingMore,
-    recordBoardHasColumnsToFetchMore,
     triggerRecordBoardFetchMore,
     setLastRecordGroupIds,
     recordGroupIds,

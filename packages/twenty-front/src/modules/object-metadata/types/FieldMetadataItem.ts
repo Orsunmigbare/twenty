@@ -24,8 +24,6 @@ export type FieldMetadataItem = Omit<
   | 'options'
   | 'relation'
   | 'morphRelations'
-  // Deprecated GraphQL field kept server-side for one release; no longer queried
-  | 'isUIReadOnly'
 > & {
   __typename?: string;
   applicationId?: string;

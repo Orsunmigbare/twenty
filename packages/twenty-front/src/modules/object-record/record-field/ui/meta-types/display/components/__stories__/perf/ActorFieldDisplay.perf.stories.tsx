@@ -35,7 +35,7 @@ export const Default: Story = {};
 
 export const Performance = getProfilingStory({
   componentName: 'ActorFieldDisplay',
-  averageThresholdInMs: 0.4,
+  averageThresholdInMs: 0.2,
   numberOfRuns: 20,
   numberOfTestsPerRun: 100,
 });

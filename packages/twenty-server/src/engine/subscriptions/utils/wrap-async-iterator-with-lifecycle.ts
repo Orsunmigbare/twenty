@@ -5,28 +5,21 @@ type AsyncIteratorLifecycleOptions<T> = {
   onHeartbeat?: () => Promise<boolean>;
   heartbeatIntervalMs?: number;
   onCleanup?: () => Promise<void>;
-  onCleanupError?: (error: unknown) => void;
 };
 
 export function wrapAsyncIteratorWithLifecycle<T>(
   iterator: AsyncIterableIterator<T>,
   options: AsyncIteratorLifecycleOptions<T>,
 ): AsyncIterableIterator<T> {
-  const {
-    initialValue,
-    onHeartbeat,
-    heartbeatIntervalMs,
-    onCleanup,
-    onCleanupError,
-  } = options;
+  const { initialValue, onHeartbeat, heartbeatIntervalMs, onCleanup } = options;
   let heartbeatInterval: NodeJS.Timeout | null = null;
   let hasYieldedInitialValue = false;
 
   const startHeartbeat = () => {
     if (onHeartbeat && heartbeatIntervalMs) {
-      heartbeatInterval = setInterval(() => {
+      heartbeatInterval = setInterval(async () => {
         try {
-          void onHeartbeat().catch(() => {});
+          await onHeartbeat();
         } catch {
           // Heartbeat failure shouldn't crash the stream
         }
@@ -40,11 +33,7 @@ export function wrapAsyncIteratorWithLifecycle<T>(
       heartbeatInterval = null;
     }
     if (onCleanup) {
-      try {
-        await onCleanup();
-      } catch (error) {
-        onCleanupError?.(error);
-      }
+      await onCleanup();
     }
   };
 

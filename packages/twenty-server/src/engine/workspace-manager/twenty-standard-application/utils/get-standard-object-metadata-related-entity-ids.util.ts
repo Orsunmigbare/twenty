@@ -35,7 +35,7 @@ const computeStandardViewObjectIds = <O extends AllStandardObjectName>({
 }): StandardObjectViewIds<O> | undefined => {
   const objectDefinition = STANDARD_OBJECTS[objectName];
 
-  if (!('views' in objectDefinition)) {
+  if (!Object.prototype.hasOwnProperty.call(objectDefinition, 'views')) {
     return undefined;
   }
 

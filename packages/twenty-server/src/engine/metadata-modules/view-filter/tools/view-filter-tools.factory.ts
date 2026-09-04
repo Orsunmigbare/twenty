@@ -26,7 +26,7 @@ const CreateViewFilterInputSchema = z.object({
     .string()
     .uuid()
     .describe(
-      'ID of the field to filter on. Use get_field_metadata to find field IDs.',
+      'ID of the field to filter on. Use list_object_metadata_items to find field IDs.',
     ),
   operand: z
     .enum(VIEW_FILTER_OPERAND_OPTIONS)
@@ -42,7 +42,7 @@ const CreateViewFilterInputSchema = z.object({
       z.record(z.string(), z.unknown()),
     ])
     .describe(
-      'Filter value. Format depends on operand and field type: string for TEXT, array of option values for SELECT/MULTI_SELECT (e.g. ["OPTION_1", "OPTION_2"]), number for NUMBER/CURRENCY, empty string "" for IS_EMPTY/IS_NOT_EMPTY operators.',
+      'Filter value. Format depends on operand and field type: string for TEXT/SELECT, number for NUMBER/CURRENCY, array of option values for MULTI_SELECT IS/IS_NOT, empty string "" for IS_EMPTY/IS_NOT_EMPTY operators.',
     ),
   subFieldName: z
     .string()
@@ -75,9 +75,7 @@ const UpdateViewFilterInputSchema = z.object({
       z.record(z.string(), z.unknown()),
     ])
     .optional()
-    .describe(
-      'New filter value. Use array of option values for SELECT/MULTI_SELECT (e.g. ["OPTION_1"]).',
-    ),
+    .describe('New filter value'),
   subFieldName: z
     .string()
     .optional()
@@ -122,7 +120,7 @@ export class ViewFilterToolsFactory {
     return {
       create_view_filter: {
         description:
-          'Add a filter to a view. Use get_field_metadata to get fieldMetadataId values.',
+          'Add a filter to a view. Use list_object_metadata_items to get fieldMetadataId values.',
         inputSchema: CreateViewFilterInputSchema,
         execute: async (parameters: {
           viewId: string;
@@ -161,7 +159,7 @@ export class ViewFilterToolsFactory {
       },
       create_many_view_filters: {
         description:
-          'Add multiple filters to a view in one call. Use get_field_metadata to get fieldMetadataId values.',
+          'Add multiple filters to a view in one call. Use list_object_metadata_items to get fieldMetadataId values.',
         inputSchema: CreateManyViewFiltersInputSchema,
         execute: async (parameters: {
           filters: Array<{

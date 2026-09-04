@@ -26,11 +26,12 @@ import {
 
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
 import { RatioAggregateConfigDTO } from 'src/engine/metadata-modules/page-layout-widget/dtos/ratio-aggregate-config.dto';
-import { ChartNumberFormat } from 'src/engine/metadata-modules/page-layout-widget/enums/chart-number-format.enum';
 import { WidgetConfigurationType } from 'src/engine/metadata-modules/page-layout-widget/enums/widget-configuration-type.type';
 
 @ObjectType('AggregateChartConfiguration')
-export class AggregateChartConfigurationDTO implements AggregateChartConfiguration {
+export class AggregateChartConfigurationDTO
+  implements AggregateChartConfiguration
+{
   @Field(() => WidgetConfigurationType)
   @IsIn([WidgetConfigurationType.AGGREGATE_CHART])
   @IsNotEmpty()
@@ -56,10 +57,10 @@ export class AggregateChartConfigurationDTO implements AggregateChartConfigurati
   @IsOptional()
   displayDataLabel?: boolean;
 
-  @Field(() => ChartNumberFormat, { nullable: true })
-  @IsEnum(ChartNumberFormat)
+  @Field(() => String, { nullable: true })
+  @IsString()
   @IsOptional()
-  numberFormat?: ChartNumberFormat;
+  format?: string;
 
   @Field(() => String, { nullable: true })
   @IsString()

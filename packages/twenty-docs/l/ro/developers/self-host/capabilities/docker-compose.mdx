@@ -51,7 +51,7 @@ Urmați acești pași pentru o configurare manuală.
    curl -o .env https://raw.githubusercontent.com/twentyhq/twenty/refs/heads/main/packages/twenty-docker/.env.example
    ```
 
-2. **Generează o cheie de criptare**
+2. **Generați Tokenuri Secrete**
 
    Rulați următoarea comandă pentru a genera un șir unic aleatoriu:
 
@@ -59,17 +59,15 @@ Urmați acești pași pentru o configurare manuală.
    openssl rand -base64 32
    ```
 
-   **Important:** Păstrați această valoare secretă / nu o împărtășiți. Pierderea `ENCRYPTION_KEY` înseamnă pierderea accesului la toate secretele stocate în baza de date (tokenuri OAuth, variabile de aplicație, secrete TOTP etc.).
+   **Important:** Păstrați această valoare secretă / nu o împărtășiți.
 
 3. **Actualizați `.env`**
 
    Înlocuiți valoarea substituentului în fișierul dvs. .env cu tokenul generat:
 
    ```ini
-   ENCRYPTION_KEY=random_string
+   APP_SECRET=first_random_string
    ```
-
-   Vezi [ghidul pentru rotația cheii](/l/ro/developers/self-host/capabilities/key-rotation) pentru instrucțiuni despre cum să o rotești fără întreruperi.
 
 4. **Setați Parola pentru Postgres**
 
@@ -254,9 +252,3 @@ docker compose up -d
 ## Depanare
 
 Dacă întâmpinați vreo problemă, verificați [Depanare](/l/ro/developers/self-host/capabilities/troubleshooting) pentru soluții.
-
-## Găzduire gestionată
-
-<Tip>
-  Preferiți să nu rulați și să nu întrețineți Twenty chiar dumneavoastră? [Găsiți un partener Twenty certificat pentru găzduire](https://twenty.com/partners/list?categories=HOSTING\&ref=docs-docker-compose) care să vă implementeze, găzduiască și gestioneze instanța de la un capăt la altul. *(Sau contactați echipa noastră: [contact@twenty.com](mailto:contact@twenty.com).)*
-</Tip>

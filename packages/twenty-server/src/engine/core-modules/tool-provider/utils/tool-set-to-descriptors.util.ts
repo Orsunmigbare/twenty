@@ -2,7 +2,6 @@ import { type ToolSet } from 'ai';
 import { z } from 'zod';
 
 import { type ToolCategory } from 'twenty-shared/ai';
-import { toToolJsonSchema } from 'src/engine/core-modules/record-crud/utils/to-tool-json-schema.util';
 import { type ToolDescriptor } from 'src/engine/core-modules/tool-provider/types/tool-descriptor.type';
 import { type ToolIndexEntry } from 'src/engine/core-modules/tool-provider/types/tool-index-entry.type';
 
@@ -11,13 +10,9 @@ export type ToolSetToDescriptorsOptions = {
   icon?: string;
 };
 
-export const humanizeToolName = (name: string): string =>
-  name
-    .split('_')
-    .filter((word) => word.length > 0)
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ');
-
+// Converts a ToolSet (with Zod schemas and closures) into an array of
+// serializable ToolDescriptor objects. Used by providers that delegate to
+// existing factory services (workflow, view, dashboard, metadata).
 export const toolSetToDescriptors = (
   toolSet: ToolSet,
   category: ToolCategory,
@@ -28,7 +23,6 @@ export const toolSetToDescriptors = (
   return Object.entries(toolSet).map(([name, tool]) => {
     const base: ToolIndexEntry = {
       name,
-      label: humanizeToolName(name),
       description: tool.description ?? '',
       category,
       executionRef: { kind: 'static' as const, toolId: name },
@@ -42,8 +36,9 @@ export const toolSetToDescriptors = (
     let inputSchema: object;
 
     try {
-      inputSchema = toToolJsonSchema(tool.inputSchema as z.ZodType);
+      inputSchema = z.toJSONSchema(tool.inputSchema as z.ZodType);
     } catch {
+      // Fallback: schema is already JSON Schema or another format
       inputSchema = (tool.inputSchema ?? {}) as object;
     }
 

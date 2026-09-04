@@ -65,7 +65,6 @@ export type WorkflowDiagramStepNodeData =
       nodeType: 'action';
       actionType: WorkflowActionType;
       name: string;
-      logicFunctionId?: string;
       runStatus?: WorkflowRunStepStatus;
       hasNextStepIds: boolean;
       stepId: string;
