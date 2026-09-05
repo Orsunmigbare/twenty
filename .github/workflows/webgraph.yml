@@ -1,7 +1,7 @@
 # The caller for webgraph's reusable graph gate. The gate itself — every step,
 # flag and failure mode — lives in the webgraph repository beside the code that
-# implements it: Orsunmigbare/frontend-mcp-2/.github/workflows/pr-gate.yml and
-# its docs/pr-gate.md. This file only says which deployment's graph to check
+# implements it (frontend-mcp-2, .github/workflows/pr-gate.yml, docs/pr-gate.md),
+# and is mirrored to the public Orsunmigbare/webgraph-gate for callers. This file only says which deployment's graph to check
 # and where the webgraph install lives on the self-hosted runner.
 #
 # The deployment id is a repository VARIABLE (Settings → Secrets and variables →
@@ -18,7 +18,10 @@ jobs:
       contents: read
       statuses: write
       pull-requests: write
-    uses: Orsunmigbare/frontend-mcp-2/.github/workflows/pr-gate.yml@main
+    # The gate is developed in the webgraph repository and mirrored to this
+    # public repository, because GitHub does not let a public repository call a
+    # private repository's reusable workflow.
+    uses: Orsunmigbare/webgraph-gate/.github/workflows/pr-gate.yml@main
     secrets: inherit
     with:
       deployment: ${{ vars.WEBGRAPH_DEPLOYMENT_ID }}
