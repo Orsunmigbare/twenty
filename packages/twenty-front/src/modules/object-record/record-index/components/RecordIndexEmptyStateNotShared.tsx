@@ -36,7 +36,7 @@ export const RecordIndexEmptyStateNotShared = ({
           <AnimatedPlaceholderEmptySubTitle>
             {isDefined(nonReadableViewFieldInfo)
               ? getNonReadableViewFieldSubTitle(nonReadableViewFieldInfo)
-              : t`You don't have access to this object.`}
+              : t`Your role can't read this object yet. Ask a workspace admin to share it, or pick another object from the sidebar.`}
           </AnimatedPlaceholderEmptySubTitle>
         </AnimatedPlaceholderEmptyTextContainer>
       </AnimatedPlaceholderEmptyContainer>
