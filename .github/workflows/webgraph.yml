@@ -11,6 +11,13 @@ name: webgraph
 on: pull_request
 jobs:
   graph:
+    # The gate posts status checks and a comment with this repository's own
+    # token. A called workflow can hold at most what the caller grants, and the
+    # repository default is read-only, so grant exactly what it needs here.
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
     uses: Orsunmigbare/frontend-mcp-2/.github/workflows/pr-gate.yml@main
     secrets: inherit
     with:
