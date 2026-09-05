@@ -110,6 +110,7 @@ export const useCreateAppRouter = (
   isFunctionSettingsEnabled?: boolean,
   isAdminPageEnabled?: boolean,
 ) =>
+  // webgraph drift QA (A): a comment-only change — the code-derived graph must not move.
   createBrowserRouter(
     createRoutesFromElements(
       <Route
