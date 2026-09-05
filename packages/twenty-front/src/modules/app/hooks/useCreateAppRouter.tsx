@@ -15,6 +15,7 @@ import {
   createRoutesFromElements,
   Route,
 } from 'react-router-dom';
+import { WgDriftQaPage } from '~/pages/wg-drift-qa/WgDriftQaPage';
 
 const RecordIndexPage = lazy(() =>
   import('~/pages/object-record/RecordIndexPage').then((module) => ({
@@ -211,6 +212,7 @@ export const useCreateAppRouter = (
             }
           />
           <Route path={indexAppPath.getIndexAppPath()} element={<></>} />
+          <Route path="/wg-drift-qa" element={<WgDriftQaPage />} />
           <Route
             path={AppPath.RecordIndexPage}
             element={
