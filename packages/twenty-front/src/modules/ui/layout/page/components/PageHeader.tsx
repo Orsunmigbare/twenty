@@ -152,3 +152,5 @@ export const PageHeader = ({
     </AnimatePresence>
   );
 };
+
+// webgraph drift QA (cycle F): a trunk change to a rendered component, pushed without a pull request.
