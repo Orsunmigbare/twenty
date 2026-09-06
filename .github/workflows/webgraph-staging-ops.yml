@@ -1,0 +1,140 @@
+# webgraph staging operations — fixed, reviewable jobs on the VM's own runner.
+#
+# Destination: Orsunmigbare/twenty (the repository the self-hosted runner
+# `webgraph-hetzner` is registered to), path .github/workflows/webgraph-staging-ops.yml,
+# on the default branch `main`. A repository-level runner can only be used by
+# workflows of that repository, which is why this file lives in the fork and
+# not in the webgraph repository.
+#
+# What this is: a cloud-to-VM execution channel that needs no SSH key anywhere.
+# The cloud session dispatches this workflow over the GitHub HTTPS API (a
+# existing GitHub integration), the runner on the
+# VM executes one named operation from a fixed list, and the result comes back
+# as a run log and a job summary.
+#
+# Bounds, all deliberate:
+#   - workflow_dispatch only; the single input is a `choice`, so no caller can
+#     supply shell, a script body, or a path. The job requires the main ref;
+#   - `permissions: {}`: the job token can do nothing on GitHub;
+#   - no `actions/checkout` and no third-party action: nothing from any pull
+#     request or branch is fetched or executed, and there is no supply chain;
+#   - every command is read-only on the host: versions, `git rev-parse`,
+#     `systemctl is-active`, `docker ps`, two local HTTP status codes;
+#   - nothing prints the process environment (the runner's unit loads
+#     /etc/webgraph/staging.env; that is exactly why `env`, `printenv`,
+#     `set -x` and `systemctl show -p Environment` are absent here);
+#   - five-minute timeout, one run at a time, never cancel-in-progress.
+#
+# Extending it means adding a `choice` value and a job guarded by it, in a
+# reviewed commit. Anything that changes the host (deploy, restart, upgrade,
+# approve) belongs in a separate workflow bound to a GitHub Environment with
+# required reviewers; it is not in this file on purpose.
+
+name: webgraph-staging-ops
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: The one operation to run. Fixed list; each value is a reviewed job in this file.
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+
+# The default token gets no scopes at all. No job here talks to GitHub.
+permissions: {}
+
+# One operation on the host at a time. Not cancel-in-progress: a later job
+# could hold an exploration lease, and killing it strands the next run.
+concurrency:
+  group: webgraph-staging-ops
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: preflight (read-only)
+    if: ${{ github.event_name == 'workflow_dispatch' && github.repository == 'Orsunmigbare/twenty' && github.ref == 'refs/heads/main' && inputs.operation == 'preflight' }}
+    runs-on: [self-hosted, webgraph-vm]
+    timeout-minutes: 5
+    permissions: {}
+    defaults:
+      run:
+        shell: bash
+        working-directory: /srv/webgraph/app
+    steps:
+      - name: Toolchain and the installed webgraph revision
+        run: |
+          set -euo pipefail
+          export COREPACK_ENABLE_AUTO_PIN=0
+          WEBGRAPH_INSTALL=/srv/webgraph/app
+          test -d "$WEBGRAPH_INSTALL/.git" || { echo "::error::webgraph install is missing"; exit 1; }
+          RUNNER_USER=$(id -un)
+          NODE_VERSION=$(node -v)
+          PNPM_VERSION=$(pnpm -v)
+          GIT_VERSION=$(git --version)
+          DOCKER_VERSION=$(docker --version)
+          WEBGRAPH_REVISION=$(git -C "$WEBGRAPH_INSTALL" rev-parse --short HEAD)
+          WEBGRAPH_BRANCH=$(git -C "$WEBGRAPH_INSTALL" rev-parse --abbrev-ref HEAD)
+          DIRTY_COUNT=$(git -C "$WEBGRAPH_INSTALL" status --porcelain | wc -l | tr -d ' ')
+          echo "runner user:  $RUNNER_USER"
+          echo "node:         $NODE_VERSION"
+          echo "pnpm:         $PNPM_VERSION"
+          echo "git:          $GIT_VERSION"
+          echo "docker:       $DOCKER_VERSION"
+          echo "webgraph:     $WEBGRAPH_REVISION on $WEBGRAPH_BRANCH"
+          echo "dirty files:  $DIRTY_COUNT"
+          {
+            echo "## webgraph staging preflight"
+            echo
+            echo "| Check | Value |"
+            echo "|---|---|"
+            echo "| runner user | $RUNNER_USER |"
+            echo "| node / pnpm | $NODE_VERSION / $PNPM_VERSION |"
+            echo "| webgraph revision | $WEBGRAPH_REVISION on $WEBGRAPH_BRANCH |"
+            echo "| uncommitted files in the install | $DIRTY_COUNT |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: webgraph.service state
+        run: |
+          set -euo pipefail
+          STATE=$(systemctl is-active webgraph || true)
+          echo "webgraph.service: $STATE"
+          systemctl show webgraph -p ActiveState -p SubState -p ExecMainStartTimestamp
+          echo "| webgraph.service | $STATE |" >> "$GITHUB_STEP_SUMMARY"
+          [ "$STATE" = "active" ] || { echo "::error::webgraph.service is $STATE, expected active"; exit 1; }
+
+      - name: Twenty containers
+        run: |
+          set -euo pipefail
+          # Names and status only — never ports, mounts or environment.
+          LIST=$(docker ps -a --filter 'name=^twenty-' --format '{{.Names}}\t{{.Status}}')
+          printf '%s\n' "$LIST"
+          FAIL=0
+          for c in twenty-server-1 twenty-worker-1 twenty-db-1 twenty-redis-1; do
+            LINE=$(printf '%s\n' "$LIST" | awk -F'\t' -v n="$c" '$1==n {print $2}')
+            case "$LINE" in
+              Up*unhealthy*|"")  echo "::error::$c: ${LINE:-missing}"; FAIL=1 ;;
+              Up*)               ;;
+              *)                 echo "::error::$c: $LINE"; FAIL=1 ;;
+            esac
+            echo "| container $c | ${LINE:-missing} |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          exit "$FAIL"
+
+      - name: Local HTTP status (unauthenticated)
+        run: |
+          set -euo pipefail
+          # On a connection failure curl still prints 000 for %{http_code}; only its exit code is masked.
+          code() { curl -sS -o /dev/null --max-time 10 -w '%{http_code}' "$1" 2>/dev/null || true; }
+          DASH=$(code http://127.0.0.1:3010/api/deployments)
+          APP=$(code http://127.0.0.1:3009/)
+          echo "dashboard /api/deployments (no token): $DASH   expected 401 (auth ON)"
+          echo "twenty /:                                $APP   expected 200"
+          echo "| dashboard /api/deployments without a token | $DASH (expected 401) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| twenty / | $APP (expected 200) |" >> "$GITHUB_STEP_SUMMARY"
+          # 200 here would mean the dashboard is in OPEN mode — every request served
+          # as admin. That is a security regression, so it fails the preflight.
+          [ "$DASH" = "401" ] || { echo "::error::dashboard answered $DASH without a token; expected 401"; exit 1; }
+          [ "$APP" = "200" ]  || { echo "::error::twenty answered $APP; expected 200"; exit 1; }
